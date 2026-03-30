@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { api } from '@/lib/utils';
+import { apiCall } from '@/lib/utils';
 import { DetailModal, AuthModal, PayModal, ChatModal, ShareModal, Toast } from '@/components/all';
 
 export default function ListingPageClient({ initialListing, listingId }) {
@@ -20,13 +20,13 @@ export default function ListingPageClient({ initialListing, listingId }) {
     const t = localStorage.getItem('ws_token');
     const u = localStorage.getItem('ws_user');
     if (t && u) { try { setUser(JSON.parse(u)); setToken(t); } catch {} }
-    api(`/api/listings/${listingId}`).then(fresh => setListing(fresh)).catch(() => {});
+    apiCall(`/api/listings/${listingId}`).then(fresh => setListing(fresh)).catch(() => {});
   }, [listingId]);
 
   const handleLockIn = async () => {
     if (!user) { setModal('auth'); return; }
     try {
-      await api(`/api/listings/${listing.id}/lock-in`, { method: 'POST' }, token);
+      await apiCall(`/api/listings/${listing.id}/lock-in`, { method: 'POST' }, token);
       setListing(p => ({ ...p, locked_buyer_id: user.id }));
       notify('🔥 Locked in! The seller has been notified.', 'success');
     } catch (e) { notify(e.message, 'error'); }
@@ -62,7 +62,7 @@ export default function ListingPageClient({ initialListing, listingId }) {
           purpose={payType === 'unlock' ? `Reveal buyer: ${listing.title}` : `Escrow: ${listing.title}`}
           token={token} user={user} allowVoucher={true}
           onSuccess={async () => {
-            const fresh = await api(`/api/listings/${listing.id}`, {}, token).catch(() => null);
+            const fresh = await apiCall(`/api/listings/${listing.id}`, {}, token).catch(() => null);
             if (fresh) setListing(fresh);
             setModal('detail');
             notify(payType === 'unlock' ? '🔓 Buyer revealed!' : '🔐 Escrow activated!', 'success');
