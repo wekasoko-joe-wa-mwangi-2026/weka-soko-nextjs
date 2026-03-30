@@ -372,14 +372,11 @@ function AuthModal({defaultMode,onClose,onAuth,notify}){
         :await apiCall("/api/auth/register",{method:"POST",body:JSON.stringify({name:f.name.trim(),email:f.email.trim(),password:f.password,role:f.role,phone:f.phone||undefined})});
 
       if(data.requiresVerification){
-        // Signup: show "check your email" screen
+        // Signup success: show "check your email" screen
         setVerifyEmail(data.email||f.email.trim());
         return;
       }
-      // Login with unverified email - allow in but show a warning
-      if(data.needsVerification){
-        notify("Please verify your email address — check your inbox for the verification link.","warning");
-      }
+      // Store session and log in
       localStorage.setItem("ws_token",data.token);
       localStorage.setItem("ws_user",JSON.stringify(data.user));
       onAuth(data.user,data.token);onClose();
