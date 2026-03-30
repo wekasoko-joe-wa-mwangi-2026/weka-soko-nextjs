@@ -1,9 +1,8 @@
-
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
-import { api, fmtKES, ago, CATS, KENYA_COUNTIES, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
+import { apiCall, fmtKES, ago, CATS, KENYA_COUNTIES, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
 import { WekaSokoLogo, Spin, Toast, Modal, FF, Counter, ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal, WatermarkedImage, Lightbox, AuthModal, ShareModal, PayModal, ChatModal, PostAdModal, ListingCard, LeaveReviewBtn, ReportListingBtn, VerificationBanner, DetailModal, MarkSoldModal, RoleSwitcher, PostRequestModal, WhatBuyersWant, SoldSection, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab, ProfileSection, PasswordSection, VerificationSection, MobileDashboard, Dashboard, PWABanner, Pager, MobileRequestsTab, MobileLayout } from '@/components/all';
 
 export default function HomeClient({ initialListings, initialTotal, initialStats, initialCounties, initialFilter, initialPage }) {
@@ -87,7 +86,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       // Listing detail via ?listing=[id]
       const listingId = params.get('listing');
       if (listingId) {
-        api(`/api/listings/${listingId}`, {}, null).then(l => {
+        apiCall(`/api/listings/${listingId}`, {}, null).then(l => {
           if (l && l.id) setModal({ type: 'detail', listing: l });
         }).catch(() => {});
       }
@@ -158,7 +157,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         localStorage.setItem("ws_user",JSON.stringify(parsed));
         setUser(parsed);setToken(t);
         // Verify the token is valid immediately
-        api("/api/auth/me",{},t).then(fresh=>{setUser(fresh);localStorage.setItem("ws_user",JSON.stringify(fresh));}).catch(()=>{});
+        apiCall("/api/auth/me",{},t).then(fresh=>{setUser(fresh);localStorage.setItem("ws_user",JSON.stringify(fresh));}).catch(()=>{});
         notify("Welcome back, "+parsed.name.split(" ")[0]+"! 🎉","success");
         window.history.replaceState({},"",window.location.pathname);
       }catch(e){console.error("OAuth parse error",e);}
@@ -169,7 +168,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     }
     const vt=search.get("verify_email");
     if(vt){
-      api("/api/auth/verify-email?token="+vt).then(r=>{
+      apiCall("/api/auth/verify-email?token="+vt).then(r=>{
         if(r.token&&r.user){
           // Auto-login the user after verification
           localStorage.setItem("ws_token",r.token);
@@ -192,13 +191,13 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     const u=localStorage.getItem("ws_user");
     if(t&&u){
       try{const parsed=JSON.parse(u);setUser(parsed);setToken(t);}catch{}
-      api("/api/auth/me",{},t).then(u=>{setUser(u);localStorage.setItem("ws_user",JSON.stringify(u));}).catch(()=>{localStorage.removeItem("ws_token");localStorage.removeItem("ws_user");setUser(null);setToken(null);});
+      apiCall("/api/auth/me",{},t).then(u=>{setUser(u);localStorage.setItem("ws_user",JSON.stringify(u));}).catch(()=>{localStorage.removeItem("ws_token");localStorage.removeItem("ws_user");setUser(null);setToken(null);});
     }
   },[]);
 
   // Stats — fetch on load + poll every 30s
   useEffect(()=>{
-    const fetchStats=()=>api("/api/stats").then(setStats).catch(()=>{});
+    const fetchStats=()=>apiCall("/api/stats").then(setStats).catch(()=>{});
     fetchStats();
     const iv=setInterval(fetchStats,30000);
     return()=>clearInterval(iv);
@@ -220,7 +219,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         if(filter.county)p.set("county",filter.county);
         if(filter.minPrice)p.set("minPrice",filter.minPrice);
         if(filter.maxPrice)p.set("maxPrice",filter.maxPrice);
-        const data=await api(`/api/listings?${p}`);
+        const data=await apiCall(`/api/listings?${p}`);
         setListings(data.listings||[]);
         setTotal(data.total||0);
       }catch{if(!silent)setListings([]);}
@@ -270,7 +269,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       if(n.type==="warning"||n.type==="suspension"){
         notify(n.title+(n.body?" — "+n.body:""),"error");
         // Re-fetch user to get current suspended status
-        api("/api/auth/me",{},token).then(fresh=>{
+        apiCall("/api/auth/me",{},token).then(fresh=>{
           setUser(fresh);localStorage.setItem("ws_user",JSON.stringify(fresh));
           if(fresh.is_suspended){
             notify("⛔ Your account has been suspended. You will be logged out.","error");
@@ -297,7 +296,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
   // Fetch unread count on login + poll every 20s silently
   useEffect(()=>{
     if(!token)return;
-    const fetchUnread=()=>api("/api/notifications",{},token).then(ns=>{
+    const fetchUnread=()=>apiCall("/api/notifications",{},token).then(ns=>{
       if(Array.isArray(ns))setNotifCount(ns.filter(n=>!n.is_read).length);
     }).catch(()=>{});
     fetchUnread();
@@ -315,14 +314,14 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     const subscribe=async()=>{
       try{
         // Get VAPID public key from backend
-        const {key} = await api("/api/push/vapid-public-key");
+        const {key} = await apiCall("/api/push/vapid-public-key");
         const reg = await navigator.serviceWorker.ready;
 
         // Check if already subscribed
         const existing = await reg.pushManager.getSubscription();
         if(existing){
           // Re-send to backend in case it was lost
-          await api("/api/push/subscribe",{method:"POST",body:JSON.stringify({subscription:existing})},token).catch(()=>{});
+          await apiCall("/api/push/subscribe",{method:"POST",body:JSON.stringify({subscription:existing})},token).catch(()=>{});
           return;
         }
 
@@ -337,7 +336,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
           userVisibleOnly:true,
           applicationServerKey:urlBase64ToUint8Array(key)
         });
-        await api("/api/push/subscribe",{method:"POST",body:JSON.stringify({subscription:sub})},token);
+        await apiCall("/api/push/subscribe",{method:"POST",body:JSON.stringify({subscription:sub})},token);
       }catch(e){console.warn("[Push] subscribe:",e.message);}
     };
 
@@ -352,7 +351,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
   const handleLockIn=async listing=>{
     if(!user){setModal({type:"auth",mode:"login"});return;}
     try{
-      await api(`/api/listings/${listing.id}/lock-in`,{method:"POST"},token);
+      await apiCall(`/api/listings/${listing.id}/lock-in`,{method:"POST"},token);
       setListings(p=>p.map(l=>l.id===listing.id?{...l,locked_buyer_id:user.id,interest_count:(l.interest_count||0)+1}:l));
       setModal({type:"detail",listing:{...listing,locked_buyer_id:user.id}});
       notify("🔥 Locked in! The seller has been notified.","success");
@@ -364,7 +363,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     // Push listing URL so refresh/share restores the detail view
     window.history.pushState({},'',`/?listing=${l.id}`);
     try{
-      const fresh=await api(`/api/listings/${l.id}`,{},token);
+      const fresh=await apiCall(`/api/listings/${l.id}`,{},token);
       setModal({type:"detail",listing:fresh});
     }catch(e){/* keep showing cached version */}
   };
@@ -401,7 +400,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       token={token} user={user} allowVoucher={true}
       onSuccess={async(result)=>{
         if(result.listing){const ul=result.listing;setListings(p=>p.map(l=>l.id===ul.id?ul:l));closeModal();setTimeout(()=>setModal({type:"detail",listing:ul}),200);notify("🔓 Contact details revealed!","success");return;}
-        try{const fresh=await api(`/api/listings/${modal.listing.id}`,{},token);const ul=fresh.listing||fresh;setListings(p=>p.map(l=>l.id===ul.id?ul:l));closeModal();setTimeout(()=>setModal({type:"detail",listing:ul}),200);}catch{closeModal();}
+        try{const fresh=await apiCall(`/api/listings/${modal.listing.id}`,{},token);const ul=fresh.listing||fresh;setListings(p=>p.map(l=>l.id===ul.id?ul:l));closeModal();setTimeout(()=>setModal({type:"detail",listing:ul}),200);}catch{closeModal();}
         notify(modal.payType==="unlock"?"🔓 Buyer contact revealed!":"🔐 Escrow activated!","success");
       }}
       onClose={closeModal} notify={notify}/>}
@@ -425,7 +424,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
           <button style={{background:"#1428A0",color:"#FFFFFF",border:"none",padding:"9px 18px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:8,whiteSpace:"nowrap"}} onClick={()=>{
             if(user.role==="buyer"){
               if(window.confirm("You're currently a Buyer. Switch to Seller to post ads?"))
-                api("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token).then(d=>{const upd={...user,...d.user};setUser(upd);localStorage.setItem("ws_user",JSON.stringify(upd));notify("Switched to Seller!","success");setModal({type:"post"});}).catch(e=>notify(e.message,"error"));
+                apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token).then(d=>{const upd={...user,...d.user};setUser(upd);localStorage.setItem("ws_user",JSON.stringify(upd));notify("Switched to Seller!","success");setModal({type:"post"});}).catch(e=>notify(e.message,"error"));
               return;
             }
             setModal({type:"post"});
@@ -461,7 +460,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
                 if(!user){setModal({type:"auth",mode:"signup"});return;}
                 if(user.role==="buyer"){
                   if(window.confirm("You're currently a Buyer. To post an ad, switch to a Seller account.\n\nSwitch to Seller now?")){
-                    api("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token).then(d=>{
+                    apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token).then(d=>{
                       const upd={...user,...d.user};setUser(upd);localStorage.setItem("ws_user",JSON.stringify(upd));
                       notify("Switched to Seller! Now post your ad.","success");setModal({type:"post"});
                     }).catch(e=>notify(e.message,"error"));
@@ -573,7 +572,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
               compact={true}
               onIHaveThis={(request,action)=>{
                 if(action==="switch_to_seller"){
-                  api("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token)
+                  apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token)
                     .then(d=>{const u={...user,...d.user};setUser(u);localStorage.setItem("ws_user",JSON.stringify(u));
                       notify("Switched to Seller! Now post your ad.","success");
                       setModal({type:"post",linkedRequest:request});
@@ -611,7 +610,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
               {user&&<button className="btn bp" style={{borderRadius:9,fontSize:14,padding:"9px 20px"}} onClick={()=>{
                 if(user.role==="buyer"){
                   if(window.confirm("You're currently a Buyer. Switch to Seller to post ads?"))
-                    api("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token).then(d=>{const upd={...user,...d.user};setUser(upd);localStorage.setItem("ws_user",JSON.stringify(upd));notify("Switched to Seller!","success");setModal({type:"post"});}).catch(e=>notify(e.message,"error"));
+                    apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token).then(d=>{const upd={...user,...d.user};setUser(upd);localStorage.setItem("ws_user",JSON.stringify(upd));notify("Switched to Seller!","success");setModal({type:"post"});}).catch(e=>notify(e.message,"error"));
                   return;
                 }
                 setModal({type:"post"});
@@ -693,7 +692,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         }
         // Paid unlock — reload from API to get fresh contact info
         try{
-          const fresh=await api(`/api/listings/${modal.listing.id}`,{},token);
+          const fresh=await apiCall(`/api/listings/${modal.listing.id}`,{},token);
           const updatedListing=fresh.listing||fresh;
           setListings(p=>p.map(l=>l.id===updatedListing.id?updatedListing:l));
           closeModal();
