@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
-import { api, fmtKES, ago, CATS, KENYA_COUNTIES, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
+import { apiCall, fmtKES, ago, CATS, KENYA_COUNTIES, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
 
 // ── WEKA SOKO LOGO COMPONENT ──────────────────────────────────────────────────
 function WekaSokoLogo({ size = 32, iconOnly = false, light = false }) {
@@ -76,14 +76,6 @@ These Terms are governed by the laws of Kenya. Contact: support@wekasoko.co.ke`;
 const timeLeft = ts => { if(!ts)return""; const d=new Date(ts).getTime()-Date.now(); if(d<=0)return"Expired"; if(d<3600000)return Math.floor(d/60000)+"m left"; if(d<86400000)return Math.floor(d/3600000)+"h left"; if(d<604800000)return Math.floor(d/86400000)+"d left"; const weeks=Math.floor(d/604800000); return weeks+(weeks===1?" week left":" weeks left"); };
 const lastSeen = ts => { if(!ts)return""; const d=Date.now()-new Date(ts).getTime(); if(d<30000)return"online"; if(d<60000)return"last seen just now"; if(d<3600000)return"last seen "+Math.floor(d/60000)+"m ago"; if(d<86400000)return"last seen "+Math.floor(d/3600000)+"h ago"; if(d<172800000)return"last seen yesterday"; return"last seen "+new Date(ts).toLocaleDateString("en-KE",{day:"numeric",month:"short"}); };
 
-async function api(path, opts={}, token=null) {
-  const isForm = opts.body instanceof FormData;
-  const headers = {...(token?{Authorization:`Bearer ${token}`}:{}), ...(!isForm?{"Content-Type":"application/json"}:{}), ...(opts.headers||{})};
-  const res = await fetch(`${API}${path}`, {...opts, headers});
-  const data = await res.json().catch(()=>({}));
-  if (!res.ok) throw new Error(data.error||data.message||"Request failed");
-  return data;
-}
 
 // Convert VAPID base64 key to Uint8Array for PushManager.subscribe
 function urlBase64ToUint8Array(base64String) {
@@ -202,7 +194,7 @@ function ForgotPasswordPanel({onBack,notify}){
     if(!email.trim()){notify("Enter your email address","warning");return;}
     setLoading(true);
     try{
-      await api("/api/auth/forgot-password",{method:"POST",body:JSON.stringify({email:email.trim()})});
+      await apiCall("/api/auth/forgot-password",{method:"POST",body:JSON.stringify({email:email.trim()})});
       setSent(true);
     }catch(err){notify(err.message,"error");}
     finally{setLoading(false);}
@@ -238,7 +230,7 @@ function ResetPasswordModal({token,onClose,notify}){
     if(password.length<8){notify("Password must be at least 8 characters","warning");return;}
     setLoading(true);
     try{
-      await api("/api/auth/reset-password",{method:"POST",body:JSON.stringify({token,password})});
+      await apiCall("/api/auth/reset-password",{method:"POST",body:JSON.stringify({token,password})});
       setDone(true);
     }catch(err){notify(err.message,"error");}
     finally{setLoading(false);}
@@ -357,7 +349,7 @@ function AuthModal({defaultMode,onClose,onAuth,notify}){
     setResendLoading(true);
     try{
       // Register a temp token then resend — use resend endpoint
-      await api("/api/auth/resend-verification-by-email",{method:"POST",body:JSON.stringify({email})});
+      await apiCall("/api/auth/resend-verification-by-email",{method:"POST",body:JSON.stringify({email})});
       setResendSent(true);
       notify("Verification email resent! Check your inbox.","success");
     }catch(e){notify(e.message,"error");}
@@ -376,8 +368,8 @@ function AuthModal({defaultMode,onClose,onAuth,notify}){
     setLoading(true);
     try{
       const data=mode==="login"
-        ?await api("/api/auth/login",{method:"POST",body:JSON.stringify({email:f.email.trim(),password:f.password})})
-        :await api("/api/auth/register",{method:"POST",body:JSON.stringify({name:f.name.trim(),email:f.email.trim(),password:f.password,role:f.role,phone:f.phone||undefined})});
+        ?await apiCall("/api/auth/login",{method:"POST",body:JSON.stringify({email:f.email.trim(),password:f.password})})
+        :await apiCall("/api/auth/register",{method:"POST",body:JSON.stringify({name:f.name.trim(),email:f.email.trim(),password:f.password,role:f.role,phone:f.phone||undefined})});
 
       if(data.requiresVerification){
         // Signup: show "check your email" screen
@@ -587,7 +579,7 @@ function PayModal({type,listingId,amount,purpose,token,user,onSuccess,onClose,no
   const applyVoucher=async()=>{
     if(!vcode.trim()){notify("Enter a voucher code.","warning");return;}
     try{
-      const v=await api(`/api/vouchers/${vcode.trim().toUpperCase()}`,{},token);
+      const v=await apiCall(`/api/vouchers/${vcode.trim().toUpperCase()}`,{},token);
       setVoucherInfo(v);
       const pct=v.discount||v.discount_percent||0;
       const saved=Math.round(amount*pct/100);
@@ -602,7 +594,7 @@ function PayModal({type,listingId,amount,purpose,token,user,onSuccess,onClose,no
       const endpoint=type==="unlock"?"/api/payments/unlock":"/api/payments/escrow";
       const body={listing_id:listingId,phone:phone.trim()};
       if(voucherInfo)body.voucher_code=vcode.trim().toUpperCase();
-      const result=await api(endpoint,{method:"POST",body:JSON.stringify(body)},token);
+      const result=await apiCall(endpoint,{method:"POST",body:JSON.stringify(body)},token);
       if(result.unlocked){setStep("done");setTimeout(()=>onSuccess(result),600);return;}
       setStep("polling");
       let c=90;setCd(90);
@@ -610,7 +602,7 @@ function PayModal({type,listingId,amount,purpose,token,user,onSuccess,onClose,no
         c--;setCd(c);
         if(c<=0){clearInterval(pollRef.current);setStep("timeout");return;}
         try{
-          const s=await api(`/api/payments/status/${result.checkoutRequestId}`,{},token);
+          const s=await apiCall(`/api/payments/status/${result.checkoutRequestId}`,{},token);
           if(s.status==="confirmed"){clearInterval(pollRef.current);setStep("done");setTimeout(()=>onSuccess(s),800);}
           else if(s.status==="failed"){clearInterval(pollRef.current);setStep("error");setErrMsg(s.resultDesc||"Payment failed. Try again.");}
         }catch{}
@@ -623,7 +615,7 @@ function PayModal({type,listingId,amount,purpose,token,user,onSuccess,onClose,no
     if(!code||code.length<8){notify("Enter a valid M-Pesa transaction code.","warning");return;}
     setVerifying(true);
     try{
-      const result=await api("/api/payments/verify-manual",{method:"POST",body:JSON.stringify({mpesa_code:code,listing_id:listingId,type})},token);
+      const result=await apiCall("/api/payments/verify-manual",{method:"POST",body:JSON.stringify({mpesa_code:code,listing_id:listingId,type})},token);
       setStep("done");setTimeout(()=>onSuccess(result),600);
     }catch(err){notify(err.message,"error");}
     finally{setVerifying(false);}
@@ -747,12 +739,12 @@ function ChatModal({listing,user,token,onClose,notify}){
     const otherId=arr.find(m=>m.sender_id!==user.id)?.sender_id;
     if(!otherId)return;
     setOtherUserId(otherId);
-    try{const p=await api(`/api/chat/presence/${otherId}`,{},token);setOtherPresence(p);}catch{}
+    try{const p=await apiCall(`/api/chat/presence/${otherId}`,{},token);setOtherPresence(p);}catch{}
   },[user.id,token]);
 
   useEffect(()=>{
     // Load history
-    api(`/api/chat/${listing.id}`,{},token)
+    apiCall(`/api/chat/${listing.id}`,{},token)
       .then(msgs=>{const arr=Array.isArray(msgs)?msgs:[];setMessages(arr);loadPresence(arr);})
       .catch(()=>{})
       .finally(()=>setLoading(false));
@@ -953,7 +945,7 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
       images.forEach(img=>img.file&&fd.append("photos",img.file));
       const url=isEdit?`/api/listings/${listing.id}`:"/api/listings";
       const method=isEdit?"PATCH":"POST";
-      const result=await api(url,{method,body:fd},token);
+      const result=await apiCall(url,{method,body:fd},token);
       if(isEdit){onSuccess(result);onClose();notify("✅ Ad updated!","success");return;}
       const lid=result.id||result.listing?.id;
       setCreatedListingId(lid);
@@ -1034,7 +1026,7 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
             <img src={p.url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
             <button onClick={()=>{
               if(listing&&p.id&&!p.id.startsWith("ep-"))
-                api(`/api/listings/${listing.id}/photos/${p.id}`,{method:"DELETE"},token).catch(()=>{});
+                apiCall(`/api/listings/${listing.id}/photos/${p.id}`,{method:"DELETE"},token).catch(()=>{});
               setExistingPhotos(prev=>prev.filter((_,j)=>j!==i));
             }} style={{position:"absolute",top:2,right:2,background:"rgba(0,0,0,.7)",color:"#fff",border:"none",borderRadius:"50%",width:18,height:18,fontSize:11,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>×</button>
           </div>)}
@@ -1146,7 +1138,7 @@ function LeaveReviewBtn({listing,user,token,notify}){
     if(!rating){notify("Please select a rating","warning");return;}
     setLoading(true);
     try{
-      await api(`/api/reviews/${listing.id}`,{method:"POST",body:JSON.stringify({rating,comment})},token);
+      await apiCall(`/api/reviews/${listing.id}`,{method:"POST",body:JSON.stringify({rating,comment})},token);
       setDone(true);
       notify("⭐ Review submitted!","success");
       setTimeout(()=>setOpen(false),2000);
@@ -1207,7 +1199,7 @@ function ReportListingBtn({listingId,token,notify}){
     if(!reason){notify("Please select a reason","warning");return;}
     setLoading(true);
     try{
-      await api(`/api/listings/${listingId}/report`,{method:"POST",body:JSON.stringify({reason,details})},token);
+      await apiCall(`/api/listings/${listingId}/report`,{method:"POST",body:JSON.stringify({reason,details})},token);
       setDone(true);
       setTimeout(()=>setOpen(false),2000);
     }catch(e){notify(e.message||"Report failed","error");}
@@ -1249,7 +1241,7 @@ function VerificationBanner({user,token,notify}){
   const resend=async()=>{
     setLoading(true);
     try{
-      await api("/api/auth/resend-verification",{method:"POST"},token);
+      await apiCall("/api/auth/resend-verification",{method:"POST"},token);
       setSent(true);
       notify("Verification email sent! Check your inbox.","success");
     }catch(e){notify(e.message,"error");}
@@ -1427,7 +1419,7 @@ function MarkSoldModal({listing, token, notify, onClose, onSuccess}) {
   const confirm = async (channel) => {
     setLoading(true);
     try {
-      await api(`/api/listings/${listing.id}/mark-sold`, {
+      await apiCall(`/api/listings/${listing.id}/mark-sold`, {
         method: "POST",
         body: JSON.stringify({ channel })
       }, token);
@@ -1479,7 +1471,7 @@ function RoleSwitcher({user,token,notify,onSwitch}){
     if(!window.confirm(`Switch to ${target} account? You can switch back anytime.`))return;
     setLoading(true);
     try{
-      const data=await api("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:target})},token);
+      const data=await apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:target})},token);
       notify(`Switched to ${target} account ✓`,"success");
       onSwitch(data.user);
     }catch(err){notify(err.message,"error");}
@@ -1501,7 +1493,7 @@ function PostRequestModal({onClose,token,notify,onSuccess}){
     if(!f.title.trim()||!f.description.trim()){notify("Title and description are required","warning");return;}
     setLoading(true);
     try{
-      const result=await api("/api/requests",{method:"POST",body:JSON.stringify({title:f.title.trim(),description:f.description.trim(),budget:f.budget||undefined,county:f.county||undefined})},token);
+      const result=await apiCall("/api/requests",{method:"POST",body:JSON.stringify({title:f.title.trim(),description:f.description.trim(),budget:f.budget||undefined,county:f.county||undefined})},token);
       notify("✅ Request posted! Sellers will be notified.","success");
       onSuccess(result);onClose();
     }catch(err){notify(err.message,"error");}
@@ -1561,7 +1553,7 @@ function WhatBuyersWant({user,token,notify,onSignIn,compact=false,onIHaveThis}){
     const p=new URLSearchParams({limit:12});
     if(search)p.set("search",search);
     if(county)p.set("county",county);
-    api(`/api/requests?${p}`).then(d=>{
+    apiCall(`/api/requests?${p}`).then(d=>{
       setRequests(d.requests||[]);setTotal(d.total||0);
     }).catch(()=>{}).finally(()=>setLoading(false));
   },[search,county]);
@@ -1571,7 +1563,7 @@ function WhatBuyersWant({user,token,notify,onSignIn,compact=false,onIHaveThis}){
   const deleteRequest=async(id)=>{
     if(!window.confirm("Delete this request?"))return;
     try{
-      await api(`/api/requests/${id}`,{method:"DELETE"},token);
+      await apiCall(`/api/requests/${id}`,{method:"DELETE"},token);
       setRequests(p=>p.filter(r=>r.id!==id));
       notify("Request deleted","success");
     }catch(err){notify(err.message,"error");}
@@ -1711,7 +1703,7 @@ function SoldSection({token,user}){
     setLoading(true);
     const params=new URLSearchParams({page:pg,limit:PER});
     if(cat)params.set("category",cat);
-    api(`/api/listings/sold?${params}`).then(d=>{
+    apiCall(`/api/listings/sold?${params}`).then(d=>{
       setItems(d.listings||[]);setTotal(d.total||0);
     }).catch(()=>{}).finally(()=>setLoading(false));
   },[pg,cat]);
@@ -1835,8 +1827,8 @@ function ReviewsSection({token,user,notify}){
     setLoading(true);
     try{
       const [pend,aboutMe]=await Promise.all([
-        api("/api/reviews/my-pending",{},token).catch(()=>[]),
-        api(`/api/reviews/user/${user.id}`,{},token).catch(()=>({reviews:[],stats:{}})),
+        apiCall("/api/reviews/my-pending",{},token).catch(()=>[]),
+        apiCall(`/api/reviews/user/${user.id}`,{},token).catch(()=>({reviews:[],stats:{}})),
       ]);
       setPending(Array.isArray(pend)?pend:[]);
       setReviewsAboutMe(aboutMe);
@@ -1849,7 +1841,7 @@ function ReviewsSection({token,user,notify}){
     if(!rating){notify("Please select a star rating","warning");return;}
     setSubmitting(true);
     try{
-      await api("/api/reviews",{method:"POST",body:JSON.stringify({listing_id:writing.id,rating,comment})},token);
+      await apiCall("/api/reviews",{method:"POST",body:JSON.stringify({listing_id:writing.id,rating,comment})},token);
       notify("⭐ Review submitted!","success");
       setWriting(null);setRating(0);setComment("");
       load();
@@ -1939,7 +1931,7 @@ function MyRequestsTab({token,notify,user}){
 
   const load=useCallback(()=>{
     setLoading(true);
-    api("/api/requests/mine",{},token).catch(()=>[]).then(r=>{setRequests(Array.isArray(r)?r:[]);setLoading(false);});
+    apiCall("/api/requests/mine",{},token).catch(()=>[]).then(r=>{setRequests(Array.isArray(r)?r:[]);setLoading(false);});
   },[token]);
 
   useEffect(()=>{load();},[load]);
@@ -1947,7 +1939,7 @@ function MyRequestsTab({token,notify,user}){
   const deleteRequest=async(id)=>{
     if(!window.confirm("Delete this request?"))return;
     try{
-      await api(`/api/requests/${id}`,{method:"DELETE"},token);
+      await apiCall(`/api/requests/${id}`,{method:"DELETE"},token);
       setRequests(p=>p.filter(r=>r.id!==id));
       notify("Request deleted","success");
     }catch(err){notify(err.message,"error");}
@@ -1998,7 +1990,7 @@ function PitchesTab({token, notify, user}) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const reqs = await api("/api/requests/mine", {}, token);
+      const reqs = await apiCall("/api/requests/mine", {}, token);
       setRequests(Array.isArray(reqs) ? reqs : []);
     } catch(e) {}
     finally { setLoading(false); }
@@ -2009,7 +2001,7 @@ function PitchesTab({token, notify, user}) {
   const loadPitches = async (requestId) => {
     if (pitches[requestId]) { setExpanded(expanded === requestId ? null : requestId); return; }
     try {
-      const data = await api(`/api/pitches/for-request/${requestId}`, {}, token);
+      const data = await apiCall(`/api/pitches/for-request/${requestId}`, {}, token);
       setPitches(p => ({ ...p, [requestId]: Array.isArray(data) ? data : [] }));
       setExpanded(requestId);
     } catch(e) { notify("Failed to load pitches", "error"); }
@@ -2017,7 +2009,7 @@ function PitchesTab({token, notify, user}) {
 
   const decline = async (pitchId, requestId) => {
     try {
-      await api(`/api/pitches/${pitchId}/decline`, { method: "POST" }, token);
+      await apiCall(`/api/pitches/${pitchId}/decline`, { method: "POST" }, token);
       setPitches(p => ({ ...p, [requestId]: p[requestId].map(x => x.id === pitchId ? { ...x, status: "declined" } : x) }));
       notify("Pitch declined.", "info");
     } catch(e) { notify(e.message, "error"); }
@@ -2107,7 +2099,7 @@ function PitchesTab({token, notify, user}) {
       token={token} user={user} allowVoucher={true}
       onSuccess={async () => {
         try {
-          const res = await api(`/api/pitches/${paying.id}/accept`, { method: "POST" }, token);
+          const res = await apiCall(`/api/pitches/${paying.id}/accept`, { method: "POST" }, token);
           if (res.seller_contact) {
             notify(`✅ Contact revealed! ${res.seller_contact.name} — ${res.seller_contact.phone || res.seller_contact.email}`, "success");
           }
@@ -2140,7 +2132,7 @@ function ProfileSection({user, token, notify, onUpdate}){
     if(!f.name.trim()){notify("Name cannot be empty","warning");return;}
     setSaving(true);
     try{
-      const updated = await api("/api/auth/profile",{
+      const updated = await apiCall("/api/auth/profile",{
         method:"PATCH",
         body:JSON.stringify({
           name: f.name.trim()||undefined,
@@ -2246,7 +2238,7 @@ function PasswordSection({user, token, notify}){
     if(f.newPwd !== f.confirm){notify("Passwords do not match","warning");return;}
     setSaving(true);
     try{
-      await api("/api/auth/change-password",{
+      await apiCall("/api/auth/change-password",{
         method:"POST",
         body:JSON.stringify({currentPassword:f.current, newPassword:f.newPwd})
       }, token);
@@ -2313,7 +2305,7 @@ function VerificationSection({user, token, notify}){
   const resend = async()=>{
     setSending(true);
     try{
-      await api("/api/auth/resend-verification",{method:"POST"}, token);
+      await apiCall("/api/auth/resend-verification",{method:"POST"}, token);
       setSent(true);
       notify("✅ Verification email sent! Check your inbox.","success");
     }catch(e){notify(e.message,"error");}
@@ -2358,7 +2350,7 @@ function MobileDashboard({
 
   const markRead=async(id)=>{
     try{
-      await api(`/api/notifications/${id}/read`,{method:"PATCH"},token);
+      await apiCall(`/api/notifications/${id}/read`,{method:"PATCH"},token);
       setNotifs(p=>p.map(n=>n.id===id?{...n,is_read:true}:n));
     }catch{}
   };
@@ -2575,7 +2567,7 @@ function MobileDashboard({
           <button style={{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 18px",background:"none",border:"none",borderTop:"1px solid #F5F5F5",cursor:"pointer",fontFamily:"var(--fn)",fontSize:15,color:"#dc2626",textAlign:"left"}}
             onClick={async()=>{
               if(!window.confirm("Permanently delete your account? ALL your listings and data will be removed forever."))return;
-              try{await api("/api/auth/account",{method:"DELETE",body:JSON.stringify({})},token);localStorage.removeItem("ws_token");localStorage.removeItem("ws_user");onClose();window.location.reload();}
+              try{await apiCall("/api/auth/account",{method:"DELETE",body:JSON.stringify({})},token);localStorage.removeItem("ws_token");localStorage.removeItem("ws_user");onClose();window.location.reload();}
               catch(err){notify(err.message,"error");}
             }}>
             <span style={{fontSize:20}}>🗑</span>
@@ -2606,7 +2598,7 @@ function MobileDashboard({
     {showPayModal&&<PayModal type="unlock" listingId={showPayModal.id} amount={250} purpose={`Reveal buyer: ${showPayModal.title}`} token={token} user={user} allowVoucher={true}
       onSuccess={async()=>{
         const lid=showPayModal.id;setShowPayModal(null);
-        try{const fresh=await api(`/api/listings/${lid}`,{},token);setListings(p=>p.map(l=>l.id===lid?fresh:l));}
+        try{const fresh=await apiCall(`/api/listings/${lid}`,{},token);setListings(p=>p.map(l=>l.id===lid?fresh:l));}
         catch{setListings(p=>p.map(l=>l.id===lid?{...l,is_unlocked:true}:l));}
         notify("🔓 Buyer contact revealed!","success");
       }}
@@ -2645,14 +2637,14 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
       if(!silent)setLoading(true);
       try{
         const [ls,ns,th]=await Promise.all([
-          user.role==="seller"?api("/api/listings/seller/mine",{},token).catch(()=>[]):Promise.resolve([]),
-          api("/api/notifications",{},token).catch(()=>[]),
-          api("/api/chat/threads/mine",{},token).catch(()=>[]),
+          user.role==="seller"?apiCall("/api/listings/seller/mine",{},token).catch(()=>[]):Promise.resolve([]),
+          apiCall("/api/notifications",{},token).catch(()=>[]),
+          apiCall("/api/chat/threads/mine",{},token).catch(()=>[]),
         ]);
         if(user.role==="buyer"){
-          api("/api/listings/buyer/interests",{},token).catch(()=>[]).then(r=>setBuyerInterests(Array.isArray(r)?r:[]));
+          apiCall("/api/listings/buyer/interests",{},token).catch(()=>[]).then(r=>setBuyerInterests(Array.isArray(r)?r:[]));
         }
-        api("/api/requests/mine",{},token).catch(()=>[]).then(r=>setMyRequests(Array.isArray(r)?r:[]));
+        apiCall("/api/requests/mine",{},token).catch(()=>[]).then(r=>setMyRequests(Array.isArray(r)?r:[]));
         const lArr=Array.isArray(ls)?ls:(ls.listings||[]);
         setListings(lArr);
         setNotifs(Array.isArray(ns)?ns:[]);
@@ -2676,13 +2668,13 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
   },[token]);
 
   const markRead=async id=>{
-    await api(`/api/notifications/${id}/read`,{method:"PATCH"},token).catch(()=>{});
+    await apiCall(`/api/notifications/${id}/read`,{method:"PATCH"},token).catch(()=>{});
     setNotifs(p=>p.map(n=>n.id===id?{...n,is_read:true}:n));
   };
 
   const deleteListing=async id=>{
     if(!window.confirm("Delete this listing permanently?"))return;
-    try{await api(`/api/listings/${id}`,{method:"DELETE"},token);setListings(p=>p.filter(l=>l.id!==id));notify("Listing deleted.","success");}
+    try{await apiCall(`/api/listings/${id}`,{method:"DELETE"},token);setListings(p=>p.filter(l=>l.id!==id));notify("Listing deleted.","success");}
     catch(err){notify(err.message,"error");}
   };
 
@@ -2863,7 +2855,7 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
 
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
         <h3 style={{fontSize:15,fontWeight:700,letterSpacing:"-.01em"}}>🔔 All Notifications</h3>
-        {notifs.length>0&&<button className="btn bs sm" style={{fontSize:11}} onClick={async()=>{await api("/api/notifications/read-all",{method:"PATCH"},token).catch(()=>{});setNotifs(p=>p.map(n=>({...n,is_read:true})));notify("All marked as read.","success");}}>Mark All Read</button>}
+        {notifs.length>0&&<button className="btn bs sm" style={{fontSize:11}} onClick={async()=>{await apiCall("/api/notifications/read-all",{method:"PATCH"},token).catch(()=>{});setNotifs(p=>p.map(n=>({...n,is_read:true})));notify("All marked as read.","success");}}>Mark All Read</button>}
       </div>
       {notifs.length===0&&threads.length===0&&<div style={{textAlign:"center",padding:"60px 20px",background:"#f9f9f9",border:"1px dashed #E5E5E5"}}>
         <div style={{fontSize:48,marginBottom:12,opacity:.2}}>🔔</div><p>No notifications yet</p>
@@ -2945,11 +2937,11 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
               <div style={{display:"flex",gap:6,flexWrap:"wrap",justifyContent:"flex-end",flexShrink:0}}>
                 <span className={`badge ${l.status==="active"||l.status==="locked"?"bg-g":l.status==="sold"?"bg-y":l.status==="pending_review"?"bg-b":l.status==="rejected"?"br2":"bg-m"}`} style={{fontSize:10}}>{l.status==="pending_review"?"⏳ Review":l.status==="rejected"?"❌ Rejected":l.status}</span>
                 {!l.is_unlocked&&l.status!=="sold"&&(l.free_unlock_approved
-                  ?<button className="btn bg2 sm" onClick={async()=>{try{await api(`/api/payments/unlock`,{method:"POST",body:JSON.stringify({listing_id:l.id,phone:user.phone||"0700000000",voucher_code:"ADMIN-FREE"})},token);setListings(p=>p.map(x=>x.id===l.id?{...x,is_unlocked:true}:x));notify("🔓 Unlocked!","success");}catch{setShowPayModal(l);}}}>🎁 Free</button>
+                  ?<button className="btn bg2 sm" onClick={async()=>{try{await apiCall(`/api/payments/unlock`,{method:"POST",body:JSON.stringify({listing_id:l.id,phone:user.phone||"0700000000",voucher_code:"ADMIN-FREE"})},token);setListings(p=>p.map(x=>x.id===l.id?{...x,is_unlocked:true}:x));notify("🔓 Unlocked!","success");}catch{setShowPayModal(l);}}}>🎁 Free</button>
                   :<button className="btn bp sm" onClick={()=>setShowPayModal(l)}>🔓 {l.linked_request_id?"Reveal Buyer":"Unlock"} — KSh 250</button>)}
                 {(l.status==="active"||l.status==="locked")&&<button className="btn bp sm" onClick={()=>setMarkSoldListing(l)}>✅ Sold</button>}
                 {l.status!=="sold"&&<button className="btn bs sm" onClick={()=>setEditingListing(l)}>✏️</button>}
-                {(l.status==="rejected"||l.status==="needs_changes")&&<button className="btn bg2 sm" onClick={async()=>{try{await api(`/api/listings/${l.id}/resubmit`,{method:"POST"},token);setListings(p=>p.map(x=>x.id===l.id?{...x,status:"pending_review",moderation_note:null}:x));notify("⏳ Resubmitted","success");}catch(e){notify(e.message,"error");}}}>↺</button>}
+                {(l.status==="rejected"||l.status==="needs_changes")&&<button className="btn bg2 sm" onClick={async()=>{try{await apiCall(`/api/listings/${l.id}/resubmit`,{method:"POST"},token);setListings(p=>p.map(x=>x.id===l.id?{...x,status:"pending_review",moderation_note:null}:x));notify("⏳ Resubmitted","success");}catch(e){notify(e.message,"error");}}}>↺</button>}
                 <button className="btn br2 sm" onClick={()=>deleteListing(l.id)}>✕</button>
               </div>
             </div>
@@ -2987,7 +2979,7 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
             <button className="btn" style={{justifyContent:"flex-start",gap:10,borderRadius:10,background:"transparent",border:"1.5px solid #FFCCCC",color:"#dc2626",fontFamily:"var(--fn)",padding:"11px 16px",fontSize:14,cursor:"pointer",fontWeight:600}} onClick={async()=>{
               if(!window.confirm("Permanently delete your account? ALL your listings and data will be removed forever. This CANNOT be undone."))return;
               try{
-                await api("/api/auth/account",{method:"DELETE",body:JSON.stringify({})},token);
+                await apiCall("/api/auth/account",{method:"DELETE",body:JSON.stringify({})},token);
                 localStorage.removeItem("ws_token");localStorage.removeItem("ws_user");
                 onClose();window.location.reload();
               }catch(err){notify(err.message,"error");}
@@ -3005,7 +2997,7 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
     {showPayModal&&<PayModal type="unlock" listingId={showPayModal.id} amount={250} purpose={`Unlock buyer contact for: ${showPayModal.title}`} token={token} user={user} allowVoucher={true}
       onSuccess={async(result)=>{
         const lid=showPayModal.id;setShowPayModal(null);
-        try{const fresh=await api(`/api/listings/${lid}`,{},token);const ul=fresh.listing||fresh;setListings(p=>p.map(l=>l.id===lid?ul:l));}
+        try{const fresh=await apiCall(`/api/listings/${lid}`,{},token);const ul=fresh.listing||fresh;setListings(p=>p.map(l=>l.id===lid?ul:l));}
         catch{setListings(p=>p.map(l=>l.id===lid?{...l,is_unlocked:true}:l));}
         notify("🔓 Buyer contact unlocked!","success");
       }}
@@ -3066,7 +3058,7 @@ function MobileRequestsTab({user, token, notify, setModal}){
     const p = new URLSearchParams({page:1, limit:50});
     if(search) p.set("search", search);
     if(county) p.set("county", county);
-    api(`/api/requests?${p}`).then(d=>{
+    apiCall(`/api/requests?${p}`).then(d=>{
       setRequests(d.requests||[]);
       setTotal(d.total||0);
     }).catch(()=>{}).finally(()=>setLoading(false));
@@ -3075,7 +3067,7 @@ function MobileRequestsTab({user, token, notify, setModal}){
   const deleteReq = async (id)=>{
     if(!window.confirm("Delete this request?")) return;
     try{
-      await api(`/api/requests/${id}`, {method:"DELETE"}, token);
+      await apiCall(`/api/requests/${id}`, {method:"DELETE"}, token);
       setRequests(p=>p.filter(r=>r.id!==id));
       setTotal(t=>t-1);
       notify("Request deleted","info");
@@ -3086,7 +3078,7 @@ function MobileRequestsTab({user, token, notify, setModal}){
     if(!user){setModal({type:"auth",mode:"login"});return;}
     if(user.role!=="seller"){
       if(window.confirm("You need a Seller account to respond to requests.\n\nSwitch to Seller now?")){
-        api("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token)
+        apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token)
           .then(d=>{
             const updated={...user,...d.user};
             localStorage.setItem("ws_user",JSON.stringify(updated));
