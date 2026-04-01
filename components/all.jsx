@@ -379,19 +379,14 @@ function AuthModal({defaultMode,onClose,onAuth,notify}){
         ?await api("/api/auth/login",{method:"POST",body:JSON.stringify({email:f.email.trim(),password:f.password})})
         :await api("/api/auth/register",{method:"POST",body:JSON.stringify({name:f.name.trim(),email:f.email.trim(),password:f.password,role:f.role,phone:f.phone||undefined})});
 
-      if(data.requiresVerification){
-        // Signup: show "check your email" screen
-        setVerifyEmail(data.email||f.email.trim());
-        return;
-      }
-      // Login with unverified email - allow in but show a warning
-      if(data.needsVerification){
-        notify("Please verify your email address — check your inbox for the verification link.","warning");
-      }
       localStorage.setItem("ws_token",data.token);
       localStorage.setItem("ws_user",JSON.stringify(data.user));
       onAuth(data.user,data.token);onClose();
-      notify(`Welcome${data.user.name?", "+data.user.name.split(" ")[0]:""}! 🎉`,"success");
+      if(mode==="signup"){
+        notify(`Welcome to Weka Soko, ${data.user.name?.split(" ")[0]||""}! 🎉 Check your email to verify your account.`,"success");
+      } else {
+        notify(`Welcome back, ${data.user.name?.split(" ")[0]||""}! 🎉`,"success");
+      }
     }catch(err){
       // Login blocked because email not verified
       if(err.message?.includes("verify your email")||err.message?.includes("requiresVerification")){
