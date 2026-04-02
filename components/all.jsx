@@ -3226,7 +3226,7 @@ function MobileLayout({
     if(!user){setModal({type:"auth",mode:"signup"});return;}
     if(user.role==="buyer"){
       if(window.confirm("Switch to Seller to post ads?"))
-        fetch(`${(process.env.NEXT_PUBLIC_API_URL||"https://weka-soko-backend-production.up.railway.app").replace(/\/$/,"")}/api/auth/role`,{method:"PATCH",headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`},body:JSON.stringify({role:"seller"})})
+        fetch(`${(process.env.NEXT_PUBLIC_API_URL||"https://wekasokobackend.up.railway.app").replace(/\/$/,"")}/api/auth/role`,{method:"PATCH",headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`},body:JSON.stringify({role:"seller"})})
           .then(r=>r.json()).then(d=>{localStorage.setItem("ws_user",JSON.stringify(d.user));window.location.reload();});
       return;
     }
