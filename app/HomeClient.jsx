@@ -423,9 +423,9 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         {/* RIGHT — categories grid */}
         <div style={{flex:"1 1 280px",display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:1,minWidth:280}}>
           {CATS.slice(0,8).map((c,i)=>(
-            <div key={c} onClick={()=>{setFilter(f=>({...f,cat:c}));setPg(1);}} style={{background:CAT_PHOTOS[c]?`url(${CAT_PHOTOS[c]}) center/cover`:"#E0E0E0",cursor:"pointer",display:"flex",alignItems:"flex-end",padding:"16px",minHeight:110,position:"relative",overflow:"hidden",transition:"transform .2s"}}>
+            <div key={c.name} onClick={()=>{setFilter(f=>({...f,cat:c.name}));setPg(1);}} style={{background:CAT_PHOTOS[c.name]?`url(${CAT_PHOTOS[c.name]}) center/cover`:"#E0E0E0",cursor:"pointer",display:"flex",alignItems:"flex-end",padding:"16px",minHeight:110,position:"relative",overflow:"hidden",transition:"transform .2s"}}>
               <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.3)",transition:"opacity .2s"}}/>
-              <div style={{position:"relative",zIndex:1,fontSize:13,fontWeight:700,color:"#fff"}}>{c}</div>
+              <div style={{position:"relative",zIndex:1,fontSize:13,fontWeight:700,color:"#fff"}}>{c.name}</div>
             </div>
           ))}
         </div>
@@ -440,7 +440,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
             <input type="text" placeholder="Search listings..." value={filter.q} onChange={e=>{setFilter(f=>({...f,q:e.target.value}));setPg(1);}} style={{flex:"1 1 200px",padding:"10px 14px",fontSize:14,border:"1.5px solid #E0E0E0",borderRadius:8,fontFamily:"var(--fn)",minWidth:150}}/>
             <select value={filter.cat} onChange={e=>{setFilter(f=>({...f,cat:e.target.value}));setPg(1);}} style={{padding:"10px 14px",fontSize:14,border:"1.5px solid #E0E0E0",borderRadius:8,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer"}}>
               <option value="">All Categories</option>
-              {CATS.map(c=><option key={c} value={c}>{c}</option>)}
+              {CATS.map(c=><option key={c.name} value={c.name}>{c.name}</option>)}
             </select>
             <select value={filter.county} onChange={e=>{setFilter(f=>({...f,county:e.target.value}));setPg(1);}} style={{padding:"10px 14px",fontSize:14,border:"1.5px solid #E0E0E0",borderRadius:8,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer"}}>
               <option value="">All Counties</option>
