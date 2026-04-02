@@ -1,6 +1,8 @@
 import { API, PER_PAGE } from '@/lib/utils';
 import HomeClient from './HomeClient';
 
+export const dynamic = 'force-dynamic';
+
 async function getInitialData(searchParams) {
   const { category = '', search = '', county = '', sort = 'newest', page = '1' } = searchParams || {};
   const params = new URLSearchParams({ page, limit: PER_PAGE, sort });
