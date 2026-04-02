@@ -317,7 +317,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     return ()=>clearTimeout(t);
   },[token,user]);
 
-  const handleAuth=(u,t)=>{setUser(u);setToken(t);setNotifCount(0);};
+  const handleAuth=(u,t)=>{setUser(u);setToken(t);setNotifCount(0);setPage("dashboard");if(typeof window !== 'undefined') window.history.pushState({},"","/dashboard");};
   const logout=()=>{setUser(null);setToken(null);setNotifCount(0);if(typeof window !== 'undefined') localStorage.removeItem("ws_token");if(typeof window !== 'undefined') localStorage.removeItem("ws_user");notify("Signed out.","info");};
 
   const handleLockIn=async listing=>{
