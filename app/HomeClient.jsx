@@ -405,113 +405,193 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       </div>
     </nav>
 
-    {/* ── HERO ── */}
-    {page!=="dashboard"&&page!=="sold"&&<>
-      <div style={{background:"#fff",borderBottom:"1px solid #EBEBEB"}}>
-        <div style={{maxWidth:1400,margin:"0 auto",padding:"0 clamp(16px,4vw,48px)",display:"flex",alignItems:"center",gap:40,minHeight:440,flexWrap:"wrap"}}>
-          {/* LEFT */}
-          <div style={{flex:"1 1 340px",padding:"48px 0",minWidth:280}}>
-            <div style={{fontSize:11,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"#767676",marginBottom:16}}>🇰🇪 Kenya's Resell Platform</div>
-            <h1 style={{fontSize:"clamp(30px,4vw,52px)",fontWeight:800,letterSpacing:"-.03em",color:"#1A1A1A",lineHeight:1.1,marginBottom:16}}>Post Free.<br/><span style={{color:"#1428A0"}}>Pay Only When</span><br/>You Get a Buyer.</h1>
-            <p style={{fontSize:15,color:"#636363",lineHeight:1.75,marginBottom:28,maxWidth:400}}>List items in minutes with photos. Pay KSh 250 only when a serious buyer locks in to buy.</p>
-            <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:24}}>
-              {!user?<>
-                <button style={{background:"#1428A0",color:"#fff",border:"none",padding:"13px 28px",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:8}} onClick={()=>setModal({type:"auth",mode:"signup"})}>+ Post an Ad for Free</button>
-                <button style={{background:"transparent",color:"#1428A0",border:"1.5px solid #1428A0",padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:8}} onClick={()=>setModal({type:"auth",mode:"login"})}>Browse Listings</button>
-              </>:<button style={{background:"#1428A0",color:"#fff",border:"none",padding:"13px 28px",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:8}} onClick={()=>{if(user.role==="buyer"){if(typeof window !== 'undefined' && window.confirm("Switch to Seller to post ads?"))apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token).then(d=>{const upd={...user,...d.user};setUser(upd);localStorage.setItem("ws_user",JSON.stringify(upd));notify("Switched to Seller!","success");setModal({type:"post"});}).catch(e=>notify(e.message,"error"));return;}setModal({type:"post"});}}>+ Post an Ad for Free</button>}
-            </div>
-            <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
-              {["Free to post","Anonymous chat","M-Pesa escrow"].map(t=>(
-                <span key={t} style={{fontSize:13,color:"#555",display:"flex",alignItems:"center",gap:6,fontWeight:500}}>
-                  <span style={{color:"#1428A0",fontWeight:700}}>✓</span>{t}
-                </span>
-              ))}
-            </div>
+    {/* ── HERO + CATEGORIES side by side ── */}
+    {page!=="dashboard"&&page!=="sold"&&<div style={{background:"#FFFFFF",borderBottom:"1px solid #EBEBEB"}}>
+      <div style={{display:"flex",alignItems:"stretch",minHeight:460,flexWrap:"wrap"}}>
+
+        {/* LEFT — hero text */}
+        <div style={{flex:"1 1 380px",minWidth:0,padding:"clamp(28px,5vw,60px) clamp(20px,5vw,56px)",display:"flex",flexDirection:"column",justifyContent:"center",borderRight:"1px solid #EBEBEB",background:"#fff"}}>
+          <div style={{fontSize:13,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",marginBottom:18,color:"#1428A0"}}>
+            🇰🇪 Kenya's Resell Platform
           </div>
-          {/* RIGHT — circular categories */}
-          <div style={{flex:"1 1 400px",padding:"32px 0",minWidth:320}}>
-            <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:8}}>Browse by Category</div>
-            <div style={{fontSize:22,fontWeight:700,color:"#1A1A1A",marginBottom:20}}>What are you looking for?</div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:12}}>
-              {CATS.map(c=>(
-                <div key={c.name} onClick={()=>{setFilter(f=>({...f,cat:c.name}));setPg(1);document.getElementById('listings-section')?.scrollIntoView({behavior:'smooth'});}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8,cursor:"pointer",padding:"8px 4px",borderRadius:10,transition:"background .15s",background:filter.cat===c.name?"#EEF2FF":"transparent"}} className="cat-pill">
-                  <img src={CAT_PHOTOS[c.name]||CAT_PHOTOS.Other} alt={c.name} style={{width:56,height:56,borderRadius:"50%",objectFit:"cover",border:filter.cat===c.name?"2.5px solid #1428A0":"2px solid #E5E5E5",boxShadow:"0 2px 8px rgba(0,0,0,.1)"}}/>
-                  <span style={{fontSize:11,fontWeight:600,color:filter.cat===c.name?"#1428A0":"#555",textAlign:"center",lineHeight:1.2}}>{c.name}</span>
+          <h1 style={{fontSize:"clamp(32px,3.5vw,50px)",fontWeight:800,letterSpacing:"-.02em",lineHeight:1.12,marginBottom:20,color:"#1A1A1A",fontFamily:"var(--fn)"}}>
+            Post Free.<br/>
+            <span style={{color:"#1428A0"}}>Pay Only When</span><br/>
+            You Get a Buyer.
+          </h1>
+          <p style={{fontSize:17,color:"#636363",lineHeight:1.8,marginBottom:34,fontWeight:400}}>
+            List items in minutes with photos. Pay KSh 250 only when a serious buyer locks in to buy.
+          </p>
+          <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:24}}>
+            <button style={{background:"#1428A0",color:"#fff",border:"none",padding:"16px 34px",fontSize:16,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:10,transition:"background .15s",boxShadow:"0 4px 14px rgba(20,40,160,.25)"}}
+              onMouseOver={e=>e.currentTarget.style.background="#0F1F8A"} onMouseOut={e=>e.currentTarget.style.background="#1428A0"}
+              onClick={()=>{
+                if(!user){setModal({type:"auth",mode:"signup"});return;}
+                if(user.role==="buyer"){
+                  if(typeof window !== 'undefined' && window.confirm("You're currently a Buyer. To post an ad, switch to a Seller account.\n\nSwitch to Seller now?")){
+                    apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token).then(d=>{
+                      const upd={...user,...d.user};setUser(upd);localStorage.setItem("ws_user",JSON.stringify(upd));
+                      notify("Switched to Seller! Now post your ad.","success");setModal({type:"post"});
+                    }).catch(e=>notify(e.message,"error"));
+                  }
+                  return;
+                }
+                setModal({type:"post"});
+              }}>+ Post an Ad for Free</button>
+            <button style={{background:"#fff",color:"#1A1A1A",border:"1.5px solid #D0D0D0",padding:"16px 30px",fontSize:16,fontWeight:600,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:10,transition:"all .15s"}}
+              onMouseOver={e=>{e.currentTarget.style.borderColor="#1428A0";e.currentTarget.style.color="#1428A0";}} onMouseOut={e=>{e.currentTarget.style.borderColor="#D0D0D0";e.currentTarget.style.color="#1A1A1A";}}
+              onClick={()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"})}>Browse Listings</button>
+          </div>
+          <div style={{display:"flex",gap:22,fontSize:14,color:"#888",fontWeight:500,flexWrap:"wrap"}}>
+            <span style={{display:"flex",alignItems:"center",gap:7}}><span style={{color:"#1428A0",fontWeight:800,fontSize:16}}>✓</span>Free to post</span>
+            <span style={{display:"flex",alignItems:"center",gap:7}}><span style={{color:"#1428A0",fontWeight:800,fontSize:16}}>✓</span>Anonymous chat</span>
+            <span style={{display:"flex",alignItems:"center",gap:7}}><span style={{color:"#1428A0",fontWeight:800,fontSize:16}}>✓</span>M-Pesa escrow</span>
+          </div>
+        </div>
+
+        {/* RIGHT — categories with circular images */}
+        <div style={{flex:"1 1 320px",minWidth:0,padding:"clamp(24px,4vw,40px) clamp(16px,4vw,48px) 32px",background:"#FAFAFA"}}>
+          <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:6}}>Browse by Category</div>
+          <h2 style={{fontSize:22,fontWeight:700,color:"#1A1A1A",marginBottom:24,letterSpacing:"-.01em",fontFamily:"var(--fn)"}}>What are you looking for?</h2>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(72px,1fr))",gap:8}}>
+            {CATS.map(c=>{
+              const active=filter.cat===c.name;
+              return <div key={c.name}
+                onClick={()=>{setFilter(p=>({...p,cat:p.cat===c.name?"":c.name}));setPg(1);setTimeout(()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"}),100);}}
+                style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8,padding:"12px 4px",cursor:"pointer",borderRadius:14,background:active?"#EEF2FF":"#fff",border:`1.5px solid ${active?"#1428A0":"#EBEBEB"}`,transition:"all .15s",boxShadow:active?"0 0 0 2px rgba(20,40,160,.1)":"none"}}>
+                <div style={{width:62,height:62,borderRadius:"50%",overflow:"hidden",flexShrink:0,border:`2.5px solid ${active?"#1428A0":"#E5E5E5"}`,boxShadow:"0 2px 8px rgba(0,0,0,.1)"}}>
+                  <img src={CAT_PHOTOS[c.name]||CAT_PHOTOS.Other} alt={c.name} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
                 </div>
-              ))}
-            </div>
+                <div style={{fontSize:11,fontWeight:600,color:active?"#1428A0":"#333",textAlign:"center",lineHeight:1.3,wordBreak:"break-word"}}>{c.name}</div>
+              </div>;
+            })}
           </div>
         </div>
       </div>
+
       {/* Trust bar */}
-      <div style={{background:"#1428A0",padding:"14px clamp(16px,4vw,48px)",display:"flex",gap:32,justifyContent:"center",flexWrap:"wrap"}}>
+      <div style={{background:"#1428A0",padding:"12px 20px",display:"flex",gap:20,alignItems:"center",justifyContent:"center",flexWrap:"wrap"}}>
         {["Free to list","Safe anonymous chat","M-Pesa escrow","Kenyan platform"].map(t=>(
-          <span key={t} style={{fontSize:13,color:"rgba(255,255,255,.9)",fontWeight:600,display:"flex",alignItems:"center",gap:7}}>
-            <span style={{color:"rgba(255,255,255,.7)"}}>✓</span>{t}
+          <span key={t} style={{fontSize:14,fontWeight:600,color:"rgba(255,255,255,.92)",display:"flex",alignItems:"center",gap:8}}>
+            <span style={{color:"#fff",fontSize:16,fontWeight:800}}>✓</span>{t}
           </span>
         ))}
       </div>
-    </>}
+    </div>}
 
-    <main id="listings-section" style={{maxWidth:1400,margin:"0 auto",padding:"clamp(24px,4vw,40px) clamp(16px,4vw,48px)"}}>
-      {page==="home"&&<>
-        <div style={{display:"flex",gap:28,alignItems:"flex-start"}}>
-          {/* LEFT SIDEBAR — filters */}
-          <div style={{width:200,flexShrink:0,display:"flex",flexDirection:"column",gap:20}}>
-            <div>
-              <div style={{fontSize:11,fontWeight:700,color:"#AAAAAA",letterSpacing:".1em",textTransform:"uppercase",marginBottom:8}}>Search</div>
-              <input type="text" placeholder="Search listings..." value={filter.q} onChange={e=>{setFilter(f=>({...f,q:e.target.value}));setPg(1);}} style={{width:"100%",padding:"10px 12px",fontSize:13,border:"1.5px solid #E0E0E0",borderRadius:8,fontFamily:"var(--fn)",outline:"none"}}/>
-            </div>
-            <div>
-              <div style={{fontSize:11,fontWeight:700,color:"#AAAAAA",letterSpacing:".1em",textTransform:"uppercase",marginBottom:8}}>Price Range (KSh)</div>
-              <input type="number" placeholder="Min price" value={filter.minPrice} onChange={e=>{setFilter(f=>({...f,minPrice:e.target.value}));setPg(1);}} style={{width:"100%",padding:"9px 12px",fontSize:13,border:"1.5px solid #E0E0E0",borderRadius:8,fontFamily:"var(--fn)",outline:"none",marginBottom:8}}/>
-              <input type="number" placeholder="Max price" value={filter.maxPrice} onChange={e=>{setFilter(f=>({...f,maxPrice:e.target.value}));setPg(1);}} style={{width:"100%",padding:"9px 12px",fontSize:13,border:"1.5px solid #E0E0E0",borderRadius:8,fontFamily:"var(--fn)",outline:"none"}}/>
-            </div>
-            <div>
-              <div style={{fontSize:11,fontWeight:700,color:"#AAAAAA",letterSpacing:".1em",textTransform:"uppercase",marginBottom:8}}>Location</div>
-              <select value={filter.county} onChange={e=>{setFilter(f=>({...f,county:e.target.value}));setPg(1);}} style={{width:"100%",padding:"9px 12px",fontSize:13,border:"1.5px solid #E0E0E0",borderRadius:8,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",outline:"none"}}>
-                <option value="">All Counties</option>
-                {counties.map(c=><option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div>
-              <div style={{fontSize:11,fontWeight:700,color:"#AAAAAA",letterSpacing:".1em",textTransform:"uppercase",marginBottom:8}}>Category</div>
-              <select value={filter.cat} onChange={e=>{setFilter(f=>({...f,cat:e.target.value}));setPg(1);}} style={{width:"100%",padding:"9px 12px",fontSize:13,border:"1.5px solid #E0E0E0",borderRadius:8,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",outline:"none"}}>
-                <option value="">All Categories</option>
-                {CATS.map(c=><option key={c.name} value={c.name}>{c.name}</option>)}
-              </select>
-            </div>
-            {(filter.q||filter.cat||filter.county||filter.minPrice||filter.maxPrice)&&<button onClick={()=>{setFilter({cat:"",q:"",county:"",minPrice:"",maxPrice:"",sort:"newest"});setPg(1);}} style={{width:"100%",padding:"9px",fontSize:13,fontWeight:600,border:"1px solid #E0E0E0",borderRadius:8,background:"#fff",cursor:"pointer",fontFamily:"var(--fn)",color:"#636363"}}>Clear Filters</button>}
+    {page!=="dashboard"&&page!=="sold"&&<main style={{padding:"clamp(20px,4vw,40px) clamp(16px,4vw,48px) 80px"}}>
+      <div style={{display:"flex",gap:24,alignItems:"flex-start",flexWrap:"wrap"}}>
+
+        {/* LEFT SIDEBAR */}
+        <div style={{width:"min(240px,100%)",flexShrink:0,display:"flex",flexDirection:"column",gap:14}}>
+          <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:14,padding:"20px 18px"}}>
+            <div style={{fontSize:12,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:12}}>Search</div>
+            <input style={{width:"100%",padding:"11px 14px",border:"1.5px solid #E0E0E0",borderRadius:10,outline:"none",fontSize:14,fontFamily:"var(--fn)",color:"#1A1A1A",background:"#FAFAFA"}} placeholder="Search listings..." value={filter.q} onChange={e=>{setFilter(p=>({...p,q:e.target.value}));setPg(1);}}/>
           </div>
-
-          {/* MAIN — listings */}
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20,flexWrap:"wrap",gap:10}}>
-              <h2 style={{fontSize:18,fontWeight:700,color:"#1A1A1A"}}>
-                {filter.cat||"All Listings"} <span style={{fontSize:14,fontWeight:500,color:"#AAAAAA"}}>{total} items</span>
-              </h2>
-              <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                <select value={filter.sort} onChange={e=>setFilter(f=>({...f,sort:e.target.value}))} style={{padding:"8px 12px",fontSize:13,border:"1.5px solid #E0E0E0",borderRadius:8,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",outline:"none"}}>
-                  <option value="newest">Newest first</option>
-                  <option value="price_asc">Price: Low → High</option>
-                  <option value="price_desc">Price: High → Low</option>
-                  <option value="popular">Most Viewed</option>
-                  <option value="expiring">Expiring Soon</option>
-                </select>
-                <button onClick={()=>setVm("grid")} style={{background:vm==="grid"?"#1428A0":"#fff",color:vm==="grid"?"#fff":"#767676",border:"1.5px solid #E0E0E0",padding:"8px 12px",cursor:"pointer",fontSize:15,fontFamily:"var(--fn)",borderRadius:"8px 0 0 8px",transition:"all .15s"}}>⊞</button>
-                <button onClick={()=>setVm("list")} style={{background:vm==="list"?"#1428A0":"#fff",color:vm==="list"?"#fff":"#767676",border:"1.5px solid #E0E0E0",borderLeft:"none",padding:"8px 12px",cursor:"pointer",fontSize:15,fontFamily:"var(--fn)",borderRadius:"0 8px 8px 0",transition:"all .15s",marginLeft:-1}}>☰</button>
-              </div>
+          <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:14,padding:"20px 18px"}}>
+            <div style={{fontSize:12,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:12}}>Price Range (KSh)</div>
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              <input className="inp" style={{borderRadius:8,fontSize:14}} placeholder="Min price" type="number" value={filter.minPrice} onChange={e=>{setFilter(p=>({...p,minPrice:e.target.value}));setPg(1);}}/>
+              <input className="inp" style={{borderRadius:8,fontSize:14}} placeholder="Max price" type="number" value={filter.maxPrice} onChange={e=>{setFilter(p=>({...p,maxPrice:e.target.value}));setPg(1);}}/>
             </div>
-
-            {loading?<div style={{textAlign:"center",padding:"80px 0"}}><Spin s="40px"/></div>
-              :listings.length===0?<div className="empty"><div style={{fontSize:56,marginBottom:16,opacity:.15}}>🔍</div><h3 style={{fontWeight:700,fontSize:20,marginBottom:8}}>No listings found</h3><p style={{color:"#767676"}}>Try a different search or filter</p></div>
-              :<div className={vm==="grid"?"g3":"lvc"}>{listings.map(l=><ListingCard key={l.id} listing={l} onClick={()=>openListing(l)} listView={vm==="list"}/>)}</div>}
-
-            <Pager total={total} perPage={PER_PAGE} page={pg} onChange={p=>{setPg(p);if(typeof window !== 'undefined') window.scrollTo({top:400,behavior:"smooth"});}}/>
+          </div>
+          <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:14,padding:"20px 18px"}}>
+            <div style={{fontSize:12,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:12}}>Location</div>
+            <select className="inp" style={{borderRadius:8,fontSize:14}} value={filter.county} onChange={e=>{setFilter(p=>({...p,county:e.target.value}));setPg(1);}}>
+              <option value="">All Counties</option>
+              {counties.map(c=><option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          {(filter.cat||filter.county||filter.minPrice||filter.maxPrice||filter.q)&&
+            <button className="btn bs" style={{width:"100%",borderRadius:10,fontSize:14}} onClick={()=>{setFilter({cat:"",q:"",county:"",minPrice:"",maxPrice:"",sort:"newest"});setPg(1);}}>✕ Clear All Filters</button>}
+          <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:14,padding:"20px 18px"}}>
+            <div style={{fontSize:12,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:4}}>Community</div>
+            <div style={{fontSize:16,fontWeight:700,color:"#1A1A1A",marginBottom:12}}>🛒 Buyers Want</div>
+            <WhatBuyersWant user={user} token={token} notify={notify} onSignIn={()=>setModal({type:"auth",mode:"login"})} compact={true}
+              onIHaveThis={(request,action)=>{
+                if(action==="switch_to_seller"){
+                  apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token)
+                    .then(d=>{const u={...user,...d.user};setUser(u);localStorage.setItem("ws_user",JSON.stringify(u));
+                      notify("Switched to Seller! Now post your ad.","success");
+                      setModal({type:"post",linkedRequest:request});
+                    }).catch(e=>notify(e.message,"error"));
+                  return;
+                }
+                setModal({type:"post",linkedRequest:request});
+              }}/>
           </div>
         </div>
-      </>}
-    </main>
+
+        {/* RIGHT: main content */}
+        <div style={{flex:1,minWidth:0}} id="listings-section">
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,marginBottom:20,flexWrap:"wrap"}}>
+            <h2 style={{fontSize:22,fontWeight:700,letterSpacing:"-.02em",color:"#1A1A1A"}}>
+              {filter.cat||"All Listings"} <span style={{fontWeight:400,fontSize:15,color:"#AAAAAA"}}>{total} items</span>
+            </h2>
+            <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
+              <select style={{padding:"9px 14px",border:"1.5px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:14,fontFamily:"var(--fn)",background:"#fff",color:"#444",cursor:"pointer"}} value={filter.sort} onChange={e=>{setFilter(p=>({...p,sort:e.target.value}));setPg(1);}}>
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="price_asc">Price: Low → High</option>
+                <option value="price_desc">Price: High → Low</option>
+                <option value="popular">Most Viewed</option>
+                <option value="expiring">Expiring Soon</option>
+              </select>
+              <div style={{display:"flex",gap:2}}>
+                <button onClick={()=>setVm("grid")} style={{background:vm==="grid"?"#1428A0":"#fff",color:vm==="grid"?"#fff":"#767676",border:"1.5px solid #E0E0E0",padding:"8px 14px",cursor:"pointer",fontSize:15,fontFamily:"var(--fn)",borderRadius:"8px 0 0 8px",transition:"all .15s"}}>⊞</button>
+                <button onClick={()=>setVm("list")} style={{background:vm==="list"?"#1428A0":"#fff",color:vm==="list"?"#fff":"#767676",border:"1.5px solid #E0E0E0",borderLeft:"none",padding:"8px 14px",cursor:"pointer",fontSize:15,fontFamily:"var(--fn)",borderRadius:"0 8px 8px 0",transition:"all .15s"}}>☰</button>
+              </div>
+              {user&&<button className="btn bp" style={{borderRadius:9,fontSize:14,padding:"9px 20px"}} onClick={()=>{
+                if(user.role==="buyer"){
+                  if(typeof window !== 'undefined' && window.confirm("You're currently a Buyer. Switch to Seller to post ads?"))
+                    apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token).then(d=>{const upd={...user,...d.user};setUser(upd);localStorage.setItem("ws_user",JSON.stringify(upd));notify("Switched to Seller!","success");setModal({type:"post"});}).catch(e=>notify(e.message,"error"));
+                  return;
+                }
+                setModal({type:"post"});
+              }}>+ Post Ad</button>}
+            </div>
+          </div>
+
+          {loading?<div style={{textAlign:"center",padding:"80px 0"}}><Spin s="40px"/></div>
+            :listings.length===0?<div className="empty"><div style={{fontSize:56,marginBottom:16,opacity:.15}}>🔍</div><h3 style={{fontWeight:700,fontSize:20,marginBottom:8}}>No listings found</h3><p style={{color:"#767676"}}>Try a different search or filter</p></div>
+            :<div className={vm==="grid"?"g3":"lvc"}>{listings.map(l=><ListingCard key={l.id} listing={l} onClick={()=>openListing(l)} listView={vm==="list"}/>)}</div>}
+
+          <Pager total={total} perPage={PER_PAGE} page={pg} onChange={p=>{setPg(p);if(typeof window !== 'undefined') window.scrollTo({top:400,behavior:"smooth"});}}/>
+        </div>
+      </div>
+
+      {/* PLATFORM STATS */}
+      <div style={{background:"#1428A0",borderRadius:0,padding:"clamp(28px,4vw,40px) clamp(20px,4vw,48px)",marginBottom:64,margin:"0 clamp(-16px,-4vw,-48px)",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:0,textAlign:"center"}}>
+        {[{label:"Active Listings",val:stats.activeAds||0},{label:"Items Sold",val:stats.sold||0},{label:"Registered Users",val:stats.users||0},{label:"Total Views",val:stats.views||0}].map((s,i)=>(
+          <div key={s.label} style={{padding:"0 24px",borderRight:i<3?"1px solid rgba(255,255,255,.2)":"none"}}>
+            <div style={{fontSize:40,fontWeight:800,color:"#fff",lineHeight:1,fontFamily:"var(--fn)"}}><Counter to={s.val}/></div>
+            <div style={{fontSize:14,fontWeight:500,color:"rgba(255,255,255,.7)",marginTop:8,letterSpacing:".02em"}}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* HOW IT WORKS */}
+      <div style={{marginTop:80,paddingTop:64,borderTop:"2px solid #CCCCCC"}}>
+        <div style={{textAlign:"center",marginBottom:48}}>
+          <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"#767676",marginBottom:12}}>How It Works</div>
+          <h2 style={{fontSize:"clamp(24px,4vw,40px)",fontWeight:700,letterSpacing:"-.03em",color:"#111111",lineHeight:1.1}}>Simple. Safe.<br/>Built for Kenya.</h2>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:20}}>
+          {[["📝","Post for Free","No upfront cost. Photos, description, location — done in 2 minutes."],
+            ["💬","Chat Safely","Anonymous, moderated chat. Contact info hidden until unlock."],
+            ["🔥","Buyer Locks In","Serious buyers click 'I'm Interested'. You get notified instantly."],
+            ["💳","Pay KSh 250","Seller pays once to see buyer contact. Till 5673935. Non-refundable."],
+            ["🔐","Safe Escrow","Optional 7.5% escrow. Funds held until you confirm delivery."],
+            ["🏆","Deal Done","Leave a review. Build your seller reputation on the platform."]].map(([icon,title,desc])=>(
+            <div key={title} style={{background:"#F4F4F4",padding:"28px 24px"}}>
+              <div style={{fontSize:28,marginBottom:14}}>{icon}</div>
+              <div style={{fontWeight:700,fontSize:16,marginBottom:10,letterSpacing:"-.01em",color:"#1A1A1A"}}>{title}</div>
+              <div style={{fontSize:15,color:"#636363",lineHeight:1.75}}>{desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </main>}
 
     {/* MODALS */}
     {modal?.type==="auth"&&<AuthModal defaultMode={modal.mode} onClose={closeModal} onAuth={handleAuth} notify={notify}/>}
