@@ -1007,7 +1007,7 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
       const url=isEdit?`/api/listings/${listing.id}`:"/api/listings";
       const method=isEdit?"PATCH":"POST";
       const result=await api(url,{method,body:fd},token);
-      if(isEdit){onSuccess(result);onClose();notify("<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="20 6 9 17 4 12"/></svg> Ad updated!","success");return;}
+      if(isEdit){onSuccess(result);onClose();notify("Ad updated!","success");return;}
       const lid=result.id||result.listing?.id;
       setCreatedListingId(lid);
       if(payNow){
