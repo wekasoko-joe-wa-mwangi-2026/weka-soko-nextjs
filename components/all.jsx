@@ -76,6 +76,64 @@ These Terms are governed by the laws of Kenya. Contact: support@wekasoko.co.ke`;
 const timeLeft = ts => { if(!ts)return""; const d=new Date(ts).getTime()-Date.now(); if(d<=0)return"Expired"; if(d<3600000)return Math.floor(d/60000)+"m left"; if(d<86400000)return Math.floor(d/3600000)+"h left"; if(d<604800000)return Math.floor(d/86400000)+"d left"; const weeks=Math.floor(d/604800000); return weeks+(weeks===1?" week left":" weeks left"); };
 const lastSeen = ts => { if(!ts)return""; const d=Date.now()-new Date(ts).getTime(); if(d<30000)return"online"; if(d<60000)return"last seen just now"; if(d<3600000)return"last seen "+Math.floor(d/60000)+"m ago"; if(d<86400000)return"last seen "+Math.floor(d/3600000)+"h ago"; if(d<172800000)return"last seen yesterday"; return"last seen "+new Date(ts).toLocaleDateString("en-KE",{day:"numeric",month:"short"}); };
 
+// ── SVG ICON SYSTEM ──────────────────────────────────────────────────────────
+const Ic = {
+  check:    (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
+  x:        (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+  checkCircle:(s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
+  xCircle:  (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>,
+  warning:  (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
+  info:     (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
+  lock:     (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
+  unlock:   (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>,
+  eye:      (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>,
+  eyeOff:   (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>,
+  search:   (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
+  grid:     (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>,
+  list:     (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>,
+  chat:     (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
+  mail:     (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
+  camera:   (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>,
+  cart:     (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>,
+  tag:      (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>,
+  star:     (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
+  fire:     (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2c0 0-5 4-5 9a5 5 0 0 0 10 0c0-5-5-9-5-9z"/><path d="M12 12c0 0-2 1.5-2 3a2 2 0 0 0 4 0c0-1.5-2-3-2-3z"/></svg>,
+  shield:   (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+  trophy:   (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="8 21 12 17 16 21"/><line x1="12" y1="17" x2="12" y2="11"/><path d="M7 4H4a2 2 0 0 0-2 2v1a5 5 0 0 0 5 5"/><path d="M17 4h3a2 2 0 0 1 2 2v1a5 5 0 0 1-5 5"/><rect x="7" y="2" width="10" height="10" rx="1"/></svg>,
+  phone:    (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>,
+  clock:    (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+  heart:    (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
+  box:      (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>,
+  refresh:  (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>,
+  arrowRight:(s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>,
+  arrowLeft:(s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>,
+  chevronLeft:(s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>,
+  chevronRight:(s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>,
+  creditCard:(s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>,
+  document: (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>,
+  bag:      (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>,
+  inbox:    (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>,
+  bell:     (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
+  ban:      (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>,
+  gift:     (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>,
+  mapPin:   (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>,
+  user:     (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+  settings: (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
+  logout:   (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
+  trash:    (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>,
+  edit:     (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
+  share:    (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>,
+  copy:     (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>,
+  image:    (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>,
+  flag:     (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>,
+  send:     (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
+  plus:     (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+  minus:    (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+  dollarSign:(s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
+  percent:  (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>,
+  zoomIn:   (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>,
+};
+
 async function api(path, opts={}, token=null) {
   const isForm = opts.body instanceof FormData;
   const headers = {...(token?{Authorization:`Bearer ${token}`}:{}), ...(!isForm?{"Content-Type":"application/json"}:{}), ...(opts.headers||{})};
@@ -100,13 +158,13 @@ function Spin({s}){return <span className="spin" style={s?{width:s,height:s}:{}}
 function Toast({msg,type,onClose}){
   useEffect(()=>{const t=setTimeout(onClose,5000);return()=>clearTimeout(t);},[]);
   const c={success:"#111111",error:"#444444",warning:"#B07F10",info:"#2563EB"}[type]||"#111111";
-  return <div className="toast" style={{borderLeft:`3px solid ${c}`}}><span style={{fontSize:20}}>{({success:"✅",error:"❌",warning:"⚠️",info:"ℹ️"})[type]||"ℹ️"}</span><span>{msg}</span><button className="btn bgh sm" style={{marginLeft:"auto",padding:"2px 6px"}} onClick={onClose}>✕</button></div>;
+  return <div className="toast" style={{borderLeft:`3px solid ${c}`}}><span style={{display:"flex",alignItems:"center"}}>{({success:Ic.checkCircle(18,"#1428A0"),error:Ic.xCircle(18,"#C03030"),warning:Ic.warning(18,"#8B6400"),info:Ic.info(18,"#1428A0")})[type]||Ic.info(18,"#1428A0")}</span><span>{msg}</span><button className="btn bgh sm" style={{marginLeft:"auto",padding:"2px 6px"}} onClick={onClose}>{Ic.x(14)}</button></div>;
 }
 
 function Modal({title,onClose,children,footer,large,xl}){
   return <div className="ov" onClick={e=>e.target===e.currentTarget&&onClose()}>
     <div className={`mod${large?" lg":""}${xl?" xl":""}`}>
-      <div className="mh"><h3 style={{fontSize:17,fontWeight:700}}>{title}</h3><button className="btn bgh sm" style={{borderRadius:"50%",width:32,height:32,padding:0}} onClick={onClose}>✕</button></div>
+      <div className="mh"><h3 style={{fontSize:17,fontWeight:700}}>{title}</h3><button className="btn bgh sm" style={{borderRadius:"50%",width:32,height:32,padding:0,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}>{Ic.x(16)}</button></div>
       <div className="mb">{children}</div>
       {footer&&<div className="mf">{footer}</div>}
     </div>
@@ -146,7 +204,7 @@ function ImageUploader({images,setImages}){
   const remove=i=>setImages(p=>{URL.revokeObjectURL(p[i].preview);return p.filter((_,j)=>j!==i);});
   return <>
     <div className="img-upload" onClick={()=>ref.current?.click()} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();add(e.dataTransfer.files);}}>
-      <div style={{fontSize:36,marginBottom:8}}>📷</div>
+      <div style={{marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.camera(36,"#AAAAAA")}</div>
       <div style={{fontWeight:700,fontSize:14,marginBottom:4}}>Tap to add photos</div>
       <div style={{fontSize:12,color:"#888888"}}>Or drag & drop · up to 8 photos · First = cover</div>
       <input ref={ref} type="file" accept="image/*" multiple style={{display:"none"}} onChange={e=>add(e.target.files)}/>
@@ -155,7 +213,7 @@ function ImageUploader({images,setImages}){
       <div key={i} className="img-thumb">
         <img src={img.preview} alt=""/>
         {i===0&&<div style={{position:"absolute",bottom:4,left:4,background:"#111111",color:"#fff",fontSize:9,padding:"2px 7px",borderRadius:6,fontWeight:600}}>COVER</div>}
-        <button className="img-del" onClick={e=>{e.stopPropagation();remove(i);}}>✕</button>
+        <button className="img-del" onClick={e=>{e.stopPropagation();remove(i);}} style={{display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.x(12)}</button>
       </div>
     ))}</div>}
   </>;
@@ -164,8 +222,8 @@ function ImageUploader({images,setImages}){
 // ── TERMS MODAL ───────────────────────────────────────────────────────────────
 function TermsModal({onClose,onAccept}){
   const [ok,setOk]=useState(false);const r=useRef(null);
-  return <Modal title="📄 Terms & Conditions" onClose={onClose} footer={
-    <><button className="btn bs" onClick={onClose}>Decline</button><button className="btn bp" onClick={onAccept} disabled={!ok}>{ok?"I Accept →":"↓ Scroll to Accept"}</button></>
+  return <Modal title="Terms & Conditions" onClose={onClose} footer={
+    <><button className="btn bs" onClick={onClose}>Decline</button><button className="btn bp" onClick={onAccept} disabled={!ok}>{ok?"I Accept":"Scroll to Accept"}</button></>
   }>
     {!ok&&<div className="alert ay" style={{marginBottom:14}}>Scroll to the bottom to enable the Accept button.</div>}
     <div ref={r} onScroll={()=>{const el=r.current;if(el&&el.scrollTop+el.clientHeight>=el.scrollHeight-30)setOk(true);}} style={{maxHeight:380,overflowY:"auto",background:"#F5F5F5",borderRadius:6,padding:"16px 18px",fontSize:13,lineHeight:1.9,color:"#888888",whiteSpace:"pre-wrap"}}>{TERMS}</div>
@@ -186,8 +244,8 @@ function PasswordField({label,hint,value,onChange,onEnter,placeholder="•••
         autoComplete="current-password"
       />
       <button type="button" onClick={()=>setShow(s=>!s)}
-        style={{position:"absolute",right:10,background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#888888",padding:"4px",lineHeight:1}}>
-        {show?"🙈":"👁"}
+        style={{position:"absolute",right:10,background:"none",border:"none",cursor:"pointer",color:"#888888",padding:"4px",lineHeight:1,display:"flex",alignItems:"center"}}>
+        {show?Ic.eyeOff(16):Ic.eye(16)}
       </button>
     </div>
   </FF>;
@@ -208,12 +266,12 @@ function ForgotPasswordPanel({onBack,notify}){
     finally{setLoading(false);}
   };
   if(sent)return <div style={{textAlign:"center",padding:"20px 0"}}>
-    <div style={{fontSize:48,marginBottom:12}}>📬</div>
+    <div style={{marginBottom:12,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.inbox(48,"#1428A0")}</div>
     <div style={{fontWeight:700,fontSize:16,marginBottom:8}}>Check your email</div>
     <div style={{fontSize:13,color:"#888888",lineHeight:1.7,marginBottom:16}}>
       We sent a reset link to <strong>{email}</strong>.<br/>Check your inbox (and spam folder).
     </div>
-    <button className="btn bs" onClick={onBack}>← Back to Sign In</button>
+    <button className="btn bs" onClick={onBack}>Back to Sign In</button>
   </div>;
   return <div style={{padding:"8px 0"}}>
     <div style={{fontSize:14,color:"#888888",marginBottom:16,lineHeight:1.6}}>
@@ -223,8 +281,8 @@ function ForgotPasswordPanel({onBack,notify}){
       <input className="inp" type="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()}/>
     </FF>
     <div style={{display:"flex",gap:8,marginTop:4}}>
-      <button className="btn bs" onClick={onBack}>← Back</button>
-      <button className="btn bp" style={{flex:1}} onClick={send} disabled={loading}>{loading?<Spin/>:"Send Reset Link →"}</button>
+      <button className="btn bs" onClick={onBack}>Back</button>
+      <button className="btn bp" style={{flex:1}} onClick={send} disabled={loading}>{loading?<Spin/>:"Send Reset Link"}</button>
     </div>
   </div>;
 }
@@ -243,16 +301,16 @@ function ResetPasswordModal({token,onClose,notify}){
     }catch(err){notify(err.message,"error");}
     finally{setLoading(false);}
   };
-  return <Modal title="🔐 Set New Password" onClose={onClose}>
+  return <Modal title="Set New Password" onClose={onClose}>
     {done?<div style={{textAlign:"center",padding:"20px 0"}}>
-      <div style={{fontSize:48,marginBottom:12}}>✅</div>
+      <div style={{marginBottom:12,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.checkCircle(48,"#1428A0")}</div>
       <div style={{fontWeight:700,marginBottom:8}}>Password updated!</div>
       <div style={{color:"#888888",marginBottom:20}}>You can now sign in with your new password.</div>
-      <button className="btn bp" onClick={onClose}>Sign In →</button>
+      <button className="btn bp" onClick={onClose}>Sign In</button>
     </div>:<>
       <div style={{color:"#888888",fontSize:13,marginBottom:16}}>Choose a new password for your account.</div>
       <PasswordField label="New Password" hint="At least 8 characters" value={password} onChange={setPassword} onEnter={submit}/>
-      <button className="btn bp" style={{width:"100%",marginTop:8}} onClick={submit} disabled={loading}>{loading?<Spin/>:"Set New Password →"}</button>
+      <button className="btn bp" style={{width:"100%",marginTop:8}} onClick={submit} disabled={loading}>{loading?<Spin/>:"Set New Password"}</button>
     </>}
   </Modal>;
 }
@@ -323,15 +381,15 @@ function Lightbox({photos,startIdx,onClose}){
   },[]);
   return <div style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,.96)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}
     onClick={onClose}>
-    <button onClick={onClose} style={{position:"absolute",top:16,right:20,background:"rgba(255,255,255,.15)",border:"none",color:"#fff",fontSize:28,width:44,height:44,borderRadius:"50%",cursor:"pointer",zIndex:10}}>✕</button>
+    <button onClick={onClose} style={{position:"absolute",top:16,right:20,background:"rgba(255,255,255,.15)",border:"none",color:"#fff",width:44,height:44,borderRadius:"50%",cursor:"pointer",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.x(20,"#fff")}</button>
     <div style={{position:"absolute",top:20,left:"50%",transform:"translateX(-50%)",color:"rgba(255,255,255,.7)",fontSize:13,zIndex:10}}>{idx+1} / {photos.length}</div>
     <div onClick={e=>e.stopPropagation()} style={{display:"flex",alignItems:"center",justifyContent:"center",maxWidth:"92vw",maxHeight:"82vh"}}>
       <WatermarkedImage src={photos[idx]} alt=""
         style={{maxWidth:"92vw",maxHeight:"82vh",objectFit:"contain",borderRadius:8,boxShadow:"0 8px 40px rgba(0,0,0,.6)",display:"block"}}/>
     </div>
     {photos.length>1&&<>
-      <button onClick={e=>{e.stopPropagation();prev();}} style={{position:"absolute",left:16,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,.15)",border:"none",color:"#fff",fontSize:28,width:50,height:50,borderRadius:"50%",cursor:"pointer",zIndex:10}}>‹</button>
-      <button onClick={e=>{e.stopPropagation();next();}} style={{position:"absolute",right:16,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,.15)",border:"none",color:"#fff",fontSize:28,width:50,height:50,borderRadius:"50%",cursor:"pointer",zIndex:10}}>›</button>
+      <button onClick={e=>{e.stopPropagation();prev();}} style={{position:"absolute",left:16,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,.15)",border:"none",color:"#fff",width:50,height:50,borderRadius:"50%",cursor:"pointer",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.chevronLeft(28,"#fff")}</button>
+      <button onClick={e=>{e.stopPropagation();next();}} style={{position:"absolute",right:16,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,.15)",border:"none",color:"#fff",width:50,height:50,borderRadius:"50%",cursor:"pointer",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.chevronRight(28,"#fff")}</button>
     </>}
     {photos.length>1&&<div style={{position:"absolute",bottom:20,display:"flex",gap:8,overflowX:"auto",maxWidth:"90vw",padding:"0 8px",zIndex:10}}>
       {photos.map((p,i)=><img key={i} src={p} alt="" onClick={e=>{e.stopPropagation();setIdx(i);}}
@@ -383,9 +441,9 @@ function AuthModal({defaultMode,onClose,onAuth,notify}){
       localStorage.setItem("ws_user",JSON.stringify(data.user));
       onAuth(data.user,data.token);onClose();
       if(mode==="signup"){
-        notify(`Welcome to Weka Soko, ${data.user.name?.split(" ")[0]||""}! 🎉 Check your email to verify your account.`,"success");
+        notify(`Welcome to Weka Soko, ${data.user.name?.split(" ")[0]||""}! Check your email to verify your account.`,"success");
       } else {
-        notify(`Welcome back, ${data.user.name?.split(" ")[0]||""}! 🎉`,"success");
+        notify(`Welcome back, ${data.user.name?.split(" ")[0]||""}!`,"success");
       }
     }catch(err){
       // Login blocked because email not verified
@@ -398,12 +456,12 @@ function AuthModal({defaultMode,onClose,onAuth,notify}){
     finally{setLoading(false);}
   };
 
-  if(showTerms)return <TermsModal onClose={()=>setShowTerms(false)} onAccept={()=>{setAgreed(true);setShowTerms(false);notify("Terms accepted ✓","success");}}/>;
+  if(showTerms)return <TermsModal onClose={()=>setShowTerms(false)} onAccept={()=>{setAgreed(true);setShowTerms(false);notify("Terms accepted","success");}}/>;
 
   // ── Signup success: verify email screen ──────────────────────────────────
-  if(verifyEmail)return <Modal title="Check Your Email 📬" onClose={onClose}>
+  if(verifyEmail)return <Modal title="Check Your Email" onClose={onClose}>
     <div style={{textAlign:"center",padding:"12px 0 20px"}}>
-      <div style={{fontSize:64,marginBottom:16}}>📧</div>
+      <div style={{marginBottom:16,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.mail(56,"#1428A0")}</div>
       <h3 style={{fontWeight:700,fontSize:18,marginBottom:10}}>Almost there!</h3>
       <p style={{fontSize:14,color:"#888888",lineHeight:1.8,marginBottom:20}}>
         We sent a verification link to<br/>
@@ -418,7 +476,7 @@ function AuthModal({defaultMode,onClose,onAuth,notify}){
         ?<button className="btn bs" style={{marginBottom:10}} onClick={()=>resendVerification(verifyEmail)} disabled={resendLoading}>
             {resendLoading?<Spin/>:"Resend verification email"}
           </button>
-        :<p style={{fontSize:13,color:"#111111",fontWeight:600}}>✓ Email resent! Check your inbox.</p>}
+        :<p style={{fontSize:13,color:"#111111",fontWeight:600}}>Email resent! Check your inbox.</p>}
       <button className="btn bgh" style={{display:"block",margin:"8px auto 0"}} onClick={onClose}>Close</button>
     </div>
   </Modal>;
@@ -426,7 +484,7 @@ function AuthModal({defaultMode,onClose,onAuth,notify}){
   // ── Login blocked: unverified email ──────────────────────────────────────
   if(unverifiedEmail)return <Modal title="Verify Your Email First" onClose={onClose}>
     <div style={{textAlign:"center",padding:"12px 0 20px"}}>
-      <div style={{fontSize:64,marginBottom:16}}>🔒</div>
+      <div style={{marginBottom:16,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.lock(56,"#636363")}</div>
       <h3 style={{fontWeight:700,fontSize:17,marginBottom:10}}>Email not verified</h3>
       <p style={{fontSize:14,color:"#888888",lineHeight:1.8,marginBottom:20}}>
         Your account was created but your email address hasn't been verified yet.<br/><br/>
@@ -437,14 +495,14 @@ function AuthModal({defaultMode,onClose,onAuth,notify}){
             {resendLoading?<Spin/>:"Resend verification email"}
           </button>
         :<div style={{marginBottom:12,padding:"10px 14px",background:"#F8F8F8",border:"1px solid #E8E8E8",borderRadius:12,fontSize:13,color:"#111111"}}>
-            ✅ Email sent! Click the link in your inbox to activate your account.
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="20 6 9 17 4 12"/></svg> Email sent! Click the link in your inbox to activate your account.
           </div>}
-      <button className="btn bgh" style={{display:"block",margin:"0 auto"}} onClick={()=>setUnverifiedEmail(null)}>← Back to Sign In</button>
+      <button className="btn bgh" style={{display:"block",margin:"0 auto"}} onClick={()=>setUnverifiedEmail(null)}>Back to Sign In</button>
     </div>
   </Modal>;
 
   return <Modal title={mode==="login"?"Sign In":"Create Account"} onClose={onClose} footer={
-    <><button className="btn bs" onClick={onClose}>Cancel</button><button className="btn bp" onClick={submit} disabled={loading}>{loading?<Spin/>:mode==="login"?"Sign In →":"Create Account →"}</button></>
+    <><button className="btn bs" onClick={onClose}>Cancel</button><button className="btn bp" onClick={submit} disabled={loading}>{loading?<Spin/>:mode==="login"?"Sign In":"Create Account"}</button></>
   }>
     <div style={{textAlign:"center",marginBottom:20,paddingBottom:16,borderBottom:"1px solid #E8E8E8"}}><div style={{display:"inline-flex"}}><WekaSokoLogo size={28}/></div></div>
     {/* Google OAuth placeholder */}
@@ -461,7 +519,7 @@ function AuthModal({defaultMode,onClose,onAuth,notify}){
       <FF label="Full Name" required><input className="inp" placeholder="Your full name" value={f.name} onChange={e=>sf("name",e.target.value)}/></FF>
       <FF label="I am a">
         <div style={{display:"flex",gap:8}}>
-          {["buyer","seller"].map(r=><button key={r} className={`btn ${f.role===r?"bp":"bs"}`} style={{flex:1}} onClick={()=>sf("role",r)}>{r==="buyer"?"🛍 Buyer":"🏷 Seller"}</button>)}
+          {["buyer","seller"].map(r=><button key={r} className={`btn ${f.role===r?"bp":"bs"}`} style={{flex:1}} onClick={()=>sf("role",r)}>{r==="buyer"?"Buyer":"Seller"}</button>)}
         </div>
       </FF>
       <FF label="Phone (M-Pesa)" hint="Used for payment notifications"><input className="inp" placeholder="07XXXXXXXX" value={f.phone} onChange={e=>sf("phone",e.target.value)}/></FF>
@@ -538,7 +596,7 @@ function ShareModal({listing,onClose}){
 
   return <Modal title="Share Listing" onClose={onClose}>
     <div style={{background:"#F8F8F8",borderRadius:12,padding:"14px 16px",marginBottom:20,display:"flex",gap:12,alignItems:"center",border:"1px solid #EBEBEB"}}>
-      <div style={{width:42,height:42,borderRadius:10,background:"#E5E5E5",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:20}}>🏷️</div>
+      <div style={{width:42,height:42,borderRadius:10,background:"#E5E5E5",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{Ic.tag(20,"#636363")}</div>
       <div style={{minWidth:0}}>
         <div style={{fontWeight:700,fontSize:14,color:"#1A1A1A",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{listing.title}</div>
         <div style={{fontSize:13,color:"#1428A0",fontWeight:700,marginTop:2}}>{fmtKES(listing.price)}</div>
@@ -559,7 +617,7 @@ function ShareModal({listing,onClose}){
     <div style={{display:"flex",gap:8,background:"#F8F8F8",borderRadius:10,padding:"10px 14px",border:"1px solid #EBEBEB",alignItems:"center"}}>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" stroke="#AAAAAA" strokeWidth="2" strokeLinecap="round"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" stroke="#AAAAAA" strokeWidth="2" strokeLinecap="round"/></svg>
       <input className="inp" value={url} readOnly style={{flex:1,fontSize:12,border:"none",background:"transparent",padding:"0",outline:"none",color:"#636363"}}/>
-      <button className="btn bp sm" style={{borderRadius:8,whiteSpace:"nowrap"}} onClick={()=>{navigator.clipboard?.writeText(url);setCopied(true);setTimeout(()=>setCopied(false),2500);}}>{copied?"✓ Copied":"Copy"}</button>
+      <button className="btn bp sm" style={{borderRadius:8,whiteSpace:"nowrap"}} onClick={()=>{navigator.clipboard?.writeText(url);setCopied(true);setTimeout(()=>setCopied(false),2500);}}>{copied?"Copied":"Copy"}</button>
     </div>
   </Modal>;
 }
@@ -635,11 +693,11 @@ function PayModal({type,listingId,amount,purpose,token,user,onSuccess,onClose,no
     <p style={{fontSize:11,color:"#CCCCCC",marginTop:5}}>We confirm the code was paid to Till 5673935 before unlocking.</p>
   </div>;
 
-  return <Modal title={type==="unlock"?"🔓 Reveal Buyer Contact — KSh 250":"🔐 Escrow Payment"} onClose={onClose}>
+  return <Modal title={type==="unlock"?"Reveal Buyer Contact — KSh 250":"Escrow Payment"} onClose={onClose}>
     {step==="form"&&<>
       {/* Seller safety tip — shown only on unlock */}
       {type==="unlock"&&<div style={{background:"#F8F8F8",border:"1px solid #E8E8E8",borderRadius:12,padding:"11px 14px",marginBottom:16,fontSize:12,color:"#111111",lineHeight:1.7}}>
-        <strong>🛡️ Seller tip:</strong> Once you unlock, you'll see the buyer's contact details. <strong>Do not hand over the item until payment is confirmed.</strong> Use Escrow for full protection — funds are held by Weka Soko until the buyer receives and confirms the item.
+        <strong style={{display:"flex",alignItems:"center",gap:6}}>{Ic.shield(14)} Seller tip:</strong> Once you unlock, you'll see the buyer's contact details. <strong>Do not hand over the item until payment is confirmed.</strong> Use Escrow for full protection — funds are held by Weka Soko until the buyer receives and confirms the item.
       </div>}
       <div style={{background:"#F8F8F8",border:"1px solid #E8E8E8",borderRadius:12,padding:"18px 20px",marginBottom:18}}>
         <div style={{fontSize:11,color:"#888888",marginBottom:4}}>Till Number <strong style={{color:"var(--txt)"}}>5673935</strong> · Weka Soko</div>
@@ -648,7 +706,7 @@ function PayModal({type,listingId,amount,purpose,token,user,onSuccess,onClose,no
           {discount>0&&<div style={{fontSize:16,color:"#CCCCCC",textDecoration:"line-through"}}>{fmtKES(amount)}</div>}
         </div>
         {discount>0&&<div style={{display:"flex",gap:8,marginTop:8,flexWrap:"wrap"}}>
-          <span className="badge bg-g">🏷 {discount}% off</span>
+          <span className="badge bg-g">{discount}% off</span>
           <span className="badge bg-g">You save {fmtKES(saving)}</span>
         </div>}
         <div style={{fontSize:13,color:"#888888",marginTop:6}}>{purpose}</div>
@@ -658,23 +716,23 @@ function PayModal({type,listingId,amount,purpose,token,user,onSuccess,onClose,no
           <input className="inp" placeholder="e.g. WS-FREE50" value={vcode} onChange={e=>{setVcode(e.target.value);if(!e.target.value)setVoucherInfo(null);}} style={{flex:1}} onKeyDown={e=>e.key==="Enter"&&applyVoucher()}/>
           <button className="btn bs sm" onClick={applyVoucher}>Apply</button>
         </div>
-        {voucherInfo&&<div className="alert ag" style={{marginTop:8,fontSize:12}}>✅ {voucherInfo.description||`${discount}% discount`} — Pay only {fmtKES(finalAmt)}{finalAmt===0?" (FREE!)":""}</div>}
+        {voucherInfo&&<div className="alert ag" style={{marginTop:8,fontSize:12,display:"flex",alignItems:"center",gap:6}}>{Ic.check(14,"#1428A0")} {voucherInfo.description||`${discount}% discount`} — Pay only {fmtKES(finalAmt)}{finalAmt===0?" (FREE!)":""}</div>}
       </FF>}
       {finalAmt===0
-        ?<button className="btn bp lg" style={{width:"100%"}} onClick={startPayment}>🎉 Unlock for Free →</button>
+        ?<button className="btn bp lg" style={{width:"100%"}} onClick={startPayment}>Unlock for Free</button>
         :<>
           <FF label="Your M-Pesa Number" required>
             <div style={{display:"flex"}}>
-              <div style={{background:"#F5F5F5",border:"1.5px solid #E0E0E0",borderRight:"none",borderRadius:6,padding:"10px 12px",fontSize:13,color:"#888888",whiteSpace:"nowrap"}}>🇰🇪 +254</div>
+              <div style={{background:"#F5F5F5",border:"1.5px solid #E0E0E0",borderRight:"none",borderRadius:6,padding:"10px 12px",fontSize:13,color:"#888888",whiteSpace:"nowrap"}}>KE +254</div>
               <input className="inp" style={{borderRadius:6}} value={phone} onChange={e=>setPhone(e.target.value.replace(/[^0-9]/g,""))} placeholder="0712345678" maxLength={10}/>
             </div>
           </FF>
           {/* Safety tip before payment */}
           <div style={{background:"#F8F8F8",border:"1px solid #E8E8E8",borderRadius:12,padding:"10px 13px",marginBottom:12,fontSize:12,color:"#333333",lineHeight:1.65}}>
-            <strong>⚠️ Security reminder:</strong> This KSh 250 is paid to <strong>Weka Soko Till 5673935</strong> only. We will <strong>never</strong> ask you to send money to a seller's personal number before meeting. If anyone does, report it immediately.
+            <strong style={{display:"flex",alignItems:"center",gap:6}}>{Ic.warning(14)} Security reminder:</strong> This KSh 250 is paid to <strong>Weka Soko Till 5673935</strong> only. We will <strong>never</strong> ask you to send money to a seller's personal number before meeting. If anyone does, report it immediately.
           </div>
           <button className="btn bp lg" style={{width:"100%"}} onClick={startPayment} disabled={phone.length<10}>
-            📱 Send M-Pesa Request → {fmtKES(finalAmt)}
+            Send M-Pesa Request — {fmtKES(finalAmt)}
           </button>
           <ManualInput/>
         </>}
@@ -685,7 +743,7 @@ function PayModal({type,listingId,amount,purpose,token,user,onSuccess,onClose,no
       <p style={{color:"#888888",fontSize:14}}>Watch for a push notification on <strong>{phone}</strong></p>
     </div>}
     {step==="polling"&&<div style={{textAlign:"center",padding:"24px 0"}}>
-      <div style={{fontSize:64,marginBottom:12}}>📱</div>
+      <div style={{marginBottom:12,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.phone(56,"#1428A0")}</div>
       <h3 style={{fontWeight:700,marginBottom:8}}>Enter Your M-Pesa PIN</h3>
       <p style={{color:"#888888",fontSize:14,marginBottom:16}}>Check your phone · Pay Till <strong>5673935</strong> · {fmtKES(finalAmt)}</p>
       <div style={{fontSize:48,fontWeight:700,color:"#111111",marginBottom:8}}>{cd}s</div>
@@ -693,19 +751,19 @@ function PayModal({type,listingId,amount,purpose,token,user,onSuccess,onClose,no
       <ManualInput/>
     </div>}
     {step==="timeout"&&<div style={{textAlign:"center",padding:"24px 0"}}>
-      <div style={{fontSize:64,marginBottom:12}}>⏱</div>
+      <div style={{marginBottom:12,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.clock(56,"#C03030")}</div>
       <h3 style={{fontWeight:700,marginBottom:8}}>Request Timed Out</h3>
       <p style={{color:"#888888",fontSize:14,marginBottom:14}}>Did you pay? Paste your M-Pesa code to verify:</p>
       <ManualInput/>
-      <button className="btn bs" style={{width:"100%",marginTop:12}} onClick={()=>{setStep("form");if(pollRef.current)clearInterval(pollRef.current);}}>← Try Again</button>
+      <button className="btn bs" style={{width:"100%",marginTop:12}} onClick={()=>{setStep("form");if(pollRef.current)clearInterval(pollRef.current);}}>Try Again</button>
     </div>}
     {step==="done"&&<div style={{textAlign:"center",padding:"32px 0"}}>
-      <div style={{fontSize:64,marginBottom:14}}>✅</div>
+      <div style={{marginBottom:14,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.checkCircle(56,"#1428A0")}</div>
       <h3 style={{color:"#1428A0",fontWeight:700,marginBottom:8}}>Unlocked!</h3>
       <p style={{color:"#888888",fontSize:14}}>Buyer contact details are now visible. Check your email for the receipt.</p>
     </div>}
     {step==="error"&&<div style={{textAlign:"center",padding:"32px 0"}}>
-      <div style={{fontSize:64,marginBottom:14}}>❌</div>
+      <div style={{marginBottom:14,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.xCircle(56,"#C03030")}</div>
       <h3 style={{color:"#333333",fontWeight:600,marginBottom:8}}>Payment Failed</h3>
       <p style={{color:"#888888",fontSize:14,marginBottom:18}}>{errMsg}</p>
       <button className="btn bp" onClick={()=>{setStep("form");setErrMsg("");}}>Try Again</button>
@@ -798,7 +856,7 @@ function ChatModal({listing,user,token,onClose,notify}){
       const sysMsg = {
         id:"sys-"+Date.now(),
         sender_id:"system",
-        body: systemMessage || `⚠️ Message blocked: ${reason}. Contact info must stay hidden until KSh 250 unlock is paid.`,
+        body: systemMessage || `Message blocked: ${reason}. Contact info must stay hidden until KSh 250 unlock is paid.`,
         created_at: new Date().toISOString(),
         direction: "system",
         is_system: true,
@@ -806,8 +864,8 @@ function ChatModal({listing,user,token,onClose,notify}){
       };
       setMessages(p=>[...p, sysMsg]);
       // Also show a toast for immediate attention
-      if(severity==="suspended")notify("🚫 Your account has been suspended. Check your email.","error");
-      else notify(`⚠️ Message blocked (${violationCount}/3 violations)`, "warning");
+      if(severity==="suspended")notify("Your account has been suspended. Check your email.","error");
+      else notify(`Message blocked (${violationCount}/3 violations)`, "warning");
     });
     socket.on("error",e=>notify(typeof e==="string"?e:"Chat error","error"));
 
@@ -830,7 +888,7 @@ function ChatModal({listing,user,token,onClose,notify}){
     if(socketRef.current&&connected)socketRef.current.emit("typing",listing.id);
   };
 
-  return <Modal title={`💬 ${listing.title}`} onClose={onClose} large>
+  return <Modal title={listing.title} onClose={onClose} large>
     {/* Presence bar */}
     <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12,padding:"10px 14px",background:"#F5F5F5",borderRadius:6}}>
       <div style={{width:10,height:10,borderRadius:"50%",background:connected?"#111111":"#CCCCCC",flexShrink:0,boxShadow:connected?"0 0 0 3px rgba(0,0,0,.08)":"none",transition:"all .3s"}}/>
@@ -840,7 +898,7 @@ function ChatModal({listing,user,token,onClose,notify}){
         <div style={{width:8,height:8,borderRadius:"50%",background:presence.dot,flexShrink:0}}/>
         <span style={{fontSize:12,color:presence.color,fontWeight:500}}>{presence.text}</span>
       </>}
-      <span style={{fontSize:11,color:"#CCCCCC",marginLeft:"auto"}}>🔒 Moderated</span>
+      <span style={{fontSize:11,color:"#CCCCCC",marginLeft:"auto"}}>Moderated</span>
     </div>
 
     <div className="chat-wrap">
@@ -849,7 +907,7 @@ function ChatModal({listing,user,token,onClose,notify}){
           ?<div style={{textAlign:"center",padding:20}}><Spin/></div>
           :messages.length===0
             ?<div style={{textAlign:"center",padding:32,color:"#888888",fontSize:13}}>
-                <div style={{fontSize:40,marginBottom:10,opacity:.3}}>💬</div>
+                <div style={{marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",opacity:.3}}>{Ic.chat(40,"#DDDDDD")}</div>
                 No messages yet. Start the conversation!
               </div>
             :messages.map((m,i)=>(
@@ -858,7 +916,7 @@ function ChatModal({listing,user,token,onClose,notify}){
               {m.is_system
                 ?<div style={{margin:"8px auto",maxWidth:"90%",background:"#F0F0F0",border:"1px solid #CCCCCC",borderRadius:6,padding:"10px 14px",fontSize:12,lineHeight:1.6,color:"#333333",textAlign:"center"}}>{m.body}</div>
                 :<div className={`chat-msg ${m.direction||"them"}${m.is_blocked?" blocked":""}`}>
-                  <div>{m.is_blocked||!m.body?<em style={{opacity:.6}}>🚫 Message removed — contained contact info</em>:m.body}</div>
+                  <div>{m.is_blocked||!m.body?<em style={{opacity:.6}}>Message removed — contained contact info</em>:m.body}</div>
                   <div style={{fontSize:10,opacity:.5,marginTop:4,textAlign:m.direction==="me"?"right":"left"}}>{ago(m.created_at)}</div>
                 </div>
               }
@@ -874,10 +932,10 @@ function ChatModal({listing,user,token,onClose,notify}){
           value={text} onChange={onType}
           onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&(e.preventDefault(),send())}
           disabled={!connected}/>
-        <button className="btn bp sm" onClick={send} disabled={!text.trim()||!connected}>Send ↑</button>
+        <button className="btn bp sm" onClick={send} disabled={!text.trim()||!connected}>Send </button>
       </div>
     </div>
-    {!listing.is_unlocked&&<div className="alert ay" style={{marginTop:12,fontSize:12}}>🔒 Contact info hidden until unlocked. Phone/email in chat will be auto-blocked.</div>}
+    {!listing.is_unlocked&&<div className="alert ay" style={{marginTop:12,fontSize:12,display:"flex",alignItems:"center",gap:6}}>{Ic.lock(14,"#888")} Contact info hidden until unlocked. Phone/email in chat will be auto-blocked.</div>}
   </Modal>;
 }
 
@@ -932,7 +990,7 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
     const errs={};
     [["title",f.title],["description",f.description],["reason",f.reason],["location",f.location]]
       .forEach(([k,v])=>{if(v&&checkContactInfo(v))errs[k]="Cannot contain phone numbers, emails, or social handles";});
-    if(Object.keys(errs).length){setFieldErrors(errs);notify("⚠️ Remove contact info from flagged fields","warning");return;}
+    if(Object.keys(errs).length){setFieldErrors(errs);notify("Remove contact info from flagged fields","warning");return;}
     setFieldErrors({});
     setLoading(true);
     try{
@@ -949,7 +1007,7 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
       const url=isEdit?`/api/listings/${listing.id}`:"/api/listings";
       const method=isEdit?"PATCH":"POST";
       const result=await api(url,{method,body:fd},token);
-      if(isEdit){onSuccess(result);onClose();notify("✅ Ad updated!","success");return;}
+      if(isEdit){onSuccess(result);onClose();notify("<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="20 6 9 17 4 12"/></svg> Ad updated!","success");return;}
       const lid=result.id||result.listing?.id;
       setCreatedListingId(lid);
       if(payNow){
@@ -958,11 +1016,11 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
       } else {
         // Pay Later — listing is live but contact hidden
         onSuccess(result);onClose();
-        notify("⏳ Ad submitted! It's under review — you'll be notified once it goes live.","info");
+        notify("Ad submitted! It's under review — you'll be notified once it goes live.","info");
       }
     }catch(err){
       if(err.violations){
-        notify(`❌ Contact info detected — ${err.violations.map(v=>`${v.field}: ${v.reason}`).join(" | ")}`, "error");
+        notify(`Contact info detected — ${err.violations.map(v=>`${v.field}: ${v.reason}`).join(" | ")}`, "error");
       } else {
         notify(err.message||"Failed to save ad","error");
       }
@@ -975,33 +1033,33 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
 
   return <Modal title={modalTitle} onClose={onClose} footer={
     <div style={{display:"flex",gap:8,width:"100%"}}>
-      {step===2&&<button className="btn bs" onClick={()=>setStep(1)}>← Back</button>}
+      {step===2&&<button className="btn bs" onClick={()=>setStep(1)} style={{display:"flex",alignItems:"center",gap:4}}>{Ic.chevronLeft(15)} Back</button>}
       <div style={{flex:1}}/>
-      {step===1&&<button className="btn bp" onClick={()=>setStep(2)} disabled={!f.title.trim()||!f.category||!f.price||!f.description.trim()}>Continue →</button>}
+      {step===1&&<button className="btn bp" onClick={()=>setStep(2)} disabled={!f.title.trim()||!f.category||!f.price||!f.description.trim()} style={{display:"flex",alignItems:"center",gap:4}}>Continue {Ic.chevronRight(15)}</button>}
       {step===2&&payChoice&&<button className="btn bp" onClick={()=>submitListing(payChoice==="now")} disabled={loading}>
         {loading?<Spin/>:payChoice==="now"?"Post & Pay KSh 250 →":"Post Anonymously →"}
       </button>}
       {step===2&&listing&&<button className="btn bp" onClick={()=>submitListing(false)} disabled={loading}>
-        {loading?<Spin/>:"Save Changes ✅"}
+        {loading?<Spin/>:"Save Changes"}
       </button>}
     </div>
   }>
     {/* Linked request banner */}
     {isLinked&&<div style={{background:"#EEF2FF",border:"1px solid #C7D2FE",borderRadius:10,padding:"12px 14px",marginBottom:16,display:"flex",gap:10,alignItems:"flex-start"}}>
-      <span style={{fontSize:20}}>🛒</span>
+      <span><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></span>
       <div>
         <div style={{fontWeight:700,fontSize:13,color:"#1428A0",marginBottom:2}}>Responding to buyer request</div>
         <div style={{fontSize:13,color:"#3730A3"}}>{linkedRequest.title}{linkedRequest.category?` · ${linkedRequest.category}`:""}</div>
       </div>
     </div>}
 
-    <div className="alert ag" style={{marginBottom:16,fontSize:12}}>✅ Posting is free. Your ad goes to admin review first — you'll be notified when it's live. KSh 250 to reveal buyer contact.</div>
+    <div className="alert ag" style={{marginBottom:16,fontSize:12}}>Posting is free. Your ad goes to admin review first — you'll be notified when it's live. KSh 250 to reveal buyer contact.</div>
 
     {step===1&&<>
       <FF label="Item Title" required>
         <input className="inp" placeholder="e.g. iPhone 14 Pro 256GB" value={f.title}
           onChange={e=>{sf("title",e.target.value);setFieldErrors(p=>({...p,title:undefined}));}}/>
-        {fieldErrors.title&&<div style={{color:"#dc2626",fontSize:11,marginTop:3}}>⚠️ {fieldErrors.title}</div>}
+        {fieldErrors.title&&<div style={{color:"#dc2626",fontSize:11,marginTop:3}}>{fieldErrors.title}</div>}
       </FF>
       <FF label="Category" required>
         <select className="inp" value={f.category} onChange={e=>{sf("category",e.target.value);sf("subcat","");}}>
@@ -1021,7 +1079,7 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
       <FF label="Description" required hint="Condition, what's included, any defects...">
         <textarea className="inp" placeholder="Excellent condition, barely used..." value={f.description}
           onChange={e=>{sf("description",e.target.value);setFieldErrors(p=>({...p,description:undefined}));}}/>
-        {fieldErrors.description&&<div style={{color:"#dc2626",fontSize:11,marginTop:3}}>⚠️ {fieldErrors.description}</div>}
+        {fieldErrors.description&&<div style={{color:"#dc2626",fontSize:11,marginTop:3}}><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> {fieldErrors.description}</div>}
       </FF>
       <FF label={listing?"Photos — click × to remove, or add more below":"Photos (up to 8 — first is cover)"}>
         {existingPhotos.length>0&&<div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8}}>
@@ -1056,26 +1114,26 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
       {!listing&&!payChoice&&<div style={{marginTop:8,padding:"16px",background:"#F8F9FF",border:"1px solid #E0E7FF",borderRadius:12}}>
         <div style={{fontWeight:700,fontSize:14,color:"#1A1A1A",marginBottom:4}}>How do you want to post?</div>
         <div style={{fontSize:13,color:"#636363",marginBottom:14,lineHeight:1.6}}>
-          🔒 The buyer's contact info is hidden until you pay KSh 250. Choose when you'd like to pay:
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> The buyer's contact info is hidden until you pay KSh 250. Choose when you'd like to pay:
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
           <div onClick={()=>setPayChoice("now")} style={{padding:"14px 16px",border:"2px solid #1428A0",borderRadius:10,cursor:"pointer",background:"#EEF2FF"}}>
-            <div style={{fontWeight:700,fontSize:14,color:"#1428A0",marginBottom:3}}>💳 Pay KSh 250 Now</div>
+            <div style={{fontWeight:700,fontSize:14,color:"#1428A0",marginBottom:3}}>Pay KSh 250 Now</div>
             <div style={{fontSize:12,color:"#4338CA"}}>M-Pesa STK push sent immediately. Buyer contact revealed as soon as payment confirms.</div>
           </div>
           <div onClick={()=>setPayChoice("later")} style={{padding:"14px 16px",border:"1.5px solid #E0E0E0",borderRadius:10,cursor:"pointer",background:"#fff"}}>
-            <div style={{fontWeight:700,fontSize:14,color:"#1A1A1A",marginBottom:3}}>⏰ Post Anonymously (Pay Later)</div>
+            <div style={{fontWeight:700,fontSize:14,color:"#1A1A1A",marginBottom:3}}>Post Anonymously (Pay Later)</div>
             <div style={{fontSize:12,color:"#636363"}}>Your ad goes live but buyer contact stays hidden. Pay anytime from your dashboard to reveal it.</div>
           </div>
         </div>
       </div>}
 
       {payChoice&&<div style={{background:payChoice==="now"?"#EEF2FF":"#F8F8F8",border:`1px solid ${payChoice==="now"?"#C7D2FE":"#E0E0E0"}`,borderRadius:10,padding:"12px 14px",display:"flex",alignItems:"center",gap:10}}>
-        <span style={{fontSize:18}}>{payChoice==="now"?"💳":"⏰"}</span>
+        <span><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
         <div style={{flex:1,fontSize:13,color:payChoice==="now"?"#1428A0":"#636363"}}>
           {payChoice==="now"?"You'll receive an M-Pesa prompt after posting. Buyer contact revealed on payment.":"Ad posted anonymously. Pay KSh 250 anytime from your dashboard."}
         </div>
-        <button onClick={()=>setPayChoice(null)} style={{background:"none",border:"none",cursor:"pointer",color:"#AAAAAA",fontSize:18}}>✕</button>
+        <button onClick={()=>setPayChoice(null)} style={{background:"none",border:"none",cursor:"pointer",color:"#AAAAAA",fontSize:18}}>Close</button>
       </div>}
 
 
@@ -1090,14 +1148,14 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
         setShowPayModal(false);
         onSuccess({id:createdListingId,...f});
         onClose();
-        notify("⏳ Ad under review — you'll be notified when it's live. Buyer contact will be revealed on approval.","info");
+        notify("Ad under review — you'll be notified when it's live. Buyer contact will be revealed on approval.","info");
       }}
       onClose={()=>{
         // Payment failed/cancelled → listing stays in Pay Later state
         setShowPayModal(false);
         onSuccess({id:createdListingId,...f});
         onClose();
-        notify("⏳ Ad submitted for review. Pay KSh 250 from your dashboard to reveal buyer contact once live.","info");
+        notify("Ad submitted for review. Pay KSh 250 from your dashboard to reveal buyer contact once live.","info");
       }}
       notify={notify}
     />}
@@ -1109,9 +1167,9 @@ function ListingCard({listing:l,onClick,listView}){
   const photo=Array.isArray(l.photos)?l.photos.find(p=>typeof p==="string")||l.photos[0]?.url||null:null;
   return <div className={`lcard${listView?" lcard-list":""}`} onClick={onClick}>
     <div className="lthumb">
-      {photo?<WatermarkedImage src={photo} alt={l.title} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>:<span style={{fontSize:44,opacity:.15}}>📦</span>}
-      {l.status==="sold"&&<div className="sold-badge">SOLD ✓</div>}
-      {l.locked_buyer_id&&!l.is_unlocked&&<div style={{position:"absolute",bottom:0,left:0,right:0,background:"#1D1D1D",color:"#fff",fontSize:10,fontWeight:700,padding:"5px 10px",letterSpacing:".04em",textTransform:"uppercase"}}>🔥 Buyer Interested</div>}
+      {photo?<WatermarkedImage src={photo} alt={l.title} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>:<span style={{opacity:.15}}><svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span>}
+      {l.status==="sold"&&<div className="sold-badge">SOLD</div>}
+      {l.locked_buyer_id&&!l.is_unlocked&&<div style={{position:"absolute",bottom:0,left:0,right:0,background:"#1D1D1D",color:"#fff",fontSize:10,fontWeight:700,padding:"5px 10px",letterSpacing:".04em",textTransform:"uppercase"}}>Buyer Interested</div>}
     </div>
     <div style={{padding:"18px 20px",flex:1}}>
       <div style={{fontSize:12,fontWeight:700,letterSpacing:".06em",textTransform:"uppercase",color:"#888888",marginBottom:6}}>{l.category}</div>
@@ -1119,9 +1177,9 @@ function ListingCard({listing:l,onClick,listView}){
       <div style={{fontSize:22,fontWeight:700,color:"var(--a)",marginBottom:8,letterSpacing:"-.01em"}}>{fmtKES(l.price)}</div>
       {listView&&l.description&&<p style={{fontSize:13,color:"#888888",marginBottom:8,lineHeight:1.65}}>{l.description.slice(0,130)}...</p>}
       <div style={{display:"flex",gap:12,color:"#888888",fontSize:11,flexWrap:"wrap",borderTop:"1px solid #E8E8E8",paddingTop:8,marginTop:4}}>
-        {l.location&&<span>📍 {l.location}</span>}
-        <span>👁 {l.view_count||0}</span>
-        {l.seller_avg_rating>0&&<span style={{color:"#8B6400",fontWeight:700}}>★ {Number(l.seller_avg_rating).toFixed(1)}</span>}
+        {l.location&&<span><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {l.location}</span>}
+        <span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> {l.view_count||0}</span>
+        {l.seller_avg_rating>0&&<span style={{color:"#8B6400",fontWeight:700}}><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle",marginRight:2}}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> {Number(l.seller_avg_rating).toFixed(1)}</span>}
         <span style={{marginLeft:"auto"}}>{ago(l.created_at)}</span>
       </div>
     </div>
@@ -1143,14 +1201,14 @@ function LeaveReviewBtn({listing,user,token,notify}){
     try{
       await api(`/api/reviews/${listing.id}`,{method:"POST",body:JSON.stringify({rating,comment})},token);
       setDone(true);
-      notify("⭐ Review submitted!","success");
+      notify("Review submitted!","success");
       setTimeout(()=>setOpen(false),2000);
     }catch(e){notify(e.message||"Failed to submit","error");}
     finally{setLoading(false);}
   };
 
   const isSeller=listing.seller_id===user?.id;
-  const label=isSeller?"⭐ Review Buyer":"⭐ Review Seller";
+  const label=isSeller?"Review Buyer":"Review Seller";
 
   if(!open)return<button className="btn bs sm" onClick={()=>setOpen(true)}>{label}</button>;
 
@@ -1161,19 +1219,19 @@ function LeaveReviewBtn({listing,user,token,notify}){
         {isSeller?"How was the buyer? Did the transaction go smoothly?":"How was the seller? Was the item as described?"}
       </div>
       {done?<div style={{textAlign:"center",padding:"20px 0"}}>
-        <div style={{fontSize:48}}>⭐</div>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" style={{display:"inline",verticalAlign:"middle"}}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
         <div style={{fontWeight:600,marginTop:8}}>Review submitted!</div>
       </div>:<>
         <div style={{display:"flex",gap:8,marginBottom:16,justifyContent:"center"}}>
-          {[1,2,3,4,5].map(i=><span key={i} onClick={()=>setRating(i)} style={{fontSize:36,cursor:"pointer",color:i<=rating?"#111111":"#E0E0E0",userSelect:"none",transition:"color .1s"}}>★</span>)}
+          {[1,2,3,4,5].map(i=><span key={i} onClick={()=>setRating(i)} style={{cursor:"pointer",color:i<=rating?"#111111":"#E0E0E0",userSelect:"none",transition:"color .1s"}}><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>)}
         </div>
         {rating>0&&<div style={{textAlign:"center",fontSize:13,color:"#888888",marginBottom:12}}>
-          {["","😞 Poor","😐 Fair","🙂 Good","😊 Very Good","🤩 Excellent"][rating]}
+          {["","Poor","Fair","Good","Very Good","Excellent"][rating]}
         </div>}
         <textarea className="inp" rows={3} placeholder="Share your experience (optional)..." value={comment} onChange={e=>setComment(e.target.value)} style={{marginBottom:14,resize:"vertical"}}/>
         <div style={{display:"flex",gap:8}}>
           <button className="btn bs" style={{flex:1}} onClick={()=>setOpen(false)}>Cancel</button>
-          <button className="btn bp" style={{flex:1}} onClick={submit} disabled={loading||!rating}>{loading?<Spin/>:"Submit ⭐"}</button>
+          <button className="btn bp" style={{flex:1}} onClick={submit} disabled={loading||!rating}>{loading?<Spin/>:"Submit Review"}</button>
         </div>
       </>}
     </div>
@@ -1182,14 +1240,14 @@ function LeaveReviewBtn({listing,user,token,notify}){
 
 // ── REPORT LISTING BUTTON ────────────────────────────────────────────────────
 const REPORT_REASONS = [
-  {value:"scam",label:"🚨 Scam / Fraud"},
-  {value:"fake_item",label:"🎭 Fake or misleading item"},
-  {value:"wrong_price",label:"💰 Wrong price"},
-  {value:"offensive",label:"🚫 Offensive content"},
-  {value:"spam",label:"📧 Spam"},
-  {value:"wrong_category",label:"📂 Wrong category"},
-  {value:"already_sold",label:"✅ Item already sold"},
-  {value:"other",label:"❓ Other"},
+  {value:"scam",label:"Scam / Fraud"},
+  {value:"fake_item",label:"Fake or misleading item"},
+  {value:"wrong_price",label:"Wrong price"},
+  {value:"offensive",label:"Offensive content"},
+  {value:"spam",label:"Spam"},
+  {value:"wrong_category",label:"Wrong category"},
+  {value:"already_sold",label:"Item already sold"},
+  {value:"other",label:"Other"},
 ];
 function ReportListingBtn({listingId,token,notify}){
   const [open,setOpen]=useState(false);
@@ -1209,14 +1267,14 @@ function ReportListingBtn({listingId,token,notify}){
     finally{setLoading(false);}
   };
 
-  if(!open)return <button className="btn bgh sm" style={{fontSize:11,color:"#CCCCCC"}} onClick={()=>setOpen(true)}>🚩 Report</button>;
+  if(!open)return <button className="btn bgh sm" style={{fontSize:11,color:"#CCCCCC"}} onClick={()=>setOpen(true)}>Report</button>;
 
   return <div style={{position:"fixed",inset:0,zIndex:3000,background:"rgba(0,0,0,.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={e=>{if(e.target===e.currentTarget)setOpen(false);}}>
     <div style={{background:"#FFFFFF",borderRadius:6,padding:24,maxWidth:400,width:"100%",maxHeight:"90vh",overflowY:"auto"}}>
-      <div style={{fontWeight:700,fontSize:17,marginBottom:4}}>🚩 Report this listing</div>
+      <div style={{fontWeight:700,fontSize:17,marginBottom:4}}>Report this listing</div>
       <div style={{color:"#888888",fontSize:13,marginBottom:16}}>Help us keep Weka Soko safe. Reports are anonymous and reviewed by our team.</div>
       {done?<div style={{textAlign:"center",padding:"20px 0"}}>
-        <div style={{fontSize:48}}>✅</div>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="20 6 9 17 4 12"/></svg></div>
         <div style={{fontWeight:600,marginTop:8}}>Report submitted</div>
         <div style={{color:"#888888",fontSize:13}}>Our team will review it shortly.</div>
       </div>:<>
@@ -1251,14 +1309,14 @@ function VerificationBanner({user,token,notify}){
     finally{setLoading(false);}
   };
   return <div style={{background:"#F8F8F8",border:"1px solid #EBEBEB",borderRadius:6,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
-    <span style={{fontSize:20}}>📧</span>
+    <span><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
     <div style={{flex:1,minWidth:200}}>
       <div style={{fontWeight:600,fontSize:13,color:"rgba(180,90,0,1)"}}>Email not verified</div>
       <div style={{fontSize:12,color:"#888888"}}>Check your inbox for a verification link, or request a new one.</div>
     </div>
     {!sent
       ?<button className="btn by sm" onClick={resend} disabled={loading}>{loading?<Spin/>:"Resend Email"}</button>
-      :<span style={{fontSize:12,color:"#111111",fontWeight:600}}>✓ Sent!</span>}
+      :<span style={{fontSize:12,color:"#111111",fontWeight:600}}><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle",marginRight:3}}><polyline points="20 6 9 17 4 12"/></svg> Sent!</span>}
   </div>;
 }
 
@@ -1273,11 +1331,11 @@ function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnl
   return <Modal title={l.title} onClose={onClose} large footer={
     <div style={{width:"100%",display:"flex",gap:8,flexWrap:"wrap"}}>
       <button className="btn bgh sm" onClick={onShare}>↗ Share</button>
-      {user&&!isSeller&&<button className="btn bs sm" onClick={onChat}>💬 Chat with Seller</button>}
-      {isSeller&&<button className="btn bs sm" onClick={onChat}>💬 View Messages</button>}
-      {!isSeller&&l.status==="active"&&!l.locked_buyer_id&&user&&<button className="btn bg2 sm" onClick={onLockIn}>🔥 I'm Interested — Lock In</button>}
-      {!isSeller&&l.status==="active"&&user&&<button className="btn bs sm" onClick={onEscrow}>🔐 Buy with Escrow</button>}
-      {isSeller&&l.locked_buyer_id&&!l.is_unlocked&&<button className="btn bp" style={{flex:1}} onClick={onUnlock}>🔓 Pay KSh 250 to See Buyer Contact</button>}
+      {user&&!isSeller&&<button className="btn bs sm" onClick={onChat}>Chat with Seller</button>}
+      {isSeller&&<button className="btn bs sm" onClick={onChat}>View Messages</button>}
+      {!isSeller&&l.status==="active"&&!l.locked_buyer_id&&user&&<button className="btn bg2 sm" onClick={onLockIn}>I'm Interested — Lock In</button>}
+      {!isSeller&&l.status==="active"&&user&&<button className="btn bs sm" onClick={onEscrow}>Buy with Escrow</button>}
+      {isSeller&&l.locked_buyer_id&&!l.is_unlocked&&<button className="btn bp" style={{flex:1}} onClick={onUnlock}>Pay KSh 250 to See Buyer Contact</button>}
       {!user&&<button className="btn bp" onClick={()=>{}}>Sign In to Contact Seller</button>}
     </div>
   }>
@@ -1287,10 +1345,10 @@ function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnl
         ?<WatermarkedImage src={mainPhoto} alt={l.title}
             style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}
             onClick={()=>setLightbox({photos,idx:photos.indexOf(mainPhoto)<0?0:photos.indexOf(mainPhoto)})}/>
-        :<span style={{fontSize:80,opacity:.15}}>📦</span>}
+        :<span style={{opacity:.15}}><svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span>}
       {/* Zoom hint */}
-      {mainPhoto&&<div style={{position:"absolute",bottom:10,right:10,background:"rgba(0,0,0,.45)",color:"#fff",fontSize:11,padding:"4px 10px",borderRadius:80,pointerEvents:"none"}}>🔍 Click to enlarge</div>}
-      {l.status==="sold"&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.4)",display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none"}}><div style={{background:"#111111",color:"#fff",padding:"8px 28px",borderRadius:6,fontWeight:600,fontSize:18,letterSpacing:".08em"}}>SOLD ✓</div></div>}
+      {mainPhoto&&<div style={{position:"absolute",bottom:10,right:10,background:"rgba(0,0,0,.45)",color:"#fff",fontSize:11,padding:"4px 10px",borderRadius:80,pointerEvents:"none"}}>Click to enlarge</div>}
+      {l.status==="sold"&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.4)",display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none"}}><div style={{background:"#111111",color:"#fff",padding:"8px 28px",borderRadius:6,fontWeight:600,fontSize:18,letterSpacing:".08em"}}>SOLD</div></div>}
     </div>
     {photos.length>1&&<div style={{display:"flex",gap:6,marginBottom:16,overflowX:"auto"}}>
       {photos.map((p,i)=><img key={i} src={p} alt="" onClick={()=>setMainPhoto(p)} style={{width:70,height:55,objectFit:"cover",borderRadius:6,cursor:"pointer",opacity:mainPhoto===p?1:.55,border:mainPhoto===p?"2px solid #111111":"2px solid transparent",flexShrink:0}}/>)}
@@ -1305,7 +1363,7 @@ function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnl
           {l.subcat&&<span className="badge bg-m">{l.subcat}</span>}
         </div>
       </div>
-      <span className={`badge ${l.status==="active"||l.status==="locked"?"bg-g":l.status==="sold"?"bg-y":l.status==="pending_review"?"bg-b":l.status==="needs_changes"?"by2":l.status==="rejected"?"br2":"bg-m"}`}>{l.status==="pending_review"?"⏳ Under Review":l.status==="needs_changes"?"✏️ Needs Changes":l.status==="rejected"?"❌ Rejected":l.status}</span>
+      <span className={`badge ${l.status==="active"||l.status==="locked"?"bg-g":l.status==="sold"?"bg-y":l.status==="pending_review"?"bg-b":l.status==="needs_changes"?"by2":l.status==="rejected"?"br2":"bg-m"}`}>{l.status==="pending_review"?"Under Review":l.status==="needs_changes"?"Needs Changes":l.status==="rejected"?"Rejected":l.status}</span>
     </div>
 
     {l.description&&<div style={{marginBottom:16}}><div className="lbl">Description</div><p style={{color:"#888888",fontSize:14,lineHeight:1.8}}>{l.description}</p></div>}
@@ -1314,7 +1372,7 @@ function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnl
       {l.reason_for_sale&&<div style={{background:"#F5F5F5",borderRadius:6,padding:"12px 14px"}}><div className="lbl">Reason for Sale</div><div style={{fontSize:13}}>{l.reason_for_sale}</div></div>}
       {(l.location||l.county)&&<div style={{background:"#F5F5F5",borderRadius:6,padding:"12px 14px"}}>
         <div className="lbl">Location</div>
-        <div style={{fontSize:13}}>📍 {l.location}{l.county&&l.location&&l.location!==l.county?`, ${l.county}`:l.county||""}</div>
+        <div style={{fontSize:13}}><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {l.location}{l.county&&l.location&&l.location!==l.county?`, ${l.county}`:l.county||""}</div>
       </div>}
     </div>
 
@@ -1324,7 +1382,7 @@ function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnl
       {l.is_unlocked
         ?<div style={{background:"#F8F8F8",border:"1px solid #E8E8E8",borderRadius:12,padding:"16px 18px"}}>
           <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
-            <span style={{fontSize:18}}>🔓</span>
+            <span><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg></span>
             <div>
               <div style={{fontWeight:700,fontSize:14,color:"#111111"}}>Contact Revealed</div>
               <div style={{fontSize:12,color:"#888888"}}>Share responsibly — do not post publicly</div>
@@ -1332,15 +1390,15 @@ function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnl
           </div>
           <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
             {l.seller_name&&<div style={{display:"flex",alignItems:"center",gap:8,fontSize:13}}>
-              <span style={{fontSize:16}}>👤</span>
+              <span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
               <span style={{fontWeight:600}}>{l.seller_name}</span>
             </div>}
             {l.seller_phone&&<div style={{display:"flex",alignItems:"center",gap:8,fontSize:13}}>
-              <span style={{fontSize:16}}>📞</span>
+              <span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span>
               <span>{l.seller_phone}</span>
             </div>}
             {l.seller_email&&<div style={{display:"flex",alignItems:"center",gap:8,fontSize:13}}>
-              <span style={{fontSize:16}}>✉️</span>
+              <span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
               <span>{l.seller_email}</span>
             </div>}
           </div>
@@ -1364,17 +1422,17 @@ function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnl
           })()}
         </div>
         :<div style={{background:"#F5F5F5",borderRadius:6,padding:"14px",display:"flex",alignItems:"center",gap:12}}>
-          <span style={{fontSize:30}}>🔒</span>
+          <span><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
           <div style={{flex:1}}>
             <div style={{fontWeight:600}}>{l.seller_anon||"Anonymous Seller"}</div>
             <div style={{fontSize:12,color:"#888888"}}>Pay KSh 250 to reveal contact details</div>
             <div style={{display:"flex",gap:6,marginTop:5,flexWrap:"wrap",alignItems:"center"}}>
               {l.seller_avg_rating>0&&<span style={{fontSize:11,background:"rgba(0,0,0,.05)",color:"#1428A0",padding:"2px 8px",borderRadius:80,fontWeight:700}}>
-                ★ {Number(l.seller_avg_rating).toFixed(1)} ({l.seller_review_count||0} review{l.seller_review_count!==1?"s":""})
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle",marginRight:2}}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> {Number(l.seller_avg_rating).toFixed(1)} ({l.seller_review_count||0} review{l.seller_review_count!==1?"s":""})
               </span>}
               {(!l.seller_avg_rating||l.seller_avg_rating===0)&&<span style={{fontSize:11,color:"#CCCCCC"}}>No reviews yet</span>}
               {l.response_rate!=null&&<span style={{fontSize:11,background:"#F0F0F0",color:"#1428A0",padding:"2px 8px",borderRadius:6,fontWeight:600}}>
-                ⚡ {Math.round(l.response_rate)}% response rate
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> {Math.round(l.response_rate)}% response rate
               </span>}
               {l.avg_response_hours!=null&&l.avg_response_hours<48&&<span style={{fontSize:11,color:"#888888"}}>
                 Replies in ~{l.avg_response_hours<1?"under an hour":l.avg_response_hours<24?Math.round(l.avg_response_hours)+"h":Math.round(l.avg_response_hours/24)+"d"}
@@ -1387,26 +1445,26 @@ function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnl
 
     {/* ── Buyer safety tip ───────────────────────────────────────────── */}
     {!isSeller&&l.status==="active"&&<div style={{background:"#F8F8F8",border:"1px solid #E8E8E8",borderRadius:12,padding:"12px 14px",marginBottom:10}}>
-      <div style={{fontSize:12,fontWeight:700,color:"#111111",marginBottom:4}}>🛡️ Stay Safe on Weka Soko</div>
+      <div style={{fontSize:12,fontWeight:700,color:"#111111",marginBottom:4}}><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Stay Safe on Weka Soko</div>
       <div style={{fontSize:12,color:"#888888",lineHeight:1.7}}>
         • <strong>Never pay outside this platform.</strong> If a seller asks for M-Pesa directly before you've met, that's a scam.<br/>
         • <strong>Use Escrow</strong> for expensive items — your money is held safely until you confirm delivery.<br/>
         • <strong>Meet in a public place</strong> for physical item handovers. Bring someone if you can.<br/>
-        • 🚩 <strong>Something feel off?</strong> Use the Report button below.
+        • <strong>Something feel off?</strong> Use the Report button below.
       </div>
     </div>}
 
     {/* Escrow info */}
     {!isSeller&&l.status==="active"&&<div className="alert ay" style={{fontSize:12}}>
-      🔐 <strong>Safe Escrow:</strong> Pay {fmtKES(l.price+escrowFee)} (item {fmtKES(l.price)} + 7.5% fee). Funds held until you confirm you received the item.
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle",marginRight:4}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> <strong>Safe Escrow:</strong> Pay {fmtKES(l.price+escrowFee)} (item {fmtKES(l.price)} + 7.5% fee). Funds held until you confirm you received the item.
     </div>}
 
     <div style={{display:"flex",gap:16,fontSize:12,color:"#888888",marginTop:10,flexWrap:"wrap",alignItems:"center",justifyContent:"space-between"}}>
       <div style={{display:"flex",gap:12}}>
-        <span>👁 {l.view_count||0} views</span>
-        <span>🔥 {l.interest_count||0} interested</span>
-        <span>🕒 {ago(l.created_at)}</span>
-        {l.expires_at&&<span style={{color:new Date(l.expires_at)<new Date()?"#888888":"#CCCCCC"}}>⏰ {timeLeft(l.expires_at)}</span>}
+        <span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> {l.view_count||0} views</span>
+        <span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M12 2c0 0-5 4-5 9a5 5 0 0 0 10 0c0-5-5-9-5-9z"/><path d="M12 12c0 0-2 1.5-2 3a2 2 0 0 0 4 0c0-1.5-2-3-2-3z"/></svg> {l.interest_count||0} interested</span>
+        <span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle",marginRight:2}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> {ago(l.created_at)}</span>
+        {l.expires_at&&<span style={{color:new Date(l.expires_at)<new Date()?"#888888":"#CCCCCC"}}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> {timeLeft(l.expires_at)}</span>}
       </div>
       {user&&!isSeller&&<ReportListingBtn listingId={l.id} token={token} notify={notify}/>}
       {user&&(isSeller||isBuyer)&&l.status==="sold"&&<LeaveReviewBtn listing={l} user={user} token={token} notify={notify}/>}
@@ -1428,8 +1486,8 @@ function MarkSoldModal({listing, token, notify, onClose, onSuccess}) {
       }, token);
       notify(
         channel === "platform"
-          ? "🎉 Marked as sold via Weka Soko!"
-          : "✅ Marked as sold outside platform.",
+          ? "Marked as sold via Weka Soko!"
+          : "Marked as sold outside platform.",
         "success"
       );
       onSuccess(listing.id, channel);
@@ -1438,9 +1496,9 @@ function MarkSoldModal({listing, token, notify, onClose, onSuccess}) {
     finally { setLoading(false); }
   };
 
-  return <Modal title="✅ Mark as Sold" onClose={onClose}>
+  return <Modal title="Mark as Sold" onClose={onClose}>
     <div style={{textAlign:"center", padding:"8px 0 16px"}}>
-      <div style={{fontSize:48, marginBottom:12}}>🏷️</div>
+      <div style={{marginBottom:12,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></div>
       <div style={{fontWeight:700, fontSize:16, marginBottom:6}}>{listing.title}</div>
       <div style={{fontSize:13, color:"#888888", marginBottom:24}}>
         How did this item sell? This helps us improve Weka Soko.
@@ -1449,14 +1507,14 @@ function MarkSoldModal({listing, token, notify, onClose, onSuccess}) {
       <div style={{display:"flex", flexDirection:"column", gap:12}}>
         <button className="btn bp" style={{width:"100%", padding:"16px", flexDirection:"column", gap:4, height:"auto"}}
           onClick={()=>confirm("platform")} disabled={loading}>
-          <div style={{fontSize:22}}>🛒</div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
           <div style={{fontWeight:700, fontSize:14}}>Sold via Weka Soko</div>
           <div style={{fontSize:12, opacity:.8, fontWeight:400}}>Buyer found me through this platform</div>
         </button>
 
         <button className="btn bs" style={{width:"100%", padding:"16px", flexDirection:"column", gap:4, height:"auto"}}
           onClick={()=>confirm("outside")} disabled={loading}>
-          <div style={{fontSize:22}}>🤝</div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
           <div style={{fontWeight:700, fontSize:14}}>Sold Outside Platform</div>
           <div style={{fontSize:12, color:"#888888", fontWeight:400}}>I found the buyer elsewhere</div>
         </button>
@@ -1475,13 +1533,13 @@ function RoleSwitcher({user,token,notify,onSwitch}){
     setLoading(true);
     try{
       const data=await api("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:target})},token);
-      notify(`Switched to ${target} account ✓`,"success");
+      notify(`Switched to ${target} account`,"success");
       onSwitch(data.user);
     }catch(err){notify(err.message,"error");}
     finally{setLoading(false);}
   };
   return <button className="btn bs" style={{justifyContent:"flex-start",gap:10}} onClick={switch_} disabled={loading}>
-    {loading?<Spin/>:<>{target==="seller"?"🏷":"🛍"} Switch to {target==="seller"?"Seller":"Buyer"} Account</>}
+    {loading?<Spin/>:<>Switch to {target==="seller"?"Seller":"Buyer"} Account</>}
   </button>;
 }
 
@@ -1497,13 +1555,13 @@ function PostRequestModal({onClose,token,notify,onSuccess}){
     setLoading(true);
     try{
       const result=await api("/api/requests",{method:"POST",body:JSON.stringify({title:f.title.trim(),description:f.description.trim(),budget:f.budget||undefined,county:f.county||undefined})},token);
-      notify("✅ Request posted! Sellers will be notified.","success");
+      notify("Request posted! Sellers will be notified.","success");
       onSuccess(result);onClose();
     }catch(err){notify(err.message,"error");}
     finally{setLoading(false);}
   };
-  return <Modal title="🛒 Post a Buyer Request" onClose={onClose} footer={
-    <><button className="btn bs" onClick={onClose}>Cancel</button><button className="btn bp" onClick={submit} disabled={loading}>{loading?<Spin/>:"Post Request →"}</button></>
+  return <Modal title="Post a Buyer Request" onClose={onClose} footer={
+    <><button className="btn bs" onClick={onClose}>Cancel</button><button className="btn bp" onClick={submit} disabled={loading}>{loading?<Spin/>:"Post Request"}</button></>
   }>
     <div className="alert ag" style={{marginBottom:16,fontSize:13}}>Tell sellers what you're looking for. They'll be notified when a matching item is listed.</div>
     <FF label="What are you looking for?" required>
@@ -1576,7 +1634,7 @@ function WhatBuyersWant({user,token,notify,onSignIn,compact=false,onIHaveThis}){
     <div style={{display:"flex",flexDirection:"column",gap:0}}>
       {loading?<div style={{textAlign:"center",padding:20}}><Spin/></div>
         :requests.length===0?<div style={{textAlign:"center",padding:"20px 0",color:"#AAAAAA",fontSize:13}}>
-          <div style={{fontSize:28,marginBottom:8,opacity:.3}}>🛒</div>
+          <div style={{marginBottom:8,opacity:.3,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
           No requests yet
         </div>
         :requests.slice(0,4).map(r=>(
@@ -1585,7 +1643,7 @@ function WhatBuyersWant({user,token,notify,onSignIn,compact=false,onIHaveThis}){
             <div style={{fontSize:12,color:"#777",lineHeight:1.5,marginBottom:6}}>{r.description?.slice(0,60)}{r.description?.length>60?"...":""}</div>
             <div style={{display:"flex",gap:6,alignItems:"center",justifyContent:"space-between"}}>
               {r.budget&&<span style={{fontSize:11,fontWeight:600,color:"#1428A0"}}>KSh {Number(r.budget).toLocaleString()}</span>}
-              <button className="btn bp sm" style={{fontSize:11,padding:"4px 10px",borderRadius:6}} onClick={()=>handleIHaveThis(r)}>📬 I Have This</button>
+              <button className="btn bp sm" style={{fontSize:11,padding:"4px 10px",borderRadius:6}} onClick={()=>handleIHaveThis(r)}>I Have This</button>
             </div>
           </div>
         ))
@@ -1602,7 +1660,7 @@ function WhatBuyersWant({user,token,notify,onSignIn,compact=false,onIHaveThis}){
       <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-between",marginBottom:28,flexWrap:"wrap",gap:12}}>
         <div>
           <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"#767676",marginBottom:8}}>Community</div>
-          <h2 style={{fontSize:"clamp(24px,3vw,36px)",fontWeight:500,letterSpacing:"-.01em",color:"#1D1D1D",fontFamily:"var(--fn)",lineHeight:1.1}}>🛒 What Buyers Want</h2>
+          <h2 style={{fontSize:"clamp(24px,3vw,36px)",fontWeight:500,letterSpacing:"-.01em",color:"#1D1D1D",fontFamily:"var(--fn)",lineHeight:1.1}}>What Buyers Want</h2>
           <p style={{fontSize:13,color:"#767676",marginTop:6}}>{total} active request{total!==1?"s":" "} from buyers looking for items</p>
         </div>
         <button style={{background:"#1D1D1D",color:"#fff",border:"none",padding:"12px 24px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:8,whiteSpace:"nowrap"}}
@@ -1620,13 +1678,13 @@ function WhatBuyersWant({user,token,notify,onSignIn,compact=false,onIHaveThis}){
           <option value="">All Counties</option>
           {["Nairobi","Mombasa","Kisumu","Nakuru","Eldoret","Kiambu","Machakos","Kajiado","Meru","Nyeri","Kisii","Kakamega"].map(c=><option key={c} value={c}>{c}</option>)}
         </select>
-        {(search||county)&&<button style={{padding:"10px 14px",border:"1px solid #E0E0E0",background:"#fff",cursor:"pointer",fontSize:12,fontFamily:"var(--fn)",color:"#636363"}} onClick={()=>{setSearch("");setCounty("");}}>✕ Clear</button>}
+        {(search||county)&&<button style={{padding:"10px 14px",border:"1px solid #E0E0E0",background:"#fff",cursor:"pointer",fontSize:12,fontFamily:"var(--fn)",color:"#636363"}} onClick={()=>{setSearch("");setCounty("");}}>Clear</button>}
       </div>
 
       {/* Requests grid */}
       {loading?<div style={{textAlign:"center",padding:40}}><Spin s="32px"/></div>
         :requests.length===0?<div style={{textAlign:"center",padding:"40px 20px",color:"#767676"}}>
-            <div style={{fontSize:40,marginBottom:12,opacity:.3}}>🛒</div>
+            <div style={{marginBottom:12,opacity:.3,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
             <div style={{fontWeight:700,fontSize:16,marginBottom:6}}>No requests yet</div>
             <div style={{fontSize:13}}>Be the first to post what you're looking for</div>
           </div>
@@ -1636,7 +1694,7 @@ function WhatBuyersWant({user,token,notify,onSignIn,compact=false,onIHaveThis}){
               {/* Header row */}
               <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:8,gap:8}}>
                 <div style={{fontWeight:700,fontSize:15,lineHeight:1.3,letterSpacing:"-.01em",flex:1}}>{r.title}</div>
-                {user?.id===r.user_id&&<button onClick={()=>deleteRequest(r.id)} style={{background:"none",border:"none",cursor:"pointer",color:"#AEAEB2",fontSize:14,padding:"0 2px",flexShrink:0}}>✕</button>}
+                {user?.id===r.user_id&&<button onClick={()=>deleteRequest(r.id)} style={{background:"none",border:"none",cursor:"pointer",color:"#AEAEB2",fontSize:14,padding:"0 2px",flexShrink:0}}>Close</button>}
               </div>
               {/* Description — expandable */}
               <div style={{fontSize:12,color:"#636363",lineHeight:1.65,marginBottom:10}}>
@@ -1649,7 +1707,7 @@ function WhatBuyersWant({user,token,notify,onSignIn,compact=false,onIHaveThis}){
               {/* Tags */}
               <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
                 {r.budget&&<span style={{background:"rgba(0,0,0,.05)",color:"#111111",padding:"3px 10px",fontSize:11,fontWeight:700}}>Budget: {fmtKES(r.budget)}</span>}
-                {r.county&&<span style={{background:"#F0F0F0",color:"#1428A0",padding:"3px 10px",fontSize:11,fontWeight:600}}>📍 {r.county}</span>}
+                {r.county&&<span style={{background:"#F0F0F0",color:"#1428A0",padding:"3px 10px",fontSize:11,fontWeight:600}}><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {r.county}</span>}
               </div>
               {/* Footer */}
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",fontSize:11,color:"#AEAEB2",borderTop:"1px solid #F0F0F0",paddingTop:10}}>
@@ -1657,7 +1715,7 @@ function WhatBuyersWant({user,token,notify,onSignIn,compact=false,onIHaveThis}){
                 <div style={{display:"flex",gap:8,alignItems:"center"}}>
                   {parseInt(r.matching_listings)>0&&<span style={{color:"#1428A0",fontWeight:700}}>{r.matching_listings} listing{r.matching_listings!==1?"s":""} match</span>}
                   <span>{ago(r.created_at)}</span>
-                  <button className="btn bp sm" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>handleIHaveThis(r)}>📬 I Have This</button>
+                  <button className="btn bp sm" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>handleIHaveThis(r)}>I Have This</button>
                 </div>
               </div>
             </div>
@@ -1714,7 +1772,7 @@ function SoldSection({token,user}){
   if(loading)return<div style={{textAlign:"center",padding:60}}><Spin s="36px"/></div>;
 
   if(items.length===0)return<div className="empty">
-    <div style={{fontSize:56,marginBottom:16,opacity:.15}}>✅</div>
+    <div style={{marginBottom:16,opacity:.15,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="20 6 9 17 4 12"/></svg></div>
     <h3 style={{fontWeight:700,fontSize:20,marginBottom:8,letterSpacing:"-.02em"}}>No sold items yet</h3>
     <p style={{color:"#767676"}}>Completed sales will appear here</p>
   </div>;
@@ -1751,18 +1809,18 @@ function SoldSection({token,user}){
           {/* Image */}
           <div style={{aspectRatio:"4/3",background:"#F0F0F0",position:"relative",overflow:"hidden"}}>
             {photo?<img src={photo} alt={l.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-              :<span style={{fontSize:40,position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",opacity:.15}}>📦</span>}
+              :<span style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",opacity:.15}}><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span>}
             {/* SOLD overlay */}
             <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <span style={{background:"#fff",color:"#1428A0",fontSize:11,fontWeight:700,padding:"5px 14px",letterSpacing:".08em",textTransform:"uppercase"}}>SOLD ✓</span>
+              <span style={{background:"#fff",color:"#1428A0",fontSize:11,fontWeight:700,padding:"5px 14px",letterSpacing:".08em",textTransform:"uppercase"}}>SOLD</span>
             </div>
             {/* Sale channel badge */}
             {l.sold_channel&&<div style={{position:"absolute",top:8,left:8,background:"rgba(0,0,0,.75)",color:"#fff",fontSize:10,fontWeight:700,padding:"3px 8px"}}>
-              {l.sold_channel==="platform"?"🛒 Via WekaSoko":"🤝 Elsewhere"}
+              {l.sold_channel==="platform"?"Via WekaSoko":"Elsewhere"}
             </div>}
             {/* Rating */}
             {l.avg_rating>0&&<div style={{position:"absolute",top:8,right:8,background:"rgba(0,0,0,.65)",color:"#fff",fontSize:11,fontWeight:700,padding:"3px 8px",display:"flex",alignItems:"center",gap:3}}>
-              <span style={{color:"#FFD700"}}>★</span>{Number(l.avg_rating).toFixed(1)}
+              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="#FFD700" stroke="#FFD700" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>{Number(l.avg_rating).toFixed(1)}
             </div>}
           </div>
 
@@ -1775,22 +1833,22 @@ function SoldSection({token,user}){
             {/* Timeline — listed → sold */}
             <div style={{background:"#F6F6F6",padding:"10px 12px",fontSize:11,lineHeight:1.8,borderRadius:8}}>
               <div style={{display:"flex",justifyContent:"space-between",color:"#1428A0"}}>
-                <span>📅 Listed</span>
+                <span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Listed</span>
                 <span style={{fontWeight:600}}>{fmtDate(l.created_at)}</span>
               </div>
               <div style={{display:"flex",justifyContent:"space-between",color:"#111111"}}>
-                <span>✅ Sold</span>
+                <span>Sold</span>
                 <span style={{fontWeight:600}}>{fmtDate(l.sold_at)}</span>
               </div>
               {dur&&<div style={{marginTop:4,paddingTop:6,borderTop:"1px solid #E5E5E5",color:"#636363",display:"flex",justifyContent:"space-between"}}>
-                <span>⏱ Time to sell</span>
+                <span>Time to sell</span>
                 <span style={{fontWeight:700,color:"#111111"}}>{dur}</span>
               </div>}
             </div>
 
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",fontSize:11,color:"#767676",marginTop:8}}>
-              <span>📍 {l.county||l.location||"Kenya"}</span>
-              {l.review_count>0&&<span style={{color:"#FFD700"}}>{"★".repeat(Math.round(l.avg_rating||0))}</span>}
+              <span><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {l.county||l.location||"Kenya"}</span>
+              {l.review_count>0&&<span style={{color:"#FFD700"}}>{[...Array(Math.round(l.avg_rating||0))].map((_,i)=><svg key={i} xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>)}</span>}
             </div>
           </div>
         </div>;
@@ -1799,20 +1857,20 @@ function SoldSection({token,user}){
 
     {/* Pagination */}
     {Math.ceil(total/PER)>1&&<div style={{display:"flex",gap:6,justifyContent:"center",marginTop:32}}>
-      {pg>1&&<button className="btn bs sm" onClick={()=>setPg(p=>p-1)}>← Prev</button>}
+      {pg>1&&<button className="btn bs sm" onClick={()=>setPg(p=>p-1)}>Prev</button>}
       <span style={{padding:"7px 14px",fontSize:13,color:"#767676",fontWeight:500}}>Page {pg} of {Math.ceil(total/PER)}</span>
-      {pg<Math.ceil(total/PER)&&<button className="btn bs sm" onClick={()=>setPg(p=>p+1)}>Next →</button>}
+      {pg<Math.ceil(total/PER)&&<button className="btn bs sm" onClick={()=>setPg(p=>p+1)}>Next</button>}
     </div>}
   </>;
 }
 // ── REVIEWS SECTION ───────────────────────────────────────────────────────────
 function StarPicker({value,onChange}){
   const [hover,setHover]=useState(0);
-  return<div style={{display:"flex",gap:4,fontSize:28,cursor:"pointer"}}>
+  return<div style={{display:"flex",gap:4,cursor:"pointer"}}>
     {[1,2,3,4,5].map(s=><span key={s}
       style={{color:s<=(hover||value)?"#111111":"#E0E0E0",transition:"color .1s",userSelect:"none"}}
       onMouseEnter={()=>setHover(s)} onMouseLeave={()=>setHover(0)}
-      onClick={()=>onChange(s)}>★</span>)}
+      onClick={()=>onChange(s)}><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>)}
   </div>;
 }
 
@@ -1845,7 +1903,7 @@ function ReviewsSection({token,user,notify}){
     setSubmitting(true);
     try{
       await api("/api/reviews",{method:"POST",body:JSON.stringify({listing_id:writing.id,rating,comment})},token);
-      notify("⭐ Review submitted!","success");
+      notify("Review submitted!","success");
       setWriting(null);setRating(0);setComment("");
       load();
     }catch(e){notify(e.message||"Failed to submit","error");}
@@ -1862,7 +1920,7 @@ function ReviewsSection({token,user,notify}){
     {stats&&(stats.review_count>0)&&<div style={{background:"#F5F5F5",border:"1px solid #E8E8E8",borderRadius:6,padding:"18px 20px",marginBottom:18,display:"flex",gap:16,alignItems:"center"}}>
       <div style={{textAlign:"center",flexShrink:0}}>
         <div style={{fontSize:44,fontWeight:700,color:"#111111",lineHeight:1}}>{Number(stats.avg_rating||0).toFixed(1)}</div>
-        <div style={{fontSize:16,color:"#1428A0",marginTop:2}}>{"★".repeat(Math.round(stats.avg_rating||0))}{"☆".repeat(5-Math.round(stats.avg_rating||0))}</div>
+        <div style={{fontSize:16,color:"#1428A0",marginTop:2,display:"flex",gap:2,justifyContent:"center"}}>{[1,2,3,4,5].map(i=><svg key={i} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill={i<=Math.round(stats.avg_rating||0)?"currentColor":"none"} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>)}</div>
       </div>
       <div>
         <div style={{fontWeight:700,fontSize:16,marginBottom:2}}>Your Rating</div>
@@ -1873,12 +1931,12 @@ function ReviewsSection({token,user,notify}){
 
     {/* Pending reviews to write */}
     {pending.length>0&&<>
-      <div className="lbl" style={{marginBottom:10}}>⭐ Leave a Review ({pending.length} pending)</div>
+      <div className="lbl" style={{marginBottom:10}}>Leave a Review ({pending.length} pending)</div>
       <div className="alert ay" style={{fontSize:12,marginBottom:14}}>
         You can leave a review after a transaction is complete. Reviews help build trust on Weka Soko.
       </div>
       {pending.map(p=><div key={p.id} style={{display:"flex",alignItems:"center",gap:12,padding:"13px 15px",background:"rgba(176,127,16,.06)",border:"1px solid rgba(176,127,16,.2)",borderRadius:6,marginBottom:10}}>
-        <span style={{fontSize:24}}>⭐</span>
+        <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" style={{display:"inline",verticalAlign:"middle"}}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontWeight:600,fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</div>
           <div style={{fontSize:11,color:"#888888"}}>You were the {p.my_role} · Rate the {p.my_role==="buyer"?"seller":"buyer"}</div>
@@ -1901,7 +1959,7 @@ function ReviewsSection({token,user,notify}){
       </FF>
       <div style={{display:"flex",gap:8}}>
         <button className="btn bs" onClick={()=>{setWriting(null);setRating(0);setComment("");}}>Cancel</button>
-        <button className="btn bp" style={{flex:1}} onClick={submit} disabled={submitting||!rating}>{submitting?<Spin/>:"Submit Review ⭐"}</button>
+        <button className="btn bp" style={{flex:1}} onClick={submit} disabled={submitting||!rating}>{submitting?<Spin/>:"Submit Review"}</button>
       </div>
     </div>}
 
@@ -1912,9 +1970,9 @@ function ReviewsSection({token,user,notify}){
     </div>:reviews.map((r,i)=><div key={r.id||i} style={{padding:"14px 16px",background:"#F5F5F5",borderRadius:6,marginBottom:10,border:"1px solid #E8E8E8"}}>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
-          <span style={{fontSize:16,color:"#1428A0"}}>{"★".repeat(r.rating)}{"☆".repeat(5-r.rating)}</span>
+          <span style={{color:"#1428A0",display:"inline-flex",gap:1,alignItems:"center"}}>{[1,2,3,4,5].map(i=><svg key={i} xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill={i<=r.rating?"currentColor":"none"} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>)}</span>
           <span style={{fontWeight:700,fontSize:14}}>{r.rating}/5</span>
-          <span className={`badge ${r.reviewer_role==="buyer"?"bg-b":"bg-g"}`} style={{fontSize:10}}>{r.reviewer_role==="buyer"?"🛍 Buyer":"🏷 Seller"}</span>
+          <span className={`badge ${r.reviewer_role==="buyer"?"bg-b":"bg-g"}`} style={{fontSize:10}}>{r.reviewer_role==="buyer"?"Buyer":"Seller"}</span>
         </div>
         <span style={{fontSize:11,color:"#CCCCCC"}}>{ago(r.created_at)}</span>
       </div>
@@ -1957,7 +2015,7 @@ function MyRequestsTab({token,notify,user}){
     </div>
     {requests.length===0
       ?<div className="empty" style={{padding:"32px 0"}}>
-          <div style={{fontSize:40,marginBottom:12,opacity:.2}}>🛒</div>
+          <div style={{marginBottom:12,opacity:.2,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
           <p style={{fontWeight:700,marginBottom:6}}>No requests yet</p>
           <p style={{fontSize:13,color:"#888888"}}>Post a request to let sellers know what you're looking for</p>
           <button className="btn bp" style={{marginTop:14}} onClick={()=>setShowModal(true)}>Post a Request →</button>
@@ -1966,12 +2024,12 @@ function MyRequestsTab({token,notify,user}){
         <div key={r.id} style={{padding:"14px 16px",background:"#F5F5F5",borderRadius:6,marginBottom:10,border:"1px solid #E8E8E8",borderLeft:"3px solid #E0E0E0"}}>
           <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:8,marginBottom:6}}>
             <div style={{fontWeight:700,fontSize:14}}>{r.title}</div>
-            <button onClick={()=>deleteRequest(r.id)} style={{background:"none",border:"none",cursor:"pointer",color:"#CCCCCC",fontSize:14,padding:"0 2px",flexShrink:0}}>✕</button>
+            <button onClick={()=>deleteRequest(r.id)} style={{background:"none",border:"none",cursor:"pointer",color:"#CCCCCC",fontSize:14,padding:"0 2px",flexShrink:0}}>Close</button>
           </div>
           <div style={{fontSize:12,color:"#888888",marginBottom:8,lineHeight:1.6}}>{r.description}</div>
           <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:6}}>
             {r.budget&&<span className="badge bg-g">Budget: {fmtKES(r.budget)}</span>}
-            {r.county&&<span className="badge bg-m">📍 {r.county}</span>}
+            {r.county&&<span className="badge bg-m"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {r.county}</span>}
             <span className={`badge ${r.status==="active"?"bg-g":"bg-m"}`}>{r.status}</span>
           </div>
           <div style={{fontSize:11,color:"#CCCCCC"}}>{ago(r.created_at)}</div>
@@ -2021,7 +2079,7 @@ function PitchesTab({token, notify, user}) {
   if (loading) return <div style={{textAlign:"center",padding:40}}><Spin s="32px"/></div>;
 
   if (requests.length === 0) return <div className="empty" style={{padding:"40px 0"}}>
-    <div style={{fontSize:40,marginBottom:12,opacity:.2}}>📬</div>
+    <div style={{marginBottom:12,opacity:.2,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
     <p style={{fontWeight:700,marginBottom:6}}>No active requests</p>
     <p style={{fontSize:13,color:"var(--mut)"}}>Post a buyer request to start receiving pitches from sellers</p>
   </div>;
@@ -2039,7 +2097,7 @@ function PitchesTab({token, notify, user}) {
             <div style={{fontSize:13,color:"#888",lineHeight:1.5}}>{r.description?.slice(0,80)}{r.description?.length>80?"...":""}</div>
             <div style={{display:"flex",gap:8,marginTop:8,flexWrap:"wrap"}}>
               {r.budget&&<span style={{background:"#EEF2FF",color:"#1428A0",padding:"3px 10px",borderRadius:20,fontSize:12,fontWeight:700}}>Budget: {fmtKES(r.budget)}</span>}
-              {r.county&&<span style={{background:"#F0F0F0",color:"#555",padding:"3px 10px",borderRadius:20,fontSize:12}}>📍 {r.county}</span>}
+              {r.county&&<span style={{background:"#F0F0F0",color:"#555",padding:"3px 10px",borderRadius:20,fontSize:12}}><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {r.county}</span>}
               <span style={{background:"#F0F0F0",color:"#555",padding:"3px 10px",borderRadius:20,fontSize:12}}>{ago(r.created_at)}</span>
             </div>
           </div>
@@ -2057,7 +2115,7 @@ function PitchesTab({token, notify, user}) {
         {expanded === r.id && <div style={{borderTop:"1px solid #EBEBEB"}}>
           {rPitches.length === 0
             ? <div style={{padding:"24px",textAlign:"center",color:"#AAAAAA",fontSize:13}}>
-                <div style={{fontSize:32,marginBottom:8,opacity:.3}}>📬</div>
+                <div style={{marginBottom:8,opacity:.3,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
                 No pitches yet — sellers will appear here when they respond to your request.
               </div>
             : rPitches.map(p => (
@@ -2073,14 +2131,14 @@ function PitchesTab({token, notify, user}) {
                       <span style={{fontSize:11,color:"#AAAAAA",marginLeft:"auto"}}>{ago(p.created_at)}</span>
                     </div>
                     <p style={{fontSize:14,color:"#333",lineHeight:1.65,marginBottom:10,padding:"10px 12px",background:"#F8F8F8",borderRadius:8}}>{p.message}</p>
-                    {p.status === "accepted" && <div style={{fontSize:13,color:"#16a34a",fontWeight:600}}>✅ Accepted — you've unlocked their contact details</div>}
-                    {p.status === "declined" && <div style={{fontSize:13,color:"#888"}}>✕ Declined</div>}
+                    {p.status === "accepted" && <div style={{fontSize:13,color:"#16a34a",fontWeight:600}}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="20 6 9 17 4 12"/></svg> Accepted — you've unlocked their contact details</div>}
+                    {p.status === "declined" && <div style={{fontSize:13,color:"#888"}}>Declined</div>}
                   </div>
                 </div>
                 {p.status === "pending" && <div style={{display:"flex",gap:8,marginTop:10}}>
                   <button className="btn bp" style={{borderRadius:8,fontSize:13,padding:"8px 18px"}}
                     onClick={() => setPaying(p)}>
-                    🔓 Accept — Pay KSh 250
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg> Accept — Pay KSh 250
                   </button>
                   <button className="btn bs" style={{borderRadius:8,fontSize:13,padding:"8px 18px"}}
                     onClick={() => decline(p.id, r.id)}>
@@ -2104,7 +2162,7 @@ function PitchesTab({token, notify, user}) {
         try {
           const res = await api(`/api/pitches/${paying.id}/accept`, { method: "POST" }, token);
           if (res.seller_contact) {
-            notify(`✅ Contact revealed! ${res.seller_contact.name} — ${res.seller_contact.phone || res.seller_contact.email}`, "success");
+            notify(`Contact revealed! ${res.seller_contact.name} — ${res.seller_contact.phone || res.seller_contact.email}`, "success");
           }
         } catch(e) { notify(e.message, "error"); }
         setPaying(null);
@@ -2145,7 +2203,7 @@ function ProfileSection({user, token, notify, onUpdate}){
       }, token);
       onUpdate(updated);
       setEditing(false);
-      notify("✅ Profile updated!","success");
+      notify("Profile updated!","success");
     }catch(e){notify(e.message,"error");}
     finally{setSaving(false);}
   };
@@ -2154,7 +2212,7 @@ function ProfileSection({user, token, notify, onUpdate}){
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18}}>
       <div style={{fontWeight:700,fontSize:15,color:"#1A1A1A"}}>Profile Information</div>
       {!editing
-        ?<button className="btn bs sm" style={{borderRadius:8}} onClick={()=>setEditing(true)}>✏️ Edit</button>
+        ?<button className="btn bs sm" style={{borderRadius:8}} onClick={()=>setEditing(true)}>Edit</button>
         :<div style={{display:"flex",gap:8}}>
           <button className="btn bs sm" style={{borderRadius:8}} onClick={()=>{setEditing(false);setF({name:user.name||"",phone:user.phone||"",whatsapp_phone:user.whatsapp_phone||""});}}>Cancel</button>
           <button className="btn bp sm" style={{borderRadius:8}} onClick={save} disabled={saving}>{saving?<Spin/>:"Save"}</button>
@@ -2187,8 +2245,8 @@ function ProfileSection({user, token, notify, onUpdate}){
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <div style={{fontSize:15,color:"#1A1A1A",fontWeight:500}}>{user.email}</div>
           {user.is_verified
-            ?<span style={{background:"#DCFCE7",color:"#16a34a",padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700}}>✓ Verified</span>
-            :<span style={{background:"#FEF9C3",color:"#CA8A04",padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700}}>⚠ Unverified</span>}
+            ?<span style={{background:"#DCFCE7",color:"#16a34a",padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700}}>Verified</span>
+            :<span style={{background:"#FEF9C3",color:"#CA8A04",padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700}}>Unverified</span>}
         </div>
         <div style={{fontSize:12,color:"#AAAAAA",marginTop:3}}>Email cannot be changed</div>
       </div>
@@ -2213,7 +2271,7 @@ function ProfileSection({user, token, notify, onUpdate}){
       {/* Role — read-only display */}
       <div>
         <div style={{fontSize:12,fontWeight:600,color:"#888",marginBottom:6,textTransform:"uppercase",letterSpacing:".05em"}}>Account Type</div>
-        <span className={`badge ${user.role==="seller"?"bg-g":"bg-b"}`}>{user.role==="seller"?"🏷 Seller":"🛍 Buyer"}</span>
+        <span className={`badge ${user.role==="seller"?"bg-g":"bg-b"}`}>{user.role==="seller"?"Seller":"Buyer"}</span>
       </div>
 
       {/* Member since */}
@@ -2245,7 +2303,7 @@ function PasswordSection({user, token, notify}){
         method:"POST",
         body:JSON.stringify({currentPassword:f.current, newPassword:f.newPwd})
       }, token);
-      notify("✅ Password changed successfully!","success");
+      notify("Password changed successfully!","success");
       setOpen(false);
       setF({current:"",newPwd:"",confirm:""});
     }catch(e){notify(e.message,"error");}
@@ -2269,7 +2327,7 @@ function PasswordSection({user, token, notify}){
         <label style={{fontSize:12,fontWeight:600,color:"#888",marginBottom:6,display:"block",textTransform:"uppercase",letterSpacing:".05em"}}>Current Password</label>
         <div style={{position:"relative"}}>
           <input className="inp" type={showCurrent?"text":"password"} value={f.current} onChange={e=>setF(p=>({...p,current:e.target.value}))} placeholder="Enter current password" style={{paddingRight:44}}/>
-          <button onClick={()=>setShowCurrent(p=>!p)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#888"}}>{showCurrent?"🙈":"👁"}</button>
+          <button onClick={()=>setShowCurrent(p=>!p)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#888"}}>{showCurrent?<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>:<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}</button>
         </div>
       </div>}
 
@@ -2277,7 +2335,7 @@ function PasswordSection({user, token, notify}){
         <label style={{fontSize:12,fontWeight:600,color:"#888",marginBottom:6,display:"block",textTransform:"uppercase",letterSpacing:".05em"}}>New Password</label>
         <div style={{position:"relative"}}>
           <input className="inp" type={showNew?"text":"password"} value={f.newPwd} onChange={e=>setF(p=>({...p,newPwd:e.target.value}))} placeholder="Minimum 8 characters" style={{paddingRight:44}}/>
-          <button onClick={()=>setShowNew(p=>!p)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#888"}}>{showNew?"🙈":"👁"}</button>
+          <button onClick={()=>setShowNew(p=>!p)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#888"}}>{showNew?<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>:<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}</button>
         </div>
         {f.newPwd&&<div style={{marginTop:6,display:"flex",gap:4,alignItems:"center"}}>
           {[8,12,16].map(n=><div key={n} style={{height:3,flex:1,borderRadius:2,background:f.newPwd.length>=n?"#1428A0":"#E0E0E0",transition:"background .2s"}}/>)}
@@ -2289,7 +2347,7 @@ function PasswordSection({user, token, notify}){
         <label style={{fontSize:12,fontWeight:600,color:"#888",marginBottom:6,display:"block",textTransform:"uppercase",letterSpacing:".05em"}}>Confirm New Password</label>
         <input className="inp" type="password" value={f.confirm} onChange={e=>setF(p=>({...p,confirm:e.target.value}))} placeholder="Re-enter new password"/>
         {f.confirm&&f.newPwd&&<div style={{fontSize:12,marginTop:4,color:f.confirm===f.newPwd?"#16a34a":"#dc2626"}}>
-          {f.confirm===f.newPwd?"✓ Passwords match":"✗ Passwords do not match"}
+          {f.confirm===f.newPwd?"Passwords match":"Passwords do not match"}
         </div>}
       </div>
 
@@ -2310,23 +2368,23 @@ function VerificationSection({user, token, notify}){
     try{
       await api("/api/auth/resend-verification",{method:"POST"}, token);
       setSent(true);
-      notify("✅ Verification email sent! Check your inbox.","success");
+      notify("Verification email sent! Check your inbox.","success");
     }catch(e){notify(e.message,"error");}
     finally{setSending(false);}
   };
 
   return <div style={{background:"#FFFBEB",border:"1px solid #FDE68A",borderRadius:14,padding:"20px 22px"}}>
     <div style={{display:"flex",gap:14,alignItems:"flex-start"}}>
-      <span style={{fontSize:28,flexShrink:0}}>⚠️</span>
+      <span style={{flexShrink:0}}><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
       <div style={{flex:1}}>
         <div style={{fontWeight:700,fontSize:15,color:"#92400E",marginBottom:4}}>Email Not Verified</div>
         <div style={{fontSize:13,color:"#78350F",lineHeight:1.7,marginBottom:14}}>
           Your email <strong>{user.email}</strong> hasn't been verified yet. Verify it to secure your account and receive important notifications.
         </div>
         {sent
-          ?<div style={{fontSize:13,color:"#16a34a",fontWeight:600}}>✅ Email sent! Check your inbox (and spam folder).</div>
+          ?<div style={{fontSize:13,color:"#16a34a",fontWeight:600}}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="20 6 9 17 4 12"/></svg> Email sent! Check your inbox (and spam folder).</div>
           :<button className="btn bp" style={{borderRadius:10,background:"#D97706",border:"none"}} onClick={resend} disabled={sending}>
-            {sending?<Spin/>:"📧 Send Verification Email"}
+            {sending?<Spin/>:"Send Verification Email"}
           </button>}
       </div>
     </div>
@@ -2381,8 +2439,8 @@ function MobileDashboard({
           <div style={{fontSize:12,color:"rgba(255,255,255,.7)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user.email}</div>
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:4,alignItems:"flex-end"}}>
-          <span style={{background:"rgba(255,255,255,.2)",color:"#fff",padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700}}>{user.role==="seller"?"🏷 Seller":"🛍 Buyer"}</span>
-          {user.is_verified&&<span style={{background:"rgba(34,197,94,.25)",color:"#86efac",padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:700}}>✓ Verified</span>}
+          <span style={{background:"rgba(255,255,255,.2)",color:"#fff",padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700}}>{user.role==="seller"?"Seller":"Buyer"}</span>
+          {user.is_verified&&<span style={{background:"rgba(34,197,94,.25)",color:"#86efac",padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:700}}>Verified</span>}
         </div>
       </div>
 
@@ -2412,7 +2470,7 @@ function MobileDashboard({
           <div style={{background:"#FFF7ED",border:"1px solid #FED7AA",borderRadius:14,padding:"14px 16px"}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
               <div style={{fontWeight:700,fontSize:14,color:"#C2410C",display:"flex",alignItems:"center",gap:6}}>
-                🔥 {stats.buyersWaiting} Buyer{stats.buyersWaiting!==1?"s":""} Waiting
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M12 2c0 0-5 4-5 9a5 5 0 0 0 10 0c0-5-5-9-5-9z"/><path d="M12 12c0 0-2 1.5-2 3a2 2 0 0 0 4 0c0-1.5-2-3-2-3z"/></svg> {stats.buyersWaiting} Buyer{stats.buyersWaiting!==1?"s":""} Waiting
               </div>
               <span style={{background:"#FED7AA",color:"#C2410C",borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:700}}>{stats.buyersWaiting} new</span>
             </div>
@@ -2422,7 +2480,7 @@ function MobileDashboard({
                   <div style={{fontWeight:600,fontSize:13,color:"#1A1A1A",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.title}</div>
                   <div style={{fontSize:12,color:"#888",marginTop:2}}>Pay KSh 250 to reveal contact</div>
                 </div>
-                <button className="btn bp sm" style={{borderRadius:8,whiteSpace:"nowrap",fontSize:12}} onClick={()=>setShowPayModal(l)}>🔓 Reveal</button>
+                <button className="btn bp sm" style={{borderRadius:8,whiteSpace:"nowrap",fontSize:12}} onClick={()=>setShowPayModal(l)}>Reveal</button>
               </div>
             ))}
           </div>
@@ -2433,25 +2491,25 @@ function MobileDashboard({
           <div style={{fontSize:12,fontWeight:700,color:"#AAAAAA",letterSpacing:".06em",textTransform:"uppercase",marginBottom:12}}>Quick Actions</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
             {user.role==="seller"&&[
-              {icon:"📦",label:"My Ads",sub:`${stats?.activeListings||0} active`,action:()=>setMobSection("ads")},
-              {icon:"🔥",label:"Buyers",sub:`${stats?.buyersWaiting||0} waiting`,action:()=>setMobSection("ads")},
-              {icon:"🏆",label:"Sold Items",sub:`${stats?.soldListings||0} sold`,action:()=>setMobSection("ads")},
-              {icon:"🛒",label:"Requests",sub:`${myRequests.length} active`,action:()=>setMobSection("requests")},
+              {icon:"box",label:"My Ads",sub:`${stats?.activeListings||0} active`,action:()=>setMobSection("ads")},
+              {icon:"fire",label:"Buyers",sub:`${stats?.buyersWaiting||0} waiting`,action:()=>setMobSection("ads")},
+              {icon:"trophy",label:"Sold Items",sub:`${stats?.soldListings||0} sold`,action:()=>setMobSection("ads")},
+              {icon:"cart",label:"Requests",sub:`${myRequests.length} active`,action:()=>setMobSection("requests")},
             ].map(a=>(
               <button key={a.label} onClick={a.action} style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:14,padding:"16px",textAlign:"left",cursor:"pointer",fontFamily:"var(--fn)"}}>
-                <div style={{fontSize:26,marginBottom:8}}>{a.icon}</div>
+                <div style={{marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center"}}>{a.icon==="box"?<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>:a.icon==="fire"?<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M12 2c0 0-5 4-5 9a5 5 0 0 0 10 0c0-5-5-9-5-9z"/><path d="M12 12c0 0-2 1.5-2 3a2 2 0 0 0 4 0c0-1.5-2-3-2-3z"/></svg>:a.icon==="trophy"?<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="8 21 12 17 16 21"/><line x1="12" y1="17" x2="12" y2="11"/><path d="M7 4H4a2 2 0 0 0-2 2v1a5 5 0 0 0 5 5"/><path d="M17 4h3a2 2 0 0 1 2 2v1a5 5 0 0 1-5 5"/><rect x="7" y="2" width="10" height="10" rx="1"/></svg>:a.icon==="cart"?<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>:a.icon==="heart"?<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>:a.icon==="chat"?<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>:a.icon==="bell"?<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>:null}</div>
                 <div style={{fontWeight:700,fontSize:14,color:"#1A1A1A",marginBottom:2}}>{a.label}</div>
                 <div style={{fontSize:12,color:"#888"}}>{a.sub}</div>
               </button>
             ))}
             {user.role==="buyer"&&[
-              {icon:"❤️",label:"Saved",sub:`${buyerInterests.length} items`,action:()=>setMobSection("ads")},
-              {icon:"🛒",label:"Requests",sub:`${myRequests.length} active`,action:()=>setMobSection("requests")},
-              {icon:"💬",label:"Messages",sub:`${threads.length} chats`,action:()=>setMobSection("notif")},
-              {icon:"🔔",label:"Alerts",sub:`${unreadCount} unread`,action:()=>setMobSection("notif")},
+              {icon:"heart",label:"Saved",sub:`${buyerInterests.length} items`,action:()=>setMobSection("ads")},
+              {icon:"cart",label:"Requests",sub:`${myRequests.length} active`,action:()=>setMobSection("requests")},
+              {icon:"chat",label:"Messages",sub:`${threads.length} chats`,action:()=>setMobSection("notif")},
+              {icon:"bell",label:"Alerts",sub:`${unreadCount} unread`,action:()=>setMobSection("notif")},
             ].map(a=>(
               <button key={a.label} onClick={a.action} style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:14,padding:"16px",textAlign:"left",cursor:"pointer",fontFamily:"var(--fn)"}}>
-                <div style={{fontSize:26,marginBottom:8}}>{a.icon}</div>
+                <div style={{marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center"}}>{a.icon==="box"?<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>:a.icon==="fire"?<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M12 2c0 0-5 4-5 9a5 5 0 0 0 10 0c0-5-5-9-5-9z"/><path d="M12 12c0 0-2 1.5-2 3a2 2 0 0 0 4 0c0-1.5-2-3-2-3z"/></svg>:a.icon==="trophy"?<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="8 21 12 17 16 21"/><line x1="12" y1="17" x2="12" y2="11"/><path d="M7 4H4a2 2 0 0 0-2 2v1a5 5 0 0 0 5 5"/><path d="M17 4h3a2 2 0 0 1 2 2v1a5 5 0 0 1-5 5"/><rect x="7" y="2" width="10" height="10" rx="1"/></svg>:a.icon==="cart"?<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>:a.icon==="heart"?<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>:a.icon==="chat"?<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>:a.icon==="bell"?<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>:null}</div>
                 <div style={{fontWeight:700,fontSize:14,color:"#1A1A1A",marginBottom:2}}>{a.label}</div>
                 <div style={{fontSize:12,color:"#888"}}>{a.sub}</div>
               </button>
@@ -2469,7 +2527,7 @@ function MobileDashboard({
             const photo=Array.isArray(l.photos)?l.photos.find(p=>typeof p==="string")||l.photos[0]?.url||null:null;
             return <div key={l.id} style={{background:"#fff",borderRadius:12,padding:"12px",marginBottom:8,display:"flex",gap:12,alignItems:"center",border:"1px solid #EBEBEB"}}>
               <div style={{width:52,height:52,borderRadius:8,background:"#F0F0F0",overflow:"hidden",flexShrink:0}}>
-                {photo?<img src={photo} alt={l.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,opacity:.3}}>📦</div>}
+                {photo?<img src={photo} alt={l.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",opacity:.3}}><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>}
               </div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontWeight:600,fontSize:14,color:"#1A1A1A",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.title}</div>
@@ -2488,7 +2546,7 @@ function MobileDashboard({
         <div style={{fontSize:16,fontWeight:700,color:"#1A1A1A",marginBottom:16}}>{user.role==="seller"?"My Ads":"Saved Items"}</div>
         {(user.role==="seller"?listings:buyerInterests).length===0
           ?<div style={{textAlign:"center",padding:"60px 20px",color:"#AAAAAA"}}>
-              <div style={{fontSize:48,marginBottom:12,opacity:.2}}>{user.role==="seller"?"📦":"❤️"}</div>
+              <div style={{marginBottom:12,opacity:.2}}>{user.role==="seller"?<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>:<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>}</div>
               <div style={{fontWeight:700,marginBottom:6}}>{user.role==="seller"?"No ads yet":"Nothing saved yet"}</div>
               <div style={{fontSize:13,marginBottom:20}}>{user.role==="seller"?"Post your first ad to get started":"Items you lock in appear here"}</div>
               {user.role==="seller"&&<button className="btn bp" style={{borderRadius:10}} onClick={onPostAd}>+ Post an Ad</button>}
@@ -2498,7 +2556,7 @@ function MobileDashboard({
             return <div key={l.id} style={{background:"#fff",borderRadius:14,marginBottom:10,border:"1px solid #EBEBEB",overflow:"hidden"}}>
               <div style={{display:"flex",gap:12,padding:"12px"}}>
                 <div style={{width:64,height:64,borderRadius:10,background:"#F0F0F0",overflow:"hidden",flexShrink:0}}>
-                  {photo?<img src={photo} alt={l.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,opacity:.3}}>📦</div>}
+                  {photo?<img src={photo} alt={l.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",opacity:.3}}><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>}
                 </div>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontWeight:700,fontSize:14,color:"#1A1A1A",marginBottom:3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.title}</div>
@@ -2507,7 +2565,7 @@ function MobileDashboard({
                 </div>
               </div>
               {user.role==="seller"&&<div style={{borderTop:"1px solid #F5F5F5",padding:"8px 12px",display:"flex",gap:8}}>
-                {!l.is_unlocked&&l.locked_buyer_id&&<button className="btn bp sm" style={{borderRadius:8,flex:1,fontSize:12}} onClick={()=>setShowPayModal(l)}>🔓 Reveal Buyer — KSh 250</button>}
+                {!l.is_unlocked&&l.locked_buyer_id&&<button className="btn bp sm" style={{borderRadius:8,flex:1,fontSize:12}} onClick={()=>setShowPayModal(l)}>Reveal Buyer — KSh 250</button>}
                 <button className="btn bs sm" style={{borderRadius:8,fontSize:12}} onClick={()=>setEditingListing(l)}>Edit</button>
                 {l.status==="active"&&<button className="btn bs sm" style={{borderRadius:8,fontSize:12}} onClick={()=>setMarkSoldListing(l)}>Mark Sold</button>}
               </div>}
@@ -2526,14 +2584,14 @@ function MobileDashboard({
         <div style={{fontSize:16,fontWeight:700,color:"#1A1A1A",marginBottom:16}}>Notifications & Messages</div>
         {notifs.length===0
           ?<div style={{textAlign:"center",padding:"60px 20px",color:"#AAAAAA"}}>
-              <div style={{fontSize:48,marginBottom:12,opacity:.2}}>🔔</div>
+              <div style={{marginBottom:12,opacity:.2,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
               <div style={{fontWeight:700}}>All caught up!</div>
             </div>
           :notifs.map(n=>(
             <div key={n.id} onClick={()=>markRead(n.id)} style={{background:n.is_read?"#fff":"#F0F4FF",borderRadius:12,padding:"14px",marginBottom:8,border:`1px solid ${n.is_read?"#EBEBEB":"#C7D2FE"}`,cursor:"pointer"}}>
               <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
-                <span style={{fontSize:22,flexShrink:0}}>
-                  {({new_message:"💬",buyer_locked_in:"🔥",escrow_released:"💰",payment_confirmed:"✅",warning:"⚠️",admin_edit:"🛠",suspension:"🚫",seller_pitch:"📬",pitch_accepted:"✅",request_match:"🛒",listing_match:"🏷️",listing_approved:"✅"})[n.type]||"🔔"}
+                <span style={{flexShrink:0,display:"flex",alignItems:"center"}}>
+                  {({new_message:<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,buyer_locked_in:"fire",escrow_released:"money",payment_confirmed:"check",warning:"warn",admin_edit:"settings",suspension:"ban",seller_pitch:"inbox",pitch_accepted:"check",request_match:"cart",listing_match:"tag",listing_approved:"check"})[n.type]||"<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>"}
                 </span>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontWeight:n.is_read?600:700,fontSize:14,color:"#1A1A1A",marginBottom:3}}>{n.title}</div>
@@ -2563,7 +2621,7 @@ function MobileDashboard({
           <RoleSwitcher user={user} token={token} notify={notify} onSwitch={u=>{onUserUpdate&&onUserUpdate(u);}}/>
           <button style={{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 18px",background:"none",border:"none",borderTop:"1px solid #F5F5F5",cursor:"pointer",fontFamily:"var(--fn)",fontSize:15,color:"#1A1A1A",textAlign:"left"}}
             onClick={()=>{localStorage.removeItem("ws_token");localStorage.removeItem("ws_user");onClose();window.location.reload();}}>
-            <span style={{fontSize:20}}>🚪</span>
+            <span><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
             <span style={{fontWeight:600}}>Sign Out</span>
             <svg style={{marginLeft:"auto"}} width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="#CCCCCC" strokeWidth="2" strokeLinecap="round"/></svg>
           </button>
@@ -2573,7 +2631,7 @@ function MobileDashboard({
               try{await api("/api/auth/account",{method:"DELETE",body:JSON.stringify({})},token);localStorage.removeItem("ws_token");localStorage.removeItem("ws_user");onClose();window.location.reload();}
               catch(err){notify(err.message,"error");}
             }}>
-            <span style={{fontSize:20}}>🗑</span>
+            <span><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></span>
             <span style={{fontWeight:600}}>Delete Account</span>
             <svg style={{marginLeft:"auto"}} width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="#FFAAAA" strokeWidth="2" strokeLinecap="round"/></svg>
           </button>
@@ -2603,7 +2661,7 @@ function MobileDashboard({
         const lid=showPayModal.id;setShowPayModal(null);
         try{const fresh=await api(`/api/listings/${lid}`,{},token);setListings(p=>p.map(l=>l.id===lid?fresh:l));}
         catch{setListings(p=>p.map(l=>l.id===lid?{...l,is_unlocked:true}:l));}
-        notify("🔓 Buyer contact revealed!","success");
+        notify("Buyer contact revealed!","success");
       }}
       onClose={()=>setShowPayModal(null)} notify={notify}/>}
   </div>;
@@ -2718,8 +2776,8 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
                 <h1 style={{fontSize:"clamp(22px,3vw,32px)",fontWeight:500,color:"#fff",fontFamily:"var(--fn)",marginBottom:4,letterSpacing:"-.02em"}}>{user.name}</h1>
                 <div style={{fontSize:13,color:"rgba(255,255,255,.7)",marginBottom:8}}>{user.email}</div>
                 <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                  <span style={{background:"rgba(255,255,255,.2)",color:"#fff",padding:"3px 12px",fontSize:11,fontWeight:700,letterSpacing:".04em"}}>{user.role==="seller"?"🏷 SELLER":"🛍 BUYER"}</span>
-                  {user.is_verified&&<span style={{background:"rgba(255,255,255,.2)",color:"#fff",padding:"3px 12px",fontSize:11,fontWeight:700,letterSpacing:".04em"}}>✓ VERIFIED</span>}
+                  <span style={{background:"rgba(255,255,255,.2)",color:"#fff",padding:"3px 12px",fontSize:11,fontWeight:700,letterSpacing:".04em"}}>{user.role==="seller"?"SELLER":"BUYER"}</span>
+                  {user.is_verified&&<span style={{background:"rgba(255,255,255,.2)",color:"#fff",padding:"3px 12px",fontSize:11,fontWeight:700,letterSpacing:".04em"}}><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle",marginRight:3}}><polyline points="20 6 9 17 4 12"/></svg> VERIFIED</span>}
                   {unreadCount>0&&<span style={{background:"#FF3B30",color:"#fff",padding:"3px 12px",fontSize:11,fontWeight:700,letterSpacing:".04em"}}>{unreadCount} UNREAD</span>}
                 </div>
               </div>
@@ -2727,7 +2785,7 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
           </div>
           <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
             {user.role==="seller"&&<button className="btn bp sm" style={{background:"#fff",color:"#1428A0",border:"none",fontWeight:700}} onClick={()=>{onClose();onPostAd();}}>+ Post Ad</button>}
-            <button className="btn bs sm" style={{border:"1px solid rgba(255,255,255,.4)",color:"#fff",background:"transparent"}} onClick={onClose}>← Back to Home</button>
+            <button className="btn bs sm" style={{border:"1px solid rgba(255,255,255,.4)",color:"#fff",background:"transparent"}} onClick={onClose}>Back to Home</button>
           </div>
         </div>
 
@@ -2755,21 +2813,21 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:12,marginBottom:28}}>
         {(user.role==="seller"
           ? [
-              {icon:"📦",label:"Total Ads",val:stats.totalListings,color:"#1428A0",bg:"#F4F4F4"},
-              {icon:"✅",label:"Active",val:stats.activeListings,color:"#16a34a",bg:"rgba(22,163,74,.06)"},
-              {icon:"🏆",label:"Sold",val:stats.soldListings,color:"#1428A0",bg:"rgba(0,0,0,.04)"},
-              {icon:"👁",label:"Total Views",val:stats.totalViews,color:"#1428A0",bg:"#F4F4F4"},
-              {icon:"🔥",label:"Buyers Waiting",val:stats.buyersWaiting,color:"#444444",bg:"rgba(0,0,0,.04)"},
-              {icon:"💬",label:"Unread Msgs",val:stats.unreadMessages,color:"#1428A0",bg:"#F4F4F4"},
+              {icon:"box",label:"Total Ads",val:stats.totalListings,color:"#1428A0",bg:"#F4F4F4"},
+              {icon:"check",label:"Active",val:stats.activeListings,color:"#16a34a",bg:"rgba(22,163,74,.06)"},
+              {icon:"trophy",label:"Sold",val:stats.soldListings,color:"#1428A0",bg:"rgba(0,0,0,.04)"},
+              {icon:"eye",label:"Total Views",val:stats.totalViews,color:"#1428A0",bg:"#F4F4F4"},
+              {icon:"fire",label:"Buyers Waiting",val:stats.buyersWaiting,color:"#444444",bg:"rgba(0,0,0,.04)"},
+              {icon:"chat",label:"Unread Msgs",val:stats.unreadMessages,color:"#1428A0",bg:"#F4F4F4"},
             ]
           : [
-              {icon:"🔔",label:"Unread",val:unreadCount||0,color:"#1428A0",bg:"#F4F4F4"},
+              {icon:"bell",label:"Unread",val:unreadCount||0,color:"#1428A0",bg:"#F4F4F4"},
             ]
         ).map(s=>(
           <div key={s.label} style={{background:s.bg,border:`1px solid ${s.color}22`,borderRadius:6,padding:"20px 22px",transition:"transform .15s",cursor:"default"}}
             onMouseOver={e=>e.currentTarget.style.transform="translateY(-2px)"}
             onMouseOut={e=>e.currentTarget.style.transform="translateY(0)"}>
-            <div style={{fontSize:24,marginBottom:8}}>{s.icon}</div>
+            <div style={{marginBottom:8,display:"flex",alignItems:"center"}}>{s.icon==="box"?<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>:s.icon==="check"?<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="20 6 9 17 4 12"/></svg>:s.icon==="trophy"?<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="8 21 12 17 16 21"/><line x1="12" y1="17" x2="12" y2="11"/><path d="M7 4H4a2 2 0 0 0-2 2v1a5 5 0 0 0 5 5"/><path d="M17 4h3a2 2 0 0 1 2 2v1a5 5 0 0 1-5 5"/><rect x="7" y="2" width="10" height="10" rx="1"/></svg>:s.icon==="eye"?<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>:s.icon==="fire"?<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M12 2c0 0-5 4-5 9a5 5 0 0 0 10 0c0-5-5-9-5-9z"/><path d="M12 12c0 0-2 1.5-2 3a2 2 0 0 0 4 0c0-1.5-2-3-2-3z"/></svg>:s.icon==="chat"?<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>:s.icon==="bell"?<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>:null}</div>
             <div style={{fontSize:32,fontWeight:700,color:s.color,letterSpacing:"-.02em",lineHeight:1}}>{s.val}</div>
             <div style={{fontSize:12,color:"#888888",marginTop:6,fontWeight:600,letterSpacing:".04em",textTransform:"uppercase"}}>{s.label}</div>
           </div>
@@ -2779,17 +2837,17 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
       {/* Buyers waiting — action items */}
       {stats.buyersWaiting>0&&<>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
-          <h3 style={{fontSize:15,fontWeight:700,letterSpacing:"-.01em"}}>🔥 Action Required — Buyers Waiting</h3>
+          <h3 style={{fontSize:15,fontWeight:700,letterSpacing:"-.01em"}}>Action Required — Buyers Waiting</h3>
           <span className="badge bg-r">{stats.buyersWaiting} waiting</span>
         </div>
         {listings.filter(l=>l.locked_buyer_id&&!l.is_unlocked).map(l=>(
           <div key={l.id} style={{display:"flex",alignItems:"center",gap:14,padding:"16px 20px",background:"rgba(0,0,0,.04)",border:"1px solid rgba(0,0,0,.1)",borderLeft:"3px solid #888888",borderRadius:6,marginBottom:10}}>
-            <span style={{fontSize:32}}>🔥</span>
+            <span><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M12 2c0 0-5 4-5 9a5 5 0 0 0 10 0c0-5-5-9-5-9z"/><path d="M12 12c0 0-2 1.5-2 3a2 2 0 0 0 4 0c0-1.5-2-3-2-3z"/></svg></span>
             <div style={{flex:1}}>
               <div style={{fontWeight:700,fontSize:15,marginBottom:2}}>{l.title}</div>
               <div style={{fontSize:12,color:"#888888"}}>{l.linked_request_id?"A buyer requested this item!":"A buyer has locked in!"} Pay KSh 250 to reveal their contact details.</div>
             </div>
-            <button className="btn bp sm" onClick={()=>setShowPayModal(l)}>🔓 Reveal Buyer — KSh 250</button>
+            <button className="btn bp sm" onClick={()=>setShowPayModal(l)}>Reveal Buyer — KSh 250</button>
           </div>
         ))}
         <div style={{height:8}}/>
@@ -2807,21 +2865,21 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
             onMouseOver={e=>e.currentTarget.style.boxShadow="0 4px 20px rgba(0,0,0,.08)"}
             onMouseOut={e=>e.currentTarget.style.boxShadow="none"}>
             <div style={{height:120,background:"#F5F5F5",overflow:"hidden",position:"relative"}}>
-              {photo?<img src={photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100%",fontSize:36,opacity:.15}}>📦</div>}
+              {photo?<img src={photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100%",opacity:.15}}><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>}
               <div style={{position:"absolute",top:8,right:8}}>
-                <span className={`badge ${l.status==="active"||l.status==="locked"?"bg-g":l.status==="sold"?"bg-y":l.status==="pending_review"?"bg-b":l.status==="rejected"?"br2":"bg-m"}`} style={{fontSize:10}}>{l.status==="pending_review"?"⏳ Review":l.status==="rejected"?"❌ Rejected":l.status}</span>
+                <span className={`badge ${l.status==="active"||l.status==="locked"?"bg-g":l.status==="sold"?"bg-y":l.status==="pending_review"?"bg-b":l.status==="rejected"?"br2":"bg-m"}`} style={{fontSize:10}}>{l.status==="pending_review"?"Review":l.status==="rejected"?"Rejected":l.status}</span>
               </div>
             </div>
             <div style={{padding:"12px 14px"}}>
               <div style={{fontWeight:700,fontSize:13,marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.title}</div>
               <div style={{fontSize:12,color:"#1428A0",fontWeight:700}}>{fmtKES(l.price)}</div>
-              <div style={{fontSize:11,color:"#888888",marginTop:4}}>👁 {l.view_count||0} views · 🔥 {l.interest_count||0} interested</div>
+              <div style={{fontSize:11,color:"#888888",marginTop:4}}><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> {l.view_count||0} views · <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M12 2c0 0-5 4-5 9a5 5 0 0 0 10 0c0-5-5-9-5-9z"/><path d="M12 12c0 0-2 1.5-2 3a2 2 0 0 0 4 0c0-1.5-2-3-2-3z"/></svg> {l.interest_count||0} interested</div>
             </div>
           </div>;
         })}
       </div>
       {listings.length===0&&<div style={{textAlign:"center",padding:"60px 20px",background:"#f9f9f9",border:"1px dashed #E5E5E5"}}>
-        <div style={{fontSize:48,marginBottom:12,opacity:.2}}>📦</div>
+        <div style={{marginBottom:12,opacity:.2,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
         <p style={{fontWeight:700,marginBottom:8}}>No ads yet</p>
         {user.role==="seller"&&<button className="btn bp" style={{marginTop:8}} onClick={()=>{onClose();onPostAd();}}>Post Your First Ad →</button>}
       </div>}
@@ -2830,7 +2888,7 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
     {!loading&&tab==="notifications"&&<>
       {/* Chat Threads */}
       {threads.length>0&&<>
-        <h3 style={{fontSize:15,fontWeight:700,marginBottom:14,letterSpacing:"-.01em"}}>💬 Chat Threads</h3>
+        <h3 style={{fontSize:15,fontWeight:700,marginBottom:14,letterSpacing:"-.01em"}}>Chat Threads</h3>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:12,marginBottom:32}}>
           {threads.map((t,i)=>(
             <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:"#fffA0",border:"1px solid #EBEBEB",borderRadius:6,cursor:"pointer",transition:"border-color .15s"}}
@@ -2857,11 +2915,11 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
       </>}
 
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
-        <h3 style={{fontSize:15,fontWeight:700,letterSpacing:"-.01em"}}>🔔 All Notifications</h3>
+        <h3 style={{fontSize:15,fontWeight:700,letterSpacing:"-.01em"}}>All Notifications</h3>
         {notifs.length>0&&<button className="btn bs sm" style={{fontSize:11}} onClick={async()=>{await api("/api/notifications/read-all",{method:"PATCH"},token).catch(()=>{});setNotifs(p=>p.map(n=>({...n,is_read:true})));notify("All marked as read.","success");}}>Mark All Read</button>}
       </div>
       {notifs.length===0&&threads.length===0&&<div style={{textAlign:"center",padding:"60px 20px",background:"#f9f9f9",border:"1px dashed #E5E5E5"}}>
-        <div style={{fontSize:48,marginBottom:12,opacity:.2}}>🔔</div><p>No notifications yet</p>
+        <div style={{marginBottom:12,opacity:.2,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div><p>No notifications yet</p>
       </div>}
       <div style={{maxWidth:680}}>
         {notifs.map((n,i)=>(
@@ -2869,7 +2927,7 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
             onMouseOver={e=>e.currentTarget.style.paddingLeft="8px"}
             onMouseOut={e=>e.currentTarget.style.paddingLeft="0"}>
             <div style={{width:40,height:40,borderRadius:"50%",background:n.is_read?"#F5F5F5":"#E8E8E8",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>
-              {({new_message:"💬",buyer_locked_in:"🔥",escrow_released:"💰",payment_confirmed:"✅",warning:"⚠️",admin_edit:"🛠",suspension:"🚫",seller_pitch:"📬",pitch_accepted:"✅",request_match:"🛒",listing_match:"🏷️",listing_approved:"✅"})[n.type]||"🔔"}
+              {({new_message:"chat",buyer_locked_in:"fire",escrow_released:"money",payment_confirmed:"check",warning:"warn",admin_edit:"settings",suspension:"ban",seller_pitch:"inbox",pitch_accepted:"check",request_match:"cart",listing_match:"tag",listing_approved:"check"})[n.type]||"<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>"}
             </div>
             <div style={{flex:1}}>
               <div style={{fontWeight:n.is_read?500:700,fontSize:14,marginBottom:2}}>{n.title}</div>
@@ -2883,10 +2941,10 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
     </>}
 
     {!loading&&tab==="interests"&&<>
-      <h3 style={{fontSize:15,fontWeight:700,marginBottom:16,letterSpacing:"-.01em"}}>🔥 Listings You're Interested In ({buyerInterests.length})</h3>
+      <h3 style={{fontSize:15,fontWeight:700,marginBottom:16,letterSpacing:"-.01em"}}>Listings You're Interested In ({buyerInterests.length})</h3>
       {buyerInterests.length===0
         ?<div style={{textAlign:"center",padding:"60px 20px",background:"#f9f9f9",border:"1px dashed #E5E5E5"}}>
-          <div style={{fontSize:48,marginBottom:12,opacity:.2}}>🔥</div>
+          <div style={{marginBottom:12,opacity:.2,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M12 2c0 0-5 4-5 9a5 5 0 0 0 10 0c0-5-5-9-5-9z"/><path d="M12 12c0 0-2 1.5-2 3a2 2 0 0 0 4 0c0-1.5-2-3-2-3z"/></svg></div>
           <p style={{fontWeight:700,marginBottom:6}}>No interests yet</p>
           <p style={{fontSize:13,color:"#888888"}}>Browse listings and click "I'm Interested — Lock In"</p>
           <button className="btn bp" style={{marginTop:14}} onClick={onClose}>Browse Listings →</button>
@@ -2898,16 +2956,16 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
               onMouseOver={e=>e.currentTarget.style.boxShadow="0 4px 20px rgba(0,0,0,.08)"}
               onMouseOut={e=>e.currentTarget.style.boxShadow="none"}>
               <div style={{height:140,background:"#F5F5F5",overflow:"hidden",position:"relative"}}>
-                {photo?<img src={photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100%",fontSize:40,opacity:.15}}>📦</div>}
+                {photo?<img src={photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100%",opacity:.15}}><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>}
                 <span className={`badge ${l.status==="active"||l.status==="locked"?"bg-g":l.status==="sold"?"bg-y":"bg-m"}`} style={{position:"absolute",top:8,right:8,fontSize:10}}>{l.status}</span>
               </div>
               <div style={{padding:"14px 16px"}}>
                 <div style={{fontWeight:700,fontSize:14,marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.title}</div>
                 <div style={{fontSize:14,fontWeight:700,color:"#111111",marginBottom:8}}>{fmtKES(l.price)}</div>
                 {l.is_unlocked
-                  ?<div style={{fontSize:11,color:"#16a34a",fontWeight:600,marginBottom:8}}>✅ Contact revealed — {l.seller_name||"Seller"}</div>
-                  :<div style={{fontSize:11,color:"#888888",marginBottom:8}}>🔒 Contact hidden</div>}
-                <button className="btn bs sm" style={{width:"100%",fontSize:11}} onClick={()=>setSelectedListing(l)}>💬 Chat</button>
+                  ?<div style={{fontSize:11,color:"#16a34a",fontWeight:600,marginBottom:8}}>Contact revealed — {l.seller_name||"Seller"}</div>
+                  :<div style={{fontSize:11,color:"#888888",marginBottom:8}}>Contact hidden</div>}
+                <button className="btn bs sm" style={{width:"100%",fontSize:11}} onClick={()=>setSelectedListing(l)}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Chat</button>
               </div>
             </div>;
           })}
@@ -2921,7 +2979,7 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
       </div>
       {listings.length===0
         ?<div style={{textAlign:"center",padding:"60px 20px",background:"#f9f9f9",border:"1px dashed #E5E5E5"}}>
-          <div style={{fontSize:48,marginBottom:12,opacity:.2}}>📦</div><p>No ads yet</p>
+          <div style={{marginBottom:12,opacity:.2,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div><p>No ads yet</p>
         </div>
         :<div style={{display:"flex",flexDirection:"column",gap:12}}>
           {listings.map(l=>(
@@ -2933,19 +2991,19 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
               </div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontWeight:700,fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.title}</div>
-                <div style={{fontSize:12,color:"#888888",marginTop:2}}>{fmtKES(l.price)} · 👁 {l.view_count||0} · 🔥 {l.interest_count||0}</div>
-                {l.status==="rejected"&&l.moderation_note&&<div style={{fontSize:11,color:"#dc2626",marginTop:2}}>❌ {l.moderation_note}</div>}
-                {l.status==="pending_review"&&<div style={{fontSize:11,color:"#111111",marginTop:2}}>⏳ Awaiting review</div>}
+                <div style={{fontSize:12,color:"#888888",marginTop:2}}>{fmtKES(l.price)} · <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> {l.view_count||0} · <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M12 2c0 0-5 4-5 9a5 5 0 0 0 10 0c0-5-5-9-5-9z"/><path d="M12 12c0 0-2 1.5-2 3a2 2 0 0 0 4 0c0-1.5-2-3-2-3z"/></svg> {l.interest_count||0}</div>
+                {l.status==="rejected"&&l.moderation_note&&<div style={{fontSize:11,color:"#dc2626",marginTop:2}}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{display:"inline",verticalAlign:"middle"}}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> {l.moderation_note}</div>}
+                {l.status==="pending_review"&&<div style={{fontSize:11,color:"#111111",marginTop:2}}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Awaiting review</div>}
               </div>
               <div style={{display:"flex",gap:6,flexWrap:"wrap",justifyContent:"flex-end",flexShrink:0}}>
-                <span className={`badge ${l.status==="active"||l.status==="locked"?"bg-g":l.status==="sold"?"bg-y":l.status==="pending_review"?"bg-b":l.status==="rejected"?"br2":"bg-m"}`} style={{fontSize:10}}>{l.status==="pending_review"?"⏳ Review":l.status==="rejected"?"❌ Rejected":l.status}</span>
+                <span className={`badge ${l.status==="active"||l.status==="locked"?"bg-g":l.status==="sold"?"bg-y":l.status==="pending_review"?"bg-b":l.status==="rejected"?"br2":"bg-m"}`} style={{fontSize:10}}>{l.status==="pending_review"?"Review":l.status==="rejected"?"Rejected":l.status}</span>
                 {!l.is_unlocked&&l.status!=="sold"&&(l.free_unlock_approved
-                  ?<button className="btn bg2 sm" onClick={async()=>{try{await api(`/api/payments/unlock`,{method:"POST",body:JSON.stringify({listing_id:l.id,phone:user.phone||"0700000000",voucher_code:"ADMIN-FREE"})},token);setListings(p=>p.map(x=>x.id===l.id?{...x,is_unlocked:true}:x));notify("🔓 Unlocked!","success");}catch{setShowPayModal(l);}}}>🎁 Free</button>
-                  :<button className="btn bp sm" onClick={()=>setShowPayModal(l)}>🔓 {l.linked_request_id?"Reveal Buyer":"Unlock"} — KSh 250</button>)}
-                {(l.status==="active"||l.status==="locked")&&<button className="btn bp sm" onClick={()=>setMarkSoldListing(l)}>✅ Sold</button>}
-                {l.status!=="sold"&&<button className="btn bs sm" onClick={()=>setEditingListing(l)}>✏️</button>}
-                {(l.status==="rejected"||l.status==="needs_changes")&&<button className="btn bg2 sm" onClick={async()=>{try{await api(`/api/listings/${l.id}/resubmit`,{method:"POST"},token);setListings(p=>p.map(x=>x.id===l.id?{...x,status:"pending_review",moderation_note:null}:x));notify("⏳ Resubmitted","success");}catch(e){notify(e.message,"error");}}}>↺</button>}
-                <button className="btn br2 sm" onClick={()=>deleteListing(l.id)}>✕</button>
+                  ?<button className="btn bg2 sm" onClick={async()=>{try{await api(`/api/payments/unlock`,{method:"POST",body:JSON.stringify({listing_id:l.id,phone:user.phone||"0700000000",voucher_code:"ADMIN-FREE"})},token);setListings(p=>p.map(x=>x.id===l.id?{...x,is_unlocked:true}:x));notify("Unlocked!","success");}catch{setShowPayModal(l);}}}>Free</button>
+                  :<button className="btn bp sm" onClick={()=>setShowPayModal(l)}>{l.linked_request_id?"Reveal Buyer":"Unlock"} — KSh 250</button>)}
+                {(l.status==="active"||l.status==="locked")&&<button className="btn bp sm" onClick={()=>setMarkSoldListing(l)}>Sold</button>}
+                {l.status!=="sold"&&<button className="btn bs sm" onClick={()=>setEditingListing(l)}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>}
+                {(l.status==="rejected"||l.status==="needs_changes")&&<button className="btn bg2 sm" onClick={async()=>{try{await api(`/api/listings/${l.id}/resubmit`,{method:"POST"},token);setListings(p=>p.map(x=>x.id===l.id?{...x,status:"pending_review",moderation_note:null}:x));notify("Resubmitted","success");}catch(e){notify(e.message,"error");}}}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>}
+                <button className="btn br2 sm" onClick={()=>deleteListing(l.id)}>Close</button>
               </div>
             </div>
           ))}
@@ -2978,7 +3036,7 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
               localStorage.removeItem("ws_token");
               localStorage.removeItem("ws_user");
               onClose();window.location.reload();
-            }}>🚪 Sign Out</button>
+            }}>Sign Out</button>
             <button className="btn" style={{justifyContent:"flex-start",gap:10,borderRadius:10,background:"transparent",border:"1.5px solid #FFCCCC",color:"#dc2626",fontFamily:"var(--fn)",padding:"11px 16px",fontSize:14,cursor:"pointer",fontWeight:600}} onClick={async()=>{
               if(!window.confirm("Permanently delete your account? ALL your listings and data will be removed forever. This CANNOT be undone."))return;
               try{
@@ -2986,7 +3044,7 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
                 localStorage.removeItem("ws_token");localStorage.removeItem("ws_user");
                 onClose();window.location.reload();
               }catch(err){notify(err.message,"error");}
-            }}>🗑 Delete My Account</button>
+            }}>Delete My Account</button>
           </div>
         </div>
 
@@ -3002,7 +3060,7 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
         const lid=showPayModal.id;setShowPayModal(null);
         try{const fresh=await api(`/api/listings/${lid}`,{},token);const ul=fresh.listing||fresh;setListings(p=>p.map(l=>l.id===lid?ul:l));}
         catch{setListings(p=>p.map(l=>l.id===lid?{...l,is_unlocked:true}:l));}
-        notify("🔓 Buyer contact unlocked!","success");
+        notify("Buyer contact unlocked!","success");
       }}
       onClose={()=>setShowPayModal(null)} notify={notify}/>}
     </div>
@@ -3023,13 +3081,13 @@ function PWABanner({onDismiss}){
   if(!deferredPrompt)return null;
   const install=async()=>{deferredPrompt.prompt();const{outcome}=await deferredPrompt.userChoice;if(outcome==="accepted"){onDismiss();}setDeferredPrompt(null);};
   return <div className="pwa-banner">
-    <span style={{fontSize:28}}>📱</span>
+    <span><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span>
     <div style={{flex:1}}>
       <div style={{fontWeight:700,fontSize:14,display:"flex",alignItems:"center",gap:8}}><WekaSokoLogo size={22} iconOnly/>Install Weka Soko App</div>
       <div style={{fontSize:12,color:"#888888"}}>Get faster access & offline browsing</div>
     </div>
     <button className="btn bp sm" onClick={install}>Install</button>
-    <button className="btn bgh sm" onClick={onDismiss}>✕</button>
+    <button className="btn bgh sm" onClick={onDismiss}>Close</button>
   </div>;
 }
 
@@ -3100,7 +3158,7 @@ function MobileRequestsTab({user, token, notify, setModal}){
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
         <div>
           <div style={{fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:2}}>Community</div>
-          <div style={{fontSize:19,fontWeight:800,color:"#1A1A1A",letterSpacing:"-.01em"}}>🛒 What Buyers Want</div>
+          <div style={{fontSize:19,fontWeight:800,color:"#1A1A1A",letterSpacing:"-.01em"}}>What Buyers Want</div>
         </div>
         <button
           style={{background:"#1428A0",color:"#fff",border:"none",padding:"10px 14px",borderRadius:10,fontSize:13,fontWeight:700,fontFamily:"var(--fn)",cursor:"pointer",whiteSpace:"nowrap"}}
@@ -3122,7 +3180,7 @@ function MobileRequestsTab({user, token, notify, setModal}){
       </div>
       {(search||county)&&<button
         style={{marginTop:6,fontSize:12,color:"#1428A0",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--fn)",fontWeight:600,padding:0}}
-        onClick={()=>{setSearch("");setCounty("");}}>✕ Clear filters</button>}
+        onClick={()=>{setSearch("");setCounty("");}}>Clear filters</button>}
     </div>
 
     {/* Body */}
@@ -3131,7 +3189,7 @@ function MobileRequestsTab({user, token, notify, setModal}){
         ? <div style={{textAlign:"center",padding:"48px 0"}}><Spin s="32px"/></div>
         : requests.length===0
           ? <div style={{textAlign:"center",padding:"48px 20px"}}>
-              <div style={{fontSize:44,marginBottom:12,opacity:.2}}>🛒</div>
+              <div style={{marginBottom:12,opacity:.2,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
               <div style={{fontWeight:700,fontSize:16,marginBottom:6,color:"#1A1A1A"}}>No requests yet</div>
               <div style={{fontSize:13,color:"#888",marginBottom:20}}>Be the first to post what you're looking for</div>
               <button
@@ -3148,7 +3206,7 @@ function MobileRequestsTab({user, token, notify, setModal}){
                     <div style={{fontWeight:700,fontSize:15,lineHeight:1.35,color:"#1A1A1A",flex:1}}>{r.title}</div>
                     {user?.id===r.user_id&&
                       <button onClick={()=>deleteReq(r.id)}
-                        style={{background:"none",border:"none",cursor:"pointer",color:"#CCC",fontSize:16,padding:"0 2px",flexShrink:0,lineHeight:1}}>✕</button>}
+                        style={{background:"none",border:"none",cursor:"pointer",color:"#CCC",fontSize:16,padding:"0 2px",flexShrink:0,lineHeight:1}}>Close</button>}
                   </div>
                   {/* Description */}
                   <div style={{fontSize:13,color:"#636363",lineHeight:1.65,marginBottom:8}}>
@@ -3165,7 +3223,7 @@ function MobileRequestsTab({user, token, notify, setModal}){
                   {/* Tags */}
                   <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
                     {r.budget&&<span style={{background:"#EEF2FF",color:"#1428A0",padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700}}>Budget: {fmtKES(r.budget)}</span>}
-                    {r.county&&<span style={{background:"#F0F0F0",color:"#555",padding:"3px 10px",borderRadius:20,fontSize:11}}>📍 {r.county}</span>}
+                    {r.county&&<span style={{background:"#F0F0F0",color:"#555",padding:"3px 10px",borderRadius:20,fontSize:11}}><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {r.county}</span>}
                     {parseInt(r.matching_listings)>0&&
                       <span style={{background:"#DCFCE7",color:"#16a34a",padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700}}>
                         {r.matching_listings} listing{r.matching_listings!==1?"s":""} match
@@ -3178,7 +3236,7 @@ function MobileRequestsTab({user, token, notify, setModal}){
                       <button className="btn bp sm"
                         style={{fontSize:12,padding:"6px 14px",borderRadius:8}}
                         onClick={()=>handleIHaveThis(r)}>
-                        📬 I Have This
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg> I Have This
                       </button>}
                   </div>
                 </div>
@@ -3255,7 +3313,7 @@ function MobileLayout({
 
       {/* Hero banner */}
       {!filter.q&&!filter.cat&&pg===1&&<div className="mob-hero-banner">
-        <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"rgba(255,255,255,.6)",marginBottom:8}}>🇰🇪 Kenya's Resell Platform</div>
+        <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"rgba(255,255,255,.6)",marginBottom:8}}>Kenya's Resell Platform</div>
         <div style={{fontSize:22,fontWeight:800,color:"#fff",lineHeight:1.2,marginBottom:10}}>Buy & Sell<br/>Anything in Kenya</div>
         <div style={{fontSize:13,color:"rgba(255,255,255,.75)",marginBottom:16}}>Post free. Pay KSh 250 only when a buyer locks in.</div>
         <button onClick={postAd} style={{background:"#fff",color:"#1428A0",border:"none",padding:"11px 22px",borderRadius:10,fontSize:14,fontWeight:700,fontFamily:"var(--fn)",cursor:"pointer"}}>+ Post an Ad for Free</button>
@@ -3265,7 +3323,7 @@ function MobileLayout({
       <div className="mob-section">
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px 4px"}}>
           <div className="mob-section-title" style={{padding:0}}>Categories</div>
-          {filter.cat&&<button onClick={()=>{setFilter(p=>({...p,cat:""}));setPg(1);}} style={{fontSize:12,color:"#1428A0",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--fn)",fontWeight:600}}>Clear ✕</button>}
+          {filter.cat&&<button onClick={()=>{setFilter(p=>({...p,cat:""}));setPg(1);}} style={{fontSize:12,color:"#1428A0",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--fn)",fontWeight:600}}>Clear</button>}
         </div>
         <div className="mob-cats">
           {CATS.map(c=>(
@@ -3285,7 +3343,7 @@ function MobileLayout({
           Filters {(filter.county||filter.minPrice||filter.maxPrice||filter.sort!=="newest")?`(${[filter.county,filter.minPrice,filter.maxPrice].filter(Boolean).length+(filter.sort!=="newest"?1:0)})`:""}</button>
         {["newest","price_asc","price_desc","popular"].map(s=>(
           <button key={s} onClick={()=>{setFilter(p=>({...p,sort:s}));setPg(1);}} style={{background:filter.sort===s?"#1428A0":"#fff",color:filter.sort===s?"#fff":"#555",border:`1.5px solid ${filter.sort===s?"#1428A0":"#E0E0E0"}`,borderRadius:20,padding:"8px 14px",fontSize:12,fontWeight:600,fontFamily:"var(--fn)",cursor:"pointer",flexShrink:0,whiteSpace:"nowrap"}}>
-            {s==="newest"?"Latest":s==="price_asc"?"Price ↑":s==="price_desc"?"Price ↓":"Popular"}
+            {s==="newest"?"Latest":s==="price_asc"?"Price: Low":s==="price_desc"?"Price: High":"Popular"}
           </button>
         ))}
       </div>
@@ -3299,7 +3357,7 @@ function MobileLayout({
           ?<div style={{textAlign:"center",padding:"40px 0"}}><span className="spin"/></div>
           :listings.length===0
             ?<div style={{textAlign:"center",padding:"40px 20px",color:"#AAAAAA"}}>
-                <div style={{fontSize:40,marginBottom:12,opacity:.3}}>🔍</div>
+                <div style={{fontSize:40,marginBottom:12,opacity:.3}}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
                 <div style={{fontWeight:700,marginBottom:6}}>No listings found</div>
                 <div style={{fontSize:13}}>Try different filters</div>
               </div>
@@ -3308,14 +3366,14 @@ function MobileLayout({
                 const photo=Array.isArray(l.photos)?l.photos.find(p=>typeof p==="string")||l.photos[0]?.url||null:null;
                 return <div key={l.id} className="mob-lcard" onClick={()=>openListing(l)}>
                   <div className="mob-lcard-img">
-                    {photo?<img src={photo} alt={l.title}/>:<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,opacity:.15}}>📦</div>}
+                    {photo?<img src={photo} alt={l.title}/>:<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",opacity:.15}}><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>}
                   </div>
                   <div className="mob-lcard-body">
                     <div className="mob-lcard-cat">{l.category}</div>
                     <div className="mob-lcard-title">{l.title}</div>
                     <div className="mob-lcard-price">{fmtKES(l.price)}</div>
                     <div className="mob-lcard-meta">
-                      {l.location&&<span>📍 {l.location}</span>}
+                      {l.location&&<span><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {l.location}</span>}
                       <span>{ago(l.created_at)}</span>
                     </div>
                   </div>
@@ -3325,16 +3383,16 @@ function MobileLayout({
             </div>}
         {/* Pagination */}
         {Math.ceil(total/PER_PAGE)>1&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px",borderTop:"1px solid #F0F0F0"}}>
-          <button onClick={()=>{if(pg>1){setPg(p=>p-1);window.scrollTo(0,0);}}} disabled={pg<=1} className="btn bs sm" style={{borderRadius:8,opacity:pg<=1?.4:1}}>← Prev</button>
+          <button onClick={()=>{if(pg>1){setPg(p=>p-1);window.scrollTo(0,0);}}} disabled={pg<=1} className="btn bs sm" style={{borderRadius:8,opacity:pg<=1?.4:1}}>Prev</button>
           <span style={{fontSize:13,color:"#AAAAAA",fontWeight:500}}>Page {pg} of {Math.ceil(total/PER_PAGE)}</span>
-          <button onClick={()=>{if(pg<Math.ceil(total/PER_PAGE)){setPg(p=>p+1);window.scrollTo(0,0);}}} disabled={pg>=Math.ceil(total/PER_PAGE)} className="btn bp sm" style={{borderRadius:8,opacity:pg>=Math.ceil(total/PER_PAGE)?.4:1}}>Next →</button>
+          <button onClick={()=>{if(pg<Math.ceil(total/PER_PAGE)){setPg(p=>p+1);window.scrollTo(0,0);}}} disabled={pg>=Math.ceil(total/PER_PAGE)} className="btn bp sm" style={{borderRadius:8,opacity:pg>=Math.ceil(total/PER_PAGE)?.4:1}}>Next</button>
         </div>}
       </div>
 
       {/* Trust strip */}
       <div className="mob-trust">
-        {[["✓","Free to post"],["✓","Anonymous chat"],["✓","M-Pesa escrow"]].map(([icon,txt])=>(
-          <span key={txt}><span style={{color:"#1428A0",fontWeight:800}}>{icon}</span>{txt}</span>
+        {[["check","Free to post"],["check","Anonymous chat"],["check","M-Pesa escrow"]].map(([icon,txt])=>(
+          <span key={txt}><span style={{color:"#1428A0",display:"inline-flex",alignItems:"center"}}>{icon==="check"?<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="20 6 9 17 4 12"/></svg>:icon}</span>{txt}</span>
         ))}
       </div>
 
@@ -3376,7 +3434,7 @@ function MobileLayout({
       <div className="mob-drawer-panel">
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
           <div style={{fontSize:17,fontWeight:700,color:"#1A1A1A"}}>Filters</div>
-          <button onClick={()=>setMobileFiltersOpen(false)} style={{background:"#F5F5F5",border:"none",borderRadius:"50%",width:32,height:32,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+          <button onClick={()=>setMobileFiltersOpen(false)} style={{background:"#F5F5F5",border:"none",borderRadius:"50%",width:32,height:32,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>Close</button>
         </div>
         <div className="mob-filter-row">
           <div className="mob-filter-label">County</div>
@@ -3395,7 +3453,7 @@ function MobileLayout({
         <div className="mob-filter-row">
           <div className="mob-filter-label">Sort By</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-            {[["newest","Latest"],["oldest","Oldest"],["price_asc","Price ↑"],["price_desc","Price ↓"],["popular","Most Viewed"],["expiring","Expiring Soon"]].map(([val,lbl])=>(
+            {[["newest","Latest"],["oldest","Oldest"],["price_asc","Price: Low"],["price_desc","Price: High"],["popular","Most Viewed"],["expiring","Expiring Soon"]].map(([val,lbl])=>(
               <button key={val} onClick={()=>{setFilter(p=>({...p,sort:val}));setPg(1);}} style={{padding:"10px",border:`1.5px solid ${filter.sort===val?"#1428A0":"#E0E0E0"}`,borderRadius:8,background:filter.sort===val?"#EEF2FF":"#fff",color:filter.sort===val?"#1428A0":"#555",fontSize:13,fontWeight:filter.sort===val?700:500,fontFamily:"var(--fn)",cursor:"pointer"}}>{lbl}</button>
             ))}
           </div>

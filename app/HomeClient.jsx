@@ -26,7 +26,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
 
   const notify=useCallback((msg,type="info")=>setToast({msg,type,id:Date.now()}),[]);
 
-  // ✅ FIX: Initialize isMobile as false, set on client-side only
+  // <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="20 6 9 17 4 12"/></svg> FIX: Initialize isMobile as false, set on client-side only
   const [isMobile,setIsMobile]=useState(false);
   useEffect(()=>{
     const check=()=>setIsMobile(window.innerWidth<768);
@@ -65,7 +65,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         localStorage.setItem("ws_user",JSON.stringify(parsed));
         setUser(parsed);setToken(t);
         apiCall("/api/auth/me",{},t).then(fresh=>{setUser(fresh);localStorage.setItem("ws_user",JSON.stringify(fresh));}).catch(()=>{});
-        notify("Welcome back, "+parsed.name.split(" ")[0]+"! 🎉","success");
+        notify("Welcome back, "+parsed.name.split(" ")[0]+"!","success");
         window.history.replaceState({},"",window.location.pathname);
       }catch(e){console.error("OAuth parse error",e);}
     }
@@ -81,9 +81,9 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
           localStorage.setItem("ws_user",JSON.stringify(r.user));
           setUser(r.user);
           setToken(r.token);
-          notify("✅ Email verified! Welcome to Weka Soko.","success");
+          notify("Email verified! Welcome to Weka Soko.","success");
         } else {
-          notify("✅ Email verified! You can now sign in.","success");
+          notify("Email verified! You can now sign in.","success");
         }
       }).catch(e=>notify(e.message||"Verification failed","error"));
       window.history.replaceState({},"",window.location.pathname);
@@ -236,7 +236,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         return;
       }
       if(n.type==="listing_approved"){
-        notify("🎉 Your ad is now live on Weka Soko! "+(n.body||""),"success");
+        notify("Your ad is now live on Weka Soko! "+(n.body||""),"success");
         setNotifCount(c=>c+1);
         return;
       }
@@ -255,7 +255,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         apiCall("/api/auth/me",{},token).then(fresh=>{
           setUser(fresh);localStorage.setItem("ws_user",JSON.stringify(fresh));
           if(fresh.is_suspended){
-            notify("⛔ Your account has been suspended. You will be logged out.","error");
+            notify("Your account has been suspended. You will be logged out.","error");
             setTimeout(()=>{
               localStorage.removeItem("ws_token");localStorage.removeItem("ws_user");
               setUser(null);setToken(null);
@@ -264,7 +264,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
           }
         }).catch(()=>{});
       } else if(n.type==="admin_edit"){
-        notify("ℹ️ Admin has updated your listing: "+(n.body||""),"info");
+        notify("Admin has updated your listing: "+(n.body||""),"info");
       } else {
         notify(n.body||n.title,"info");
       }
@@ -326,7 +326,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       await apiCall(`/api/listings/${listing.id}/lock-in`,{method:"POST"},token);
       setListings(p=>p.map(l=>l.id===listing.id?{...l,locked_buyer_id:user.id,interest_count:(l.interest_count||0)+1}:l));
       setModal({type:"detail",listing:{...listing,locked_buyer_id:user.id}});
-      notify("🔥 Locked in! The seller has been notified.","success");
+      notify("Locked in! The seller has been notified.","success");
     }catch(err){notify(err.message,"error");}
   };
 
@@ -369,9 +369,9 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       purpose={modal.payType==="unlock"?`Unlock buyer contact: ${modal.listing.title}`:`Escrow for: ${modal.listing.title}`}
       token={token} user={user} allowVoucher={true}
       onSuccess={async(result)=>{
-        if(result.listing){const ul=result.listing;setListings(p=>p.map(l=>l.id===ul.id?ul:l));closeModal();setTimeout(()=>setModal({type:"detail",listing:ul}),200);notify("🔓 Contact details revealed!","success");return;}
+        if(result.listing){const ul=result.listing;setListings(p=>p.map(l=>l.id===ul.id?ul:l));closeModal();setTimeout(()=>setModal({type:"detail",listing:ul}),200);notify("Contact details revealed!","success");return;}
         try{const fresh=await apiCall(`/api/listings/${modal.listing.id}`,{},token);const ul=fresh.listing||fresh;setListings(p=>p.map(l=>l.id===ul.id?ul:l));closeModal();setTimeout(()=>setModal({type:"detail",listing:ul}),200);}catch{closeModal();}
-        notify(modal.payType==="unlock"?"🔓 Buyer contact revealed!":"🔐 Escrow activated!","success");
+        notify(modal.payType==="unlock"?"Buyer contact revealed!":"Escrow activated!","success");
       }}
       onClose={closeModal} notify={notify}/>}
     {toast&&<Toast key={toast.id} msg={toast.msg} type={toast.type} onClose={()=>setToast(null)}/>}
@@ -412,7 +412,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         {/* LEFT — hero text */}
         <div style={{flex:"1 1 380px",minWidth:0,padding:"clamp(28px,5vw,60px) clamp(20px,5vw,56px)",display:"flex",flexDirection:"column",justifyContent:"center",borderRight:"1px solid #EBEBEB",background:"#fff"}}>
           <div style={{fontSize:13,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",marginBottom:18,color:"#1428A0"}}>
-            🇰🇪 Kenya's Resell Platform
+            Kenya's Resell Platform
           </div>
           <h1 style={{fontSize:"clamp(32px,3.5vw,50px)",fontWeight:800,letterSpacing:"-.02em",lineHeight:1.12,marginBottom:20,color:"#1A1A1A",fontFamily:"var(--fn)"}}>
             Post Free.<br/>
@@ -443,9 +443,9 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
               onClick={()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"})}>Browse Listings</button>
           </div>
           <div style={{display:"flex",gap:22,fontSize:14,color:"#888",fontWeight:500,flexWrap:"wrap"}}>
-            <span style={{display:"flex",alignItems:"center",gap:7}}><span style={{color:"#1428A0",fontWeight:800,fontSize:16}}>✓</span>Free to post</span>
-            <span style={{display:"flex",alignItems:"center",gap:7}}><span style={{color:"#1428A0",fontWeight:800,fontSize:16}}>✓</span>Anonymous chat</span>
-            <span style={{display:"flex",alignItems:"center",gap:7}}><span style={{color:"#1428A0",fontWeight:800,fontSize:16}}>✓</span>M-Pesa escrow</span>
+            <span style={{display:"flex",alignItems:"center",gap:7}}><span style={{color:"#1428A0",fontWeight:800,fontSize:16}}><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="20 6 9 17 4 12"/></svg></span>Free to post</span>
+            <span style={{display:"flex",alignItems:"center",gap:7}}><span style={{color:"#1428A0",fontWeight:800,fontSize:16}}><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="20 6 9 17 4 12"/></svg></span>Anonymous chat</span>
+            <span style={{display:"flex",alignItems:"center",gap:7}}><span style={{color:"#1428A0",fontWeight:800,fontSize:16}}><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="20 6 9 17 4 12"/></svg></span>M-Pesa escrow</span>
           </div>
         </div>
 
@@ -473,7 +473,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       <div style={{background:"#1428A0",padding:"12px 20px",display:"flex",gap:20,alignItems:"center",justifyContent:"center",flexWrap:"wrap"}}>
         {["Free to list","Safe anonymous chat","M-Pesa escrow","Kenyan platform"].map(t=>(
           <span key={t} style={{fontSize:14,fontWeight:600,color:"rgba(255,255,255,.92)",display:"flex",alignItems:"center",gap:8}}>
-            <span style={{color:"#fff",fontSize:16,fontWeight:800}}>✓</span>{t}
+            <span style={{color:"#fff",display:"inline-flex",alignItems:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="20 6 9 17 4 12"/></svg></span>{t}
           </span>
         ))}
       </div>
@@ -503,10 +503,10 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
             </select>
           </div>
           {(filter.cat||filter.county||filter.minPrice||filter.maxPrice||filter.q)&&
-            <button className="btn bs" style={{width:"100%",borderRadius:10,fontSize:14}} onClick={()=>{setFilter({cat:"",q:"",county:"",minPrice:"",maxPrice:"",sort:"newest"});setPg(1);}}>✕ Clear All Filters</button>}
+            <button className="btn bs" style={{width:"100%",borderRadius:10,fontSize:14}} onClick={()=>{setFilter({cat:"",q:"",county:"",minPrice:"",maxPrice:"",sort:"newest"});setPg(1);}}>Clear All Filters</button>}
           <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:14,padding:"20px 18px"}}>
             <div style={{fontSize:12,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:4}}>Community</div>
-            <div style={{fontSize:16,fontWeight:700,color:"#1A1A1A",marginBottom:12}}>🛒 Buyers Want</div>
+            <div style={{fontSize:16,fontWeight:700,color:"#1A1A1A",marginBottom:12}}>Buyers Want</div>
             <WhatBuyersWant user={user} token={token} notify={notify} onSignIn={()=>setModal({type:"auth",mode:"login"})} compact={true}
               onIHaveThis={(request,action)=>{
                 if(action==="switch_to_seller"){
@@ -538,8 +538,8 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
                 <option value="expiring">Expiring Soon</option>
               </select>
               <div style={{display:"flex",gap:2}}>
-                <button onClick={()=>setVm("grid")} style={{background:vm==="grid"?"#1428A0":"#fff",color:vm==="grid"?"#fff":"#767676",border:"1.5px solid #E0E0E0",padding:"8px 14px",cursor:"pointer",fontSize:15,fontFamily:"var(--fn)",borderRadius:"8px 0 0 8px",transition:"all .15s"}}>⊞</button>
-                <button onClick={()=>setVm("list")} style={{background:vm==="list"?"#1428A0":"#fff",color:vm==="list"?"#fff":"#767676",border:"1.5px solid #E0E0E0",borderLeft:"none",padding:"8px 14px",cursor:"pointer",fontSize:15,fontFamily:"var(--fn)",borderRadius:"0 8px 8px 0",transition:"all .15s"}}>☰</button>
+                <button onClick={()=>setVm("grid")} style={{background:vm==="grid"?"#1428A0":"#fff",color:vm==="grid"?"#fff":"#767676",border:"1.5px solid #E0E0E0",padding:"8px 14px",cursor:"pointer",fontSize:15,fontFamily:"var(--fn)",borderRadius:"8px 0 0 8px",transition:"all .15s"}}>Grid</button>
+                <button onClick={()=>setVm("list")} style={{background:vm==="list"?"#1428A0":"#fff",color:vm==="list"?"#fff":"#767676",border:"1.5px solid #E0E0E0",borderLeft:"none",padding:"8px 14px",cursor:"pointer",fontSize:15,fontFamily:"var(--fn)",borderRadius:"0 8px 8px 0",transition:"all .15s"}}>List</button>
               </div>
               {user&&<button className="btn bp" style={{borderRadius:9,fontSize:14,padding:"9px 20px"}} onClick={()=>{
                 if(user.role==="buyer"){
@@ -553,7 +553,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
           </div>
 
           {loading?<div style={{textAlign:"center",padding:"80px 0"}}><Spin s="40px"/></div>
-            :listings.length===0?<div className="empty"><div style={{fontSize:56,marginBottom:16,opacity:.15}}>🔍</div><h3 style={{fontWeight:700,fontSize:20,marginBottom:8}}>No listings found</h3><p style={{color:"#767676"}}>Try a different search or filter</p></div>
+            :listings.length===0?<div className="empty"><div style={{fontSize:56,marginBottom:16,opacity:.15}}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><h3 style={{fontWeight:700,fontSize:20,marginBottom:8}}>No listings found</h3><p style={{color:"#767676"}}>Try a different search or filter</p></div>
             :<div className={vm==="grid"?"g3":"lvc"}>{listings.map(l=><ListingCard key={l.id} listing={l} onClick={()=>openListing(l)} listView={vm==="list"}/>)}</div>}
 
           <Pager total={total} perPage={PER_PAGE} page={pg} onChange={p=>{setPg(p);if(typeof window !== 'undefined') window.scrollTo({top:400,behavior:"smooth"});}}/>
@@ -577,14 +577,14 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
           <h2 style={{fontSize:"clamp(24px,4vw,40px)",fontWeight:700,letterSpacing:"-.03em",color:"#111111",lineHeight:1.1}}>Simple. Safe.<br/>Built for Kenya.</h2>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:20}}>
-          {[["📝","Post for Free","No upfront cost. Photos, description, location — done in 2 minutes."],
-            ["💬","Chat Safely","Anonymous, moderated chat. Contact info hidden until unlock."],
-            ["🔥","Buyer Locks In","Serious buyers click 'I'm Interested'. You get notified instantly."],
-            ["💳","Pay KSh 250","Seller pays once to see buyer contact. Till 5673935. Non-refundable."],
-            ["🔐","Safe Escrow","Optional 7.5% escrow. Funds held until you confirm delivery."],
-            ["🏆","Deal Done","Leave a review. Build your seller reputation on the platform."]].map(([icon,title,desc])=>(
+          {[["doc","Post for Free","No upfront cost. Photos, description, location — done in 2 minutes."],
+            ["chat","Chat Safely","Anonymous, moderated chat. Contact info hidden until unlock."],
+            ["fire","Buyer Locks In","Serious buyers click 'I'm Interested'. You get notified instantly."],
+            ["card","Pay KSh 250","Seller pays once to see buyer contact. Till 5673935. Non-refundable."],
+            ["lock","Safe Escrow","Optional 7.5% escrow. Funds held until you confirm delivery."],
+            ["trophy","Deal Done","Leave a review. Build your seller reputation on the platform."]].map(([icon,title,desc])=>(
             <div key={title} style={{background:"#F4F4F4",padding:"28px 24px"}}>
-              <div style={{fontSize:28,marginBottom:14}}>{icon}</div>
+              <div style={{marginBottom:14,display:"flex",alignItems:"center"}}>{icon==="doc"?<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>:icon==="chat"?<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>:icon==="fire"?<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M12 2c0 0-5 4-5 9a5 5 0 0 0 10 0c0-5-5-9-5-9z"/><path d="M12 12c0 0-2 1.5-2 3a2 2 0 0 0 4 0c0-1.5-2-3-2-3z"/></svg>:icon==="card"?<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>:icon==="lock"?<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>:icon==="trophy"?<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="8 21 12 17 16 21"/><line x1="12" y1="17" x2="12" y2="11"/><path d="M7 4H4a2 2 0 0 0-2 2v1a5 5 0 0 0 5 5"/><path d="M17 4h3a2 2 0 0 1 2 2v1a5 5 0 0 1-5 5"/><rect x="7" y="2" width="10" height="10" rx="1"/></svg>:null}</div>
               <div style={{fontWeight:700,fontSize:16,marginBottom:10,letterSpacing:"-.01em",color:"#1A1A1A"}}>{title}</div>
               <div style={{fontSize:15,color:"#636363",lineHeight:1.75}}>{desc}</div>
             </div>
@@ -618,7 +618,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
           setListings(p=>p.map(l=>l.id===updatedListing.id?updatedListing:l));
           closeModal();
           setTimeout(()=>setModal({type:"detail",listing:updatedListing}),200);
-          notify("🔓 Contact details revealed!","success");
+          notify("Contact details revealed!","success");
           return;
         }
         try{
@@ -628,7 +628,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
           closeModal();
           setTimeout(()=>setModal({type:"detail",listing:updatedListing}),200);
         }catch{closeModal();}
-        notify(modal.payType==="unlock"?"🔓 Buyer contact revealed!":"🔐 Escrow activated!","success");
+        notify(modal.payType==="unlock"?"Buyer contact revealed!":"Escrow activated!","success");
       }}
       onClose={closeModal} notify={notify}
     />}
@@ -637,7 +637,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     {page==="sold"&&<div style={{minHeight:"100vh",background:"#F0F0F0"}}>
       <div style={{background:"#1D1D1D",padding:"clamp(28px,4vw,52px) clamp(16px,4vw,40px) clamp(28px,4vw,48px)"}}>
         <div>
-          <button onClick={()=>setPage("home")} style={{background:"transparent",border:"1px solid rgba(255,255,255,.35)",color:"#fff",padding:"7px 16px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"var(--fn)",marginBottom:28,display:"inline-flex",alignItems:"center",gap:6,letterSpacing:".02em",borderRadius:8}}>← Back to Marketplace</button>
+          <button onClick={()=>setPage("home")} style={{background:"transparent",border:"1px solid rgba(255,255,255,.35)",color:"#fff",padding:"7px 16px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"var(--fn)",marginBottom:28,display:"inline-flex",alignItems:"center",gap:6,letterSpacing:".02em",borderRadius:8}}>Back to Marketplace</button>
           <div style={{marginBottom:14,opacity:.9}}><WekaSokoLogo size={26}/></div>
           <div style={{fontSize:11,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"rgba(255,255,255,.55)",marginBottom:10}}>Sold Listings</div>
           <h1 style={{fontSize:"clamp(30px,5vw,54px)",fontWeight:700,letterSpacing:"-.03em",color:"#fff",lineHeight:1.05,marginBottom:14}}>Sold on Weka Soko</h1>
