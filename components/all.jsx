@@ -27,7 +27,7 @@ function WekaSokoLogo({ size = 32, iconOnly = false, light = false }) {
     );
   }
   return (
-    <svg width={iconW + gap + 82} height={iconH} viewBox={`0 0 ${Math.round(iconW + gap + 82)} ${iconH}`} fill="none" xmlns="http://www.w3.org/2000/svg" style={{display:"block"}}>
+    <svg width={Math.round(totalW)} height={iconH} viewBox={`0 0 ${Math.round(totalW)} ${iconH}`} fill="none" xmlns="http://www.w3.org/2000/svg" style={{display:"block"}}>
       {/* Bag body */}
       <rect x="0" y={Math.round(iconH*0.33)} width={Math.round(iconW)} height={Math.round(iconH*0.67)} rx="3" fill="#111111"/>
       {/* Bag shadow strip */}

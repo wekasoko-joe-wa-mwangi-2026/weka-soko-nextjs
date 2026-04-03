@@ -406,22 +406,31 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     </nav>
 
     {/* ── HERO + CATEGORIES side by side ── */}
-    {page!=="dashboard"&&page!=="sold"&&<div style={{background:"#FFFFFF",borderBottom:"1px solid #EBEBEB"}}>
+    {page!=="dashboard"&&page!=="sold"&&<div style={{background:"#FFFFFF",borderBottom:"1px solid #EBEBEB",overflow:"hidden"}}>
       <div style={{display:"flex",alignItems:"stretch",minHeight:460,flexWrap:"wrap"}}>
         {/* LEFT — hero text */}
-        <div style={{flex:"1 1 280px",display:"flex",flexDirection:"column",justifyContent:"center",padding:"clamp(32px,4vw,48px) clamp(24px,4vw,48px)",minWidth:280}}>
+        <div style={{flex:"1 1 300px",display:"flex",flexDirection:"column",justifyContent:"center",padding:"clamp(32px,4vw,48px) clamp(24px,4vw,48px)",minWidth:300,maxWidth:560}}>
           <div style={{fontSize:11,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"#767676",marginBottom:14}}>Kenya's Smartest Resell Platform</div>
           <h1 style={{fontSize:"clamp(28px,4vw,48px)",fontWeight:700,letterSpacing:"-.03em",color:"#1A1A1A",lineHeight:1.1,marginBottom:16}}>Buy & Sell Safely</h1>
           <p style={{fontSize:15,color:"#636363",lineHeight:1.75,marginBottom:24,maxWidth:420}}>Post free. Pay KSh 250 only when a serious buyer locks in. Chat safely. Build your reputation.</p>
-          <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+          <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:28}}>
             {!user?<>
               <button style={{background:"#1428A0",color:"#FFFFFF",border:"none",padding:"11px 24px",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:8}} onClick={()=>setModal({type:"auth",mode:"signup"})}>Get Started Free</button>
               <button style={{background:"transparent",color:"#1428A0",border:"1.5px solid #1428A0",padding:"10px 24px",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:8}} onClick={()=>setModal({type:"auth",mode:"login"})}>Sign In</button>
             </>:<button style={{background:"#1428A0",color:"#FFFFFF",border:"none",padding:"11px 24px",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:8}} onClick={()=>{if(user.role==="buyer"){if(typeof window !== 'undefined' && window.confirm("Switch to Seller to post ads?"))apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token).then(d=>{const upd={...user,...d.user};setUser(upd);localStorage.setItem("ws_user",JSON.stringify(upd));notify("Switched to Seller!","success");setModal({type:"post"});}).catch(e=>notify(e.message,"error"));return;}setModal({type:"post"});}}>+ Post Your First Ad</button>}
           </div>
+          {/* Stats */}
+          <div style={{display:"flex",gap:24,flexWrap:"wrap"}}>
+            {[["Users",stats.users||0],["Active Ads",stats.activeAds||0],["Sold",stats.sold||0]].map(([label,val])=>(
+              <div key={label}>
+                <div style={{fontSize:22,fontWeight:800,color:"#1A1A1A",letterSpacing:"-.02em"}}>{Number(val).toLocaleString()}</div>
+                <div style={{fontSize:11,fontWeight:600,color:"#9E9E9E",letterSpacing:".06em",textTransform:"uppercase"}}>{label}</div>
+              </div>
+            ))}
+          </div>
         </div>
         {/* RIGHT — categories grid */}
-        <div style={{flex:"1 1 280px",display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:1,minWidth:280}}>
+        <div style={{flex:"1 1 300px",display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:1}}>
           {CATS.slice(0,8).map((c,i)=>(
             <div key={c.name} onClick={()=>{setFilter(f=>({...f,cat:c.name}));setPg(1);}} style={{background:CAT_PHOTOS[c.name]?`url(${CAT_PHOTOS[c.name]}) center/cover`:"#E0E0E0",cursor:"pointer",display:"flex",alignItems:"flex-end",padding:"16px",minHeight:110,position:"relative",overflow:"hidden",transition:"transform .2s"}}>
               <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.3)",transition:"opacity .2s"}}/>
