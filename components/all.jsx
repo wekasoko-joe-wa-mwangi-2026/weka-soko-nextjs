@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { io } from 'socket.io-client';
 import { fmtKES, ago, CATS, KENYA_COUNTIES, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
 
@@ -3764,6 +3764,7 @@ function MobileLayout({
         initialListings={listings}
         startIndex={swipeFeedIdx}
         onClose={()=>setSwipeFeedIdx(null)}
+        filter={filter}
       />
     </div>}
 
@@ -3852,46 +3853,62 @@ function MobileLayout({
 }
 
 
-// ── SWIPE FEED — TikTok-style full-screen listing discovery ───────────────────
-function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,onSignIn,onPostAd,initialListings,startIndex,onClose}){
+// ── SWIPE FEED — Tinder-style horizontal listing discovery ────────────────────
+function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,onSignIn,onPostAd,initialListings,startIndex,onClose,filter}){
   const [listings,setListings]=useState(initialListings&&initialListings.length?[...initialListings]:[]);
   const [total,setTotal]=useState(0);
   const [loading,setLoading]=useState(!(initialListings&&initialListings.length));
   const [idx,setIdx]=useState(typeof startIndex==="number"?startIndex:0);
-  const [dragY,setDragY]=useState(0);
+  const [dragX,setDragX]=useState(0);
   const [animating,setAnimating]=useState(false);
   const containerRef=useRef(null);
   const fetching=useRef(false);
   const animating_=useRef(false);
-  const startYRef=useRef(null);
   const startXRef=useRef(null);
+  const startYRef=useRef(null);
+  const touchStartTimeRef=useRef(null);
   const PER=20;
+
+  // Build filter query params (respects active category/search/county)
+  const filterQuery=useMemo(()=>{
+    if(!filter)return'';
+    const p=new URLSearchParams();
+    if(filter.cat)p.set('category',filter.cat);
+    if(filter.subcat)p.set('subcat',filter.subcat);
+    if(filter.q)p.set('search',filter.q);
+    if(filter.county)p.set('county',filter.county);
+    if(filter.minPrice)p.set('minPrice',filter.minPrice);
+    if(filter.maxPrice)p.set('maxPrice',filter.maxPrice);
+    const qs=p.toString();
+    return qs?'&'+qs:'';
+  },[filter]);
 
   // Initial data fetch
   useEffect(()=>{
     if(initialListings&&initialListings.length){
-      api(`/api/listings?sort=newest&limit=1&page=1`).then(d=>setTotal(d.total||0)).catch(()=>{});
+      api(`/api/listings?sort=newest&limit=1&page=1${filterQuery}`).then(d=>setTotal(d.total||0)).catch(()=>{});
     } else {
-      api(`/api/listings?sort=newest&limit=${PER}&page=1`)
+      api(`/api/listings?sort=newest&limit=${PER}&page=1${filterQuery}`)
         .then(d=>{setListings(d.listings||[]);setTotal(d.total||0);})
         .catch(()=>{}).finally(()=>setLoading(false));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[]);
 
-  // Non-passive touchmove listener — prevents page scroll during swipe
+  // Non-passive touchmove — prevents page scroll while swiping horizontally
   useEffect(()=>{
     const el=containerRef.current;
     if(!el)return;
     const onMove=e=>{
-      if(startYRef.current===null||animating_.current)return;
-      const dx=Math.abs(e.touches[0].clientX-startXRef.current);
-      if(dx>30){startYRef.current=null;return;}
+      if(startXRef.current===null||animating_.current)return;
+      const dy=Math.abs(e.touches[0].clientY-startYRef.current);
+      // If mostly vertical, cancel horizontal swipe
+      if(dy>30){startXRef.current=null;return;}
       e.preventDefault();
-      const dy=e.touches[0].clientY-startYRef.current;
+      const dx=e.touches[0].clientX-startXRef.current;
       // Elastic resistance beyond ±120px
-      const clamped=dy>0?Math.min(dy,120+Math.max(0,dy-120)*0.2):Math.max(dy,-120+Math.min(0,dy+120)*0.2);
-      setDragY(clamped);
+      const clamped=dx>0?Math.min(dx,120+Math.max(0,dx-120)*0.2):Math.max(dx,-120+Math.min(0,dx+120)*0.2);
+      setDragX(clamped);
     };
     el.addEventListener('touchmove',onMove,{passive:false});
     return()=>el.removeEventListener('touchmove',onMove);
@@ -3901,7 +3918,7 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
     if(fetching.current)return;
     fetching.current=true;
     const pg=Math.ceil(listings.length/PER)+1;
-    api(`/api/listings?sort=newest&limit=${PER}&page=${pg}`)
+    api(`/api/listings?sort=newest&limit=${PER}&page=${pg}${filterQuery}`)
       .then(d=>{
         setTotal(d.total||0);
         setListings(prev=>{const ids=new Set(prev.map(l=>l.id));return[...prev,...(d.listings||[]).filter(l=>!ids.has(l.id))];});
@@ -3912,10 +3929,11 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
     if(animating_.current||newIdx<0||newIdx>=listings.length)return false;
     animating_.current=true;
     setAnimating(true);
-    setDragY(newIdx>idx?-window.innerHeight:window.innerHeight);
+    // slide left for next, slide right for prev
+    setDragX(newIdx>idx?-window.innerWidth:window.innerWidth);
     setTimeout(()=>{
       setIdx(newIdx);
-      setDragY(0);
+      setDragX(0);
       setAnimating(false);
       animating_.current=false;
       if(newIdx>=listings.length-5&&listings.length<total)fetchMore();
@@ -3925,19 +3943,41 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
 
   const onTouchStart=e=>{
     if(animating_.current)return;
-    startYRef.current=e.touches[0].clientY;
     startXRef.current=e.touches[0].clientX;
-  };
-  const onTouchEnd=e=>{
-    if(startYRef.current===null||animating_.current)return;
-    const dy=startYRef.current-e.changedTouches[0].clientY;
-    startYRef.current=null;
-    if(dy>55&&idx<listings.length-1){snapTo(idx+1);}
-    else if(dy<-55&&idx>0){snapTo(idx-1);}
-    else{setAnimating(true);setDragY(0);setTimeout(()=>setAnimating(false),280);}
+    startYRef.current=e.touches[0].clientY;
+    touchStartTimeRef.current=Date.now();
   };
 
-  // Render a single card slide (prev=-1, current=0, next=1)
+  const onTouchEnd=e=>{
+    if(startXRef.current===null||animating_.current)return;
+    const endX=e.changedTouches[0].clientX;
+    const endY=e.changedTouches[0].clientY;
+    const dx=startXRef.current-endX; // positive = swiped left = go next
+    const dy=Math.abs(endY-startYRef.current);
+    const duration=Date.now()-touchStartTimeRef.current;
+    const totalMove=Math.abs(dx)+dy;
+
+    startXRef.current=null;
+    startYRef.current=null;
+
+    // Tinder-style tap: quick touch with minimal movement
+    if(duration<220&&totalMove<20){
+      const tapX=e.changedTouches[0].clientX;
+      if(tapX>window.innerWidth/2){
+        if(!snapTo(idx+1)){setDragX(0);}
+      } else {
+        if(!snapTo(idx-1)){setDragX(0);}
+      }
+      return;
+    }
+
+    // Horizontal swipe: left = next, right = prev
+    if(dx>55&&idx<listings.length-1){snapTo(idx+1);}
+    else if(dx<-55&&idx>0){snapTo(idx-1);}
+    else{setAnimating(true);setDragX(0);setTimeout(()=>setAnimating(false),280);}
+  };
+
+  // Render a single card slide (offset: -1=left, 0=current, +1=right)
   const renderSlide=(offset)=>{
     const cardIdx=idx+offset;
     if(cardIdx<0||cardIdx>=listings.length)return null;
@@ -3946,15 +3986,15 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
     const isNew=Date.now()-new Date(l.created_at)<12*3600000;
     const isExpiring=l.expires_at&&new Date(l.expires_at)-Date.now()<3*86400000&&new Date(l.expires_at)>Date.now();
     const isSaved=savedIds?.has(l.id);
-    const baseY=offset*100;// in vh units
-    const ty=`calc(${baseY}vh + ${dragY}px)`;
+    const baseX=offset*100; // in vw units
+    const tx=`calc(${baseX}vw + ${dragX}px)`;
     return(
-      <div key={l.id} style={{position:"absolute",inset:0,transform:`translateY(${ty})`,transition:animating?"transform .3s cubic-bezier(.25,.46,.45,.94)":"none",willChange:"transform",background:"#000",overflow:"hidden"}}>
+      <div key={l.id} style={{position:"absolute",inset:0,transform:`translateX(${tx})`,transition:animating?"transform .3s cubic-bezier(.25,.46,.45,.94)":"none",willChange:"transform",background:"#000",overflow:"hidden"}}>
         {photo
           ?<img src={photo} alt={l.title} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",opacity:.88}}/>
           :<div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,#1428A0 0%,#0a1060 100%)"}}/>}
         <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,rgba(0,0,0,.35) 0%,transparent 30%,transparent 45%,rgba(0,0,0,.9) 100%)",pointerEvents:"none"}}/>
-        {/* Bottom content — only interactive on current card */}
+        {/* Interactive content — only on the current (centre) card */}
         {offset===0&&<>
           {/* Right actions */}
           <div style={{position:"absolute",right:14,bottom:190,display:"flex",flexDirection:"column",gap:16,alignItems:"center",zIndex:10}}>
@@ -3989,8 +4029,8 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
               {l.seller_avg_rating>0&&<span>⭐ {Number(l.seller_avg_rating).toFixed(1)}</span>}
             </div>
             <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>onOpen&&onOpen(l)} style={{flex:1,background:"rgba(255,255,255,.15)",color:"#fff",border:"1.5px solid rgba(255,255,255,.45)",padding:"13px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",backdropFilter:"blur(8px)"}}>View Details</button>
-              <button onClick={()=>{if(!user){onSignIn&&onSignIn();return;}onLockIn&&onLockIn(l);}} style={{background:"#1428A0",color:"#fff",border:"none",padding:"13px 14px",fontSize:13,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",whiteSpace:"nowrap",boxShadow:"0 4px 14px rgba(20,40,160,.5)"}}>I'm Interested</button>
+              <button onClick={e=>{e.stopPropagation();onOpen&&onOpen(l);}} style={{flex:1,background:"rgba(255,255,255,.15)",color:"#fff",border:"1.5px solid rgba(255,255,255,.45)",padding:"13px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",backdropFilter:"blur(8px)"}}>View Details</button>
+              <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onLockIn&&onLockIn(l);}} style={{background:"#1428A0",color:"#fff",border:"none",padding:"13px 14px",fontSize:13,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",whiteSpace:"nowrap",boxShadow:"0 4px 14px rgba(20,40,160,.5)"}}>I'm Interested</button>
             </div>
           </div>
           {/* Badges */}
@@ -3998,8 +4038,11 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
             {isNew&&<div style={{background:"#10b981",color:"#fff",fontSize:10,fontWeight:800,padding:"4px 10px",borderRadius:6,letterSpacing:".06em"}}>NEW</div>}
             {isExpiring&&<div style={{background:"#f59e0b",color:"#fff",fontSize:10,fontWeight:800,padding:"4px 10px",borderRadius:6}}>EXPIRING SOON</div>}
           </div>
-          {/* Swipe hint */}
-          {idx===0&&listings.length>1&&<div style={{position:"absolute",bottom:86,left:"50%",transform:"translateX(-50%)",color:"rgba(255,255,255,.35)",fontSize:11,textAlign:"center",pointerEvents:"none",zIndex:5,whiteSpace:"nowrap"}}>↑ swipe up for next</div>}
+          {/* Swipe / tap hint */}
+          {idx===0&&listings.length>1&&<div style={{position:"absolute",bottom:86,left:"50%",transform:"translateX(-50%)",color:"rgba(255,255,255,.35)",fontSize:11,textAlign:"center",pointerEvents:"none",zIndex:5,whiteSpace:"nowrap"}}>← tap sides or swipe →</div>}
+          {/* Invisible tap zones — left/right halves for Tinder-style navigation */}
+          <div style={{position:"absolute",top:0,left:0,width:"40%",bottom:"30%",zIndex:9}} onClick={()=>snapTo(idx-1)}/>
+          <div style={{position:"absolute",top:0,right:0,width:"40%",bottom:"30%",zIndex:9}} onClick={()=>snapTo(idx+1)}/>
         </>}
       </div>
     );
@@ -4020,7 +4063,7 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
     <div ref={containerRef} style={{height:"100vh",width:"100%",background:"#000",position:"relative",overflow:"hidden",userSelect:"none",WebkitUserSelect:"none",touchAction:"none"}}
       onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
 
-      {/* Prev / Current / Next slides */}
+      {/* Left / Current / Right slides */}
       {renderSlide(-1)}
       {renderSlide(1)}
       {renderSlide(0)}
