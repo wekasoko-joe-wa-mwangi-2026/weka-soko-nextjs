@@ -1061,7 +1061,15 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
     <div style={{display:"flex",gap:8,width:"100%"}}>
       {step===2&&<button className="btn bs" onClick={()=>setStep(1)} style={{display:"flex",alignItems:"center",gap:4}}>{Ic.chevronLeft(15)} Back</button>}
       <div style={{flex:1}}/>
-      {step===1&&<button className="btn bp" onClick={()=>setStep(2)} disabled={!f.title.trim()||!f.category||!f.price||!f.description.trim()} style={{display:"flex",alignItems:"center",gap:4}}>Continue {Ic.chevronRight(15)}</button>}
+      {step===1&&<button className="btn bp" onClick={()=>{
+        const missing=[];
+        if(!f.title.trim())missing.push("title");
+        if(!f.category)missing.push("category");
+        if(!f.price)missing.push("price");
+        if(!f.description.trim())missing.push("description");
+        if(missing.length){notify(`Please fill in: ${missing.join(", ")}`, "warning");return;}
+        setStep(2);
+      }} style={{display:"flex",alignItems:"center",gap:4}}>Continue {Ic.chevronRight(15)}</button>}
       {step===2&&payChoice&&<button className="btn bp" onClick={()=>submitListing(payChoice==="now")} disabled={loading}>
         {loading?<Spin/>:payChoice==="now"?"Post & Pay KSh 250 →":"Post Anonymously →"}
       </button>}
