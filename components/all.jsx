@@ -2591,7 +2591,17 @@ function MobileDashboard({
             <div key={n.id} onClick={()=>markRead(n.id)} style={{background:n.is_read?"#fff":"#F0F4FF",borderRadius:12,padding:"14px",marginBottom:8,border:`1px solid ${n.is_read?"#EBEBEB":"#C7D2FE"}`,cursor:"pointer"}}>
               <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
                 <span style={{flexShrink:0,display:"flex",alignItems:"center"}}>
-                  {({new_message:<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,buyer_locked_in:"fire",escrow_released:"money",payment_confirmed:"check",warning:"warn",admin_edit:"settings",suspension:"ban",seller_pitch:"inbox",pitch_accepted:"check",request_match:"cart",listing_match:"tag",listing_approved:"check"})[n.type]||"<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>"}
+                  {n.type==="new_message"
+                    ?<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1428A0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    :n.type==="buyer_locked_in"
+                    ?<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e55" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    :n.type==="escrow_released"||n.type==="payment_confirmed"
+                    ?<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    :n.type==="listing_approved"||n.type==="pitch_accepted"
+                    ?<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a9e1a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    :n.type==="listing_rejected"||n.type==="suspension"
+                    ?<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e55" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                    :<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1428A0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>}
                 </span>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontWeight:n.is_read?600:700,fontSize:14,color:"#1A1A1A",marginBottom:3}}>{n.title}</div>
@@ -2926,8 +2936,18 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
           <div key={i} onClick={()=>markRead(n.id)} style={{display:"flex",gap:14,padding:"16px 0",borderBottom:"1px solid #F5F5F5",cursor:"pointer",opacity:n.is_read?.7:1,transition:"opacity .15s"}}
             onMouseOver={e=>e.currentTarget.style.paddingLeft="8px"}
             onMouseOut={e=>e.currentTarget.style.paddingLeft="0"}>
-            <div style={{width:40,height:40,borderRadius:"50%",background:n.is_read?"#F5F5F5":"#E8E8E8",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>
-              {({new_message:"chat",buyer_locked_in:"fire",escrow_released:"money",payment_confirmed:"check",warning:"warn",admin_edit:"settings",suspension:"ban",seller_pitch:"inbox",pitch_accepted:"check",request_match:"cart",listing_match:"tag",listing_approved:"check"})[n.type]||"<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>"}
+            <div style={{width:40,height:40,borderRadius:"50%",background:n.is_read?"#F5F5F5":"#E8E8E8",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              {n.type==="new_message"||n.type==="seller_pitch"
+                ?<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1428A0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                :n.type==="buyer_locked_in"
+                ?<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e55" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                :n.type==="escrow_released"||n.type==="payment_confirmed"
+                ?<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                :n.type==="listing_approved"||n.type==="pitch_accepted"
+                ?<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a9e1a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                :n.type==="listing_rejected"||n.type==="suspension"
+                ?<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e55" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                :<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1428A0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>}
             </div>
             <div style={{flex:1}}>
               <div style={{fontWeight:n.is_read?500:700,fontSize:14,marginBottom:2}}>{n.title}</div>
