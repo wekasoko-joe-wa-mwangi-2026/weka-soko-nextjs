@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { apiCall, fmtKES, ago, CATS, KENYA_COUNTIES, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
-import { WekaSokoLogo, Spin, Toast, Modal, FF, Counter, ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal, WatermarkedImage, Lightbox, AuthModal, ShareModal, PayModal, ChatModal, PostAdModal, ListingCard, LeaveReviewBtn, ReportListingBtn, VerificationBanner, DetailModal, MarkSoldModal, RoleSwitcher, PostRequestModal, WhatBuyersWant, SoldSection, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab, ProfileSection, PasswordSection, VerificationSection, MobileDashboard, Dashboard, PWABanner, Pager, MobileRequestsTab, MobileLayout, BuyersWantPage, AllListingsPage, SoldPage } from '@/components/all';
+import { WekaSokoLogo, Spin, Toast, Modal, FF, Counter, ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal, WatermarkedImage, Lightbox, AuthModal, ShareModal, PayModal, ChatModal, PostAdModal, ListingCard, LeaveReviewBtn, ReportListingBtn, VerificationBanner, DetailModal, MarkSoldModal, RoleSwitcher, PostRequestModal, WhatBuyersWant, SoldSection, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab, ProfileSection, PasswordSection, VerificationSection, MobileDashboard, Dashboard, PWABanner, Pager, MobileRequestsTab, MobileLayout, BuyersWantPage, AllListingsPage, SoldPage, HotRightNow } from '@/components/all';
 
 export default function HomeClient({ initialListings, initialTotal, initialStats, initialCounties, initialFilter, initialPage }) {
   const [user,setUser]=useState(null);
@@ -25,6 +25,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
   const socketRef=useRef(null);
   const [resetToken,setResetToken]=useState(null);
   const [savedIds,setSavedIds]=useState(new Set());
+  const [newSinceLastVisit,setNewSinceLastVisit]=useState(0);
 
   const notify=useCallback((msg,type="info")=>setToast({msg,type,id:Date.now()}),[]);
 
@@ -200,6 +201,21 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       if(Array.isArray(ids))setSavedIds(new Set(ids));
     }).catch(()=>{});
   },[token]);
+
+  // New since last visit — localStorage tracking
+  useEffect(()=>{
+    if(typeof window==="undefined")return;
+    const last=localStorage.getItem("ws_last_visit");
+    const now=Date.now();
+    if(last){
+      const hoursSince=(now-parseInt(last))/3600000;
+      if(hoursSince>0.5){
+        const estimated=Math.round(hoursSince*2.5);
+        if(estimated>0)setNewSinceLastVisit(Math.min(estimated,999));
+      }
+    }
+    localStorage.setItem("ws_last_visit",String(now));
+  },[]);
 
   const handleToggleSave=useCallback(async(listing)=>{
     if(!user||!token){setModal({type:"auth",mode:"login"});return;}
@@ -417,6 +433,8 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         mobileFiltersOpen={mobileFiltersOpen} setMobileFiltersOpen={setMobileFiltersOpen}
         mobileTab={mobileTab} setMobileTab={setMobileTab}
         openListing={openListing} handleLockIn={handleLockIn}
+        savedIds={savedIds} onToggleSave={handleToggleSave}
+        newSinceLastVisit={newSinceLastVisit}
       />
       {modal?.type==="auth"&&<AuthModal defaultMode={modal.mode} onClose={closeModal} onAuth={handleAuth} notify={notify}/>}
       {modal?.type==="post"&&token&&<PostAdModal onClose={closeModal} token={token} notify={notify} linkedRequest={modal.linkedRequest||null} onSuccess={l=>{setListings(p=>[l,...p]);setTotal(t=>t+1);}}/>}
@@ -596,6 +614,9 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       </div>
     </div>}
 
+    {page!=="dashboard"&&page!=="sold"&&page!=="requests"&&page!=="listings"&&newSinceLastVisit>0&&<div style={{background:"#1428A0",color:"#fff",padding:"10px 20px",textAlign:"center",fontSize:14,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+      <span>✨</span><span>{newSinceLastVisit} new listing{newSinceLastVisit!==1?"s":""} added since your last visit</span>
+    </div>}
     {page!=="dashboard"&&page!=="sold"&&page!=="requests"&&page!=="listings"&&<main style={{padding:"clamp(20px,4vw,40px) clamp(16px,4vw,48px) 80px"}}>
       <div style={{display:"flex",gap:24,alignItems:"flex-start",flexWrap:"wrap"}}>
 
@@ -660,6 +681,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
 
         {/* RIGHT: main content */}
         <div style={{flex:1,minWidth:0}} id="listings-section">
+          <HotRightNow onOpen={openListing} savedIds={savedIds} onToggleSave={handleToggleSave} user={user}/>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,marginBottom:20,flexWrap:"wrap"}}>
             <h2 style={{fontSize:22,fontWeight:700,letterSpacing:"-.02em",color:"#1A1A1A"}}>
               {filter.cat||"All Listings"} <span style={{fontWeight:400,fontSize:15,color:"#AAAAAA"}}>{total} items</span>

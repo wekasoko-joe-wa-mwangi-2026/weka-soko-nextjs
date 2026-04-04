@@ -1233,6 +1233,8 @@ function ListingCard({listing:l,onClick,listView,isSaved,onSave}){
     <div className="lthumb">
       {photo?<WatermarkedImage src={photo} alt={l.title} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>:<span style={{opacity:.15}}><svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span>}
       {l.status==="sold"&&<div className="sold-badge">SOLD</div>}
+      {Date.now()-new Date(l.created_at)<12*3600000&&l.status!=="sold"&&<div style={{position:"absolute",top:8,left:8,background:"#10b981",color:"#fff",fontSize:9,fontWeight:800,padding:"3px 8px",borderRadius:4,letterSpacing:".06em",textTransform:"uppercase"}}>NEW</div>}
+      {l.expires_at&&new Date(l.expires_at)-Date.now()<3*86400000&&new Date(l.expires_at)-Date.now()>0&&<div style={{position:"absolute",top:8,left:onSave?8:8,background:"#f59e0b",color:"#fff",fontSize:9,fontWeight:800,padding:"3px 8px",borderRadius:4,letterSpacing:".04em",textTransform:"uppercase",marginTop:Date.now()-new Date(l.created_at)<12*3600000?24:0}}>EXPIRING</div>}
       {l.locked_buyer_id&&!l.is_unlocked&&<div style={{position:"absolute",bottom:0,left:0,right:0,background:"#1D1D1D",color:"#fff",fontSize:10,fontWeight:700,padding:"5px 10px",letterSpacing:".04em",textTransform:"uppercase"}}>Buyer Interested</div>}
       {onSave&&<button onClick={e=>{e.stopPropagation();onSave();}} style={{position:"absolute",top:8,right:8,background:"rgba(255,255,255,.92)",border:"none",borderRadius:"50%",width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,.2)",padding:0}} title={isSaved?"Remove from saved":"Save listing"}>
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill={isSaved?"#1428A0":"none"} stroke="#1428A0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
@@ -1246,6 +1248,7 @@ function ListingCard({listing:l,onClick,listView,isSaved,onSave}){
       <div style={{display:"flex",gap:12,color:"#888888",fontSize:11,flexWrap:"wrap",borderTop:"1px solid #E8E8E8",paddingTop:8,marginTop:4}}>
         {l.location&&<span><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {l.location}</span>}
         <span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> {l.view_count||0}</span>
+        {l.interest_count>0&&<span style={{color:"#dc2626",fontWeight:700}}>🔥 {l.interest_count} interested</span>}
         {l.seller_avg_rating>0&&<span style={{color:"#8B6400",fontWeight:700}}><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle",marginRight:2}}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> {Number(l.seller_avg_rating).toFixed(1)}</span>}
         <span style={{marginLeft:"auto"}}>{ago(l.created_at)}</span>
       </div>
@@ -3464,7 +3467,7 @@ function MobileLayout({
   listings,total,loading,filter,setFilter,pg,setPg,
   stats,counties,modal,setModal,notifCount,
   mobileFiltersOpen,setMobileFiltersOpen,mobileTab,setMobileTab,
-  openListing,handleLockIn
+  openListing,handleLockIn,savedIds,onToggleSave,newSinceLastVisit
 }){
   const photoMap={
     Electronics:"https://images.unsplash.com/photo-1498049794561-7780e7231661?w=140&h=140&fit=crop",
@@ -3500,7 +3503,7 @@ function MobileLayout({
 
     {/* ── TOP BAR ── */}
     <div className="mob-topbar">
-      <div className="mob-logo" onClick={()=>{setPage("home");setFilter({cat:"",q:"",county:"",minPrice:"",maxPrice:"",sort:"newest"});setPg(1);setMobileTab("home");window.history.pushState({},"","/");}}>WekaSoko</div>
+      <div className="mob-logo" onClick={()=>{setPage("home");setFilter({cat:"",subcat:"",q:"",county:"",minPrice:"",maxPrice:"",sort:"newest"});setPg(1);setMobileTab("home");window.history.pushState({},"","/");}}>WekaSoko</div>
       <div className="mob-search">
         <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" stroke="#AAAAAA" strokeWidth="2"/><path d="M20 20l-3-3" stroke="#AAAAAA" strokeWidth="2" strokeLinecap="round"/></svg>
         <input placeholder="Search listings..." value={filter.q} onChange={e=>{setFilter(p=>({...p,q:e.target.value}));setPg(1);setMobileTab("home");}}/>
@@ -3517,6 +3520,9 @@ function MobileLayout({
     {(mobileTab==="home"||mobileTab==="search")&&<>
 
       {/* Hero banner — only on home tab, hidden in search mode */}
+      {newSinceLastVisit>0&&mobileTab==="home"&&<div style={{background:"#1428A0",color:"#fff",padding:"9px 16px",textAlign:"center",fontSize:13,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+        <span>✨</span><span>{newSinceLastVisit} new listing{newSinceLastVisit!==1?"s":""} since your last visit</span>
+      </div>}
       {mobileTab==="home"&&!filter.q&&!filter.cat&&pg===1&&<div className="mob-hero-banner">
         <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"rgba(255,255,255,.6)",marginBottom:8}}>Kenya's Resell Platform</div>
         <div style={{fontSize:22,fontWeight:800,color:"#fff",lineHeight:1.2,marginBottom:10}}>Buy & Sell<br/>Anything in Kenya</div>
@@ -3524,6 +3530,8 @@ function MobileLayout({
         <button onClick={postAd} style={{background:"#fff",color:"#1428A0",border:"none",padding:"11px 22px",borderRadius:10,fontSize:14,fontWeight:700,fontFamily:"var(--fn)",cursor:"pointer"}}>+ Post an Ad for Free</button>
       </div>}
 
+      {/* Hot Right Now — below hero, above categories */}
+      {mobileTab==="home"&&!filter.q&&!filter.cat&&pg===1&&<HotRightNow onOpen={openListing} savedIds={savedIds} onToggleSave={onToggleSave} user={user}/>}
       {/* Categories — hidden in search mode */}
       {mobileTab==="home"&&<div className="mob-section">
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px 4px"}}>
@@ -3569,7 +3577,7 @@ function MobileLayout({
             :<div className="mob-cards">
               {listings.map(l=>{
                 const photo=Array.isArray(l.photos)?l.photos.find(p=>typeof p==="string")||l.photos[0]?.url||null:null;
-                return <div key={l.id} className="mob-lcard" onClick={()=>openListing(l)}>
+                return <div key={l.id} className="mob-lcard" onClick={()=>openListing(l)} style={{position:"relative"}}>
                   <div className="mob-lcard-img">
                     {photo?<img src={photo} alt={l.title}/>:<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",opacity:.15}}><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>}
                   </div>
@@ -3579,8 +3587,10 @@ function MobileLayout({
                     <div className="mob-lcard-price">{fmtKES(l.price)}</div>
                     <div className="mob-lcard-meta">
                       {l.location&&<span><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {l.location}</span>}
+                      {l.interest_count>0&&<span style={{color:"#dc2626",fontWeight:700}}>🔥 {l.interest_count}</span>}
                       <span>{ago(l.created_at)}</span>
                     </div>
+                    {Date.now()-new Date(l.created_at)<12*3600000&&<div style={{position:"absolute",top:6,left:6,background:"#10b981",color:"#fff",fontSize:9,fontWeight:800,padding:"2px 7px",borderRadius:4}}>NEW</div>}
                   </div>
                   {l.locked_buyer_id&&!l.is_unlocked&&<div style={{width:8,height:8,background:"#1428A0",borderRadius:"50%",flexShrink:0,marginTop:4}}/>}
                 </div>;
@@ -3603,6 +3613,18 @@ function MobileLayout({
 
     </>}
 
+    {/* ── DISCOVER TAB ── */}
+    {mobileTab==="discover"&&<SwipeFeed
+      user={user} token={token}
+      onOpen={openListing} onLockIn={handleLockIn}
+      savedIds={savedIds} onToggleSave={onToggleSave}
+      onSignIn={()=>setModal({type:"auth",mode:"login"})}
+      onPostAd={()=>{
+        if(!user){setModal({type:"auth",mode:"signup"});return;}
+        if(user.role==="buyer"){if(typeof window!=="undefined"&&window.confirm("Switch to Seller to post ads?"))window.location.reload();return;}
+        setModal({type:"post"});
+      }}
+    />}
     {/* ── REQUESTS TAB ── */}
     {mobileTab==="requests"&&<MobileRequestsTab
       user={user} token={token} notify={notify}
@@ -3613,7 +3635,7 @@ function MobileLayout({
     <div className="mob-bottombar">
       {[
         {id:"home",icon:<svg viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/><path d="M9 21V12h6v9" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/></svg>,label:"Home"},
-        {id:"search",icon:<svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2"/><path d="M20 20l-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>,label:"Search"},
+        {id:"discover",icon:<svg viewBox="0 0 24 24" fill="none"><polygon points="5 3 19 12 5 21 5 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,label:"Discover"},
         {id:"post",icon:<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M12 8v8M8 12h8" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/></svg>,label:"Post",isPost:true},
         {id:"dashboard",icon:<svg viewBox="0 0 24 24" fill="none"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>,label:user?user.name?.split(" ")[0]:"Account"},
         {id:"requests",icon:<svg viewBox="0 0 24 24" fill="none"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M9 12h6M9 16h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>,label:"Requests"},
@@ -3624,6 +3646,7 @@ function MobileLayout({
             if(t.isPost){postAd();return;}
             if(t.id==="dashboard"){if(!user){setModal({type:"auth",mode:"login"});return;}setPage("dashboard");window.history.pushState({},"","/dashboard");}
             else if(t.id==="requests"){setPage("home");window.history.pushState({},"","/requests");}
+            else if(t.id==="discover"){setPage("home");}
             else{setPage("home");}
             setMobileTab(t.id);
           }}>
@@ -3674,11 +3697,166 @@ function MobileLayout({
 }
 
 
+// ── SWIPE FEED — TikTok-style full-screen listing discovery ───────────────────
+function SwipeFeed({user,token,onOpen,onLockIn,savedIds,onToggleSave,onSignIn,onPostAd}){
+  const [listings,setListings]=useState([]);
+  const [total,setTotal]=useState(0);
+  const [loading,setLoading]=useState(true);
+  const [idx,setIdx]=useState(0);
+  const [fetchPg,setFetchPg]=useState(1);
+  const startY=useRef(null);
+  const startX=useRef(null);
+  const PER=20;
+
+  useEffect(()=>{
+    api(`/api/listings?sort=newest&limit=${PER}&page=${fetchPg}`)
+      .then(d=>{
+        setListings(prev=>fetchPg===1?(d.listings||[]):[...prev,...(d.listings||[])]);
+        setTotal(d.total||0);
+      }).catch(()=>{}).finally(()=>setLoading(false));
+  },[fetchPg]);
+
+  const goNext=()=>{
+    if(idx<listings.length-1){setIdx(i=>i+1);}
+    if(idx>=listings.length-5&&listings.length<total){setFetchPg(p=>p+1);}
+  };
+  const goPrev=()=>{if(idx>0)setIdx(i=>i-1);};
+
+  const onTouchStart=e=>{startY.current=e.touches[0].clientY;startX.current=e.touches[0].clientX;};
+  const onTouchEnd=e=>{
+    const diffY=startY.current-e.changedTouches[0].clientY;
+    const diffX=Math.abs(startX.current-e.changedTouches[0].clientX);
+    if(diffX>40||Math.abs(diffY)<40)return;
+    if(diffY>0)goNext();else goPrev();
+  };
+
+  if(loading&&!listings.length)return<div style={{height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#000"}}><Spin s="48px"/></div>;
+  if(!listings.length)return<div style={{height:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#111",gap:16,padding:24,textAlign:"center"}}>
+    <div style={{fontSize:48,opacity:.3}}>📦</div>
+    <div style={{fontWeight:700,fontSize:18,color:"#fff"}}>No listings yet</div>
+    <div style={{fontSize:14,color:"rgba(255,255,255,.5)"}}>Be the first to post something</div>
+    <button onClick={()=>onPostAd&&onPostAd()} style={{background:"#1428A0",color:"#fff",border:"none",padding:"14px 28px",fontSize:14,fontWeight:700,borderRadius:10,cursor:"pointer",fontFamily:"var(--fn)",marginTop:8}}>+ Post an Ad</button>
+  </div>;
+
+  const l=listings[idx];
+  if(!l)return null;
+  const photo=Array.isArray(l.photos)?l.photos.find(p=>typeof p==="string")||l.photos[0]?.url||null:null;
+  const isNew=Date.now()-new Date(l.created_at)<12*3600000;
+  const isExpiring=l.expires_at&&new Date(l.expires_at)-Date.now()<3*86400000&&new Date(l.expires_at)-Date.now()>0;
+  const isSaved=savedIds?.has(l.id);
+
+  // Visible progress dots (max 7 shown)
+  const visCount=Math.min(listings.length,7);
+  const visStart=Math.max(0,Math.min(idx-3,listings.length-visCount));
+
+  return<div style={{height:"100vh",width:"100%",background:"#000",position:"relative",overflow:"hidden",userSelect:"none",WebkitUserSelect:"none"}}
+    onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+
+    {/* Full-bleed photo */}
+    {photo
+      ?<img src={photo} alt={l.title} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",opacity:.85}}/>
+      :<div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,#1428A0 0%,#0a1060 100%)"}}/>}
+
+    {/* Gradient overlays */}
+    <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,rgba(0,0,0,.4) 0%,transparent 25%,transparent 50%,rgba(0,0,0,.85) 100%)",pointerEvents:"none"}}/>
+
+    {/* Progress dots — top center */}
+    <div style={{position:"absolute",top:16,left:0,right:0,display:"flex",justifyContent:"center",gap:5,zIndex:10,pointerEvents:"none"}}>
+      {Array.from({length:visCount},(_,i)=>{
+        const absI=visStart+i;
+        return<div key={absI} style={{width:absI===idx?20:6,height:6,borderRadius:3,background:absI<idx?"rgba(255,255,255,.7)":absI===idx?"#fff":"rgba(255,255,255,.3)",transition:"all .2s"}}/>;
+      })}
+    </div>
+
+    {/* Counter pill — top right */}
+    <div style={{position:"absolute",top:14,right:14,background:"rgba(0,0,0,.55)",color:"#fff",fontSize:12,fontWeight:700,padding:"5px 12px",borderRadius:20,zIndex:10,backdropFilter:"blur(4px)"}}>
+      {idx+1} / {total}
+    </div>
+
+    {/* Badges — top left */}
+    <div style={{position:"absolute",top:14,left:14,display:"flex",flexDirection:"column",gap:5,zIndex:10}}>
+      {isNew&&<div style={{background:"#10b981",color:"#fff",fontSize:10,fontWeight:800,padding:"4px 10px",borderRadius:6,letterSpacing:".06em"}}>NEW</div>}
+      {isExpiring&&<div style={{background:"#f59e0b",color:"#fff",fontSize:10,fontWeight:800,padding:"4px 10px",borderRadius:6}}>EXPIRING SOON</div>}
+    </div>
+
+    {/* Right actions column */}
+    <div style={{position:"absolute",right:14,bottom:160,display:"flex",flexDirection:"column",gap:18,alignItems:"center",zIndex:10}}>
+      <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onToggleSave&&onToggleSave(l);}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,background:"none",border:"none",cursor:"pointer",padding:0}}>
+        <div style={{width:46,height:46,borderRadius:"50%",background:isSaved?"#1428A0":"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",border:`2px solid ${isSaved?"#1428A0":"rgba(255,255,255,.4)"}`,backdropFilter:"blur(4px)"}}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill={isSaved?"#fff":"none"} stroke="#fff" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+        </div>
+        <span style={{color:"#fff",fontSize:10,fontWeight:700,textShadow:"0 1px 3px rgba(0,0,0,.7)"}}>{isSaved?"Saved":"Save"}</span>
+      </button>
+      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+        <div style={{width:46,height:46,borderRadius:"50%",background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",border:"2px solid rgba(255,255,255,.2)",backdropFilter:"blur(4px)"}}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <span style={{color:"rgba(255,255,255,.8)",fontSize:10,fontWeight:700,textShadow:"0 1px 3px rgba(0,0,0,.7)"}}>{l.view_count||0}</span>
+      </div>
+      {l.interest_count>0&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+        <div style={{width:46,height:46,borderRadius:"50%",background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",border:"2px solid rgba(255,255,255,.2)",backdropFilter:"blur(4px)"}}>
+          <span style={{fontSize:20}}>🔥</span>
+        </div>
+        <span style={{color:"#ff6b6b",fontSize:10,fontWeight:700,textShadow:"0 1px 3px rgba(0,0,0,.7)"}}>{l.interest_count}</span>
+      </div>}
+    </div>
+
+    {/* Bottom info + actions */}
+    <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"0 16px 100px",zIndex:10}}>
+      <div style={{fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"rgba(255,255,255,.65)",marginBottom:4}}>{l.category}{l.subcat?` · ${l.subcat}`:""}</div>
+      <div style={{fontSize:20,fontWeight:700,color:"#fff",lineHeight:1.25,marginBottom:5,textShadow:"0 1px 6px rgba(0,0,0,.6)"}}>{l.title}</div>
+      <div style={{fontSize:28,fontWeight:800,color:"#fff",marginBottom:6,letterSpacing:"-.01em",textShadow:"0 1px 6px rgba(0,0,0,.6)"}}>KSh {Number(l.price).toLocaleString("en-KE")}</div>
+      <div style={{fontSize:12,color:"rgba(255,255,255,.65)",marginBottom:14,display:"flex",gap:14,flexWrap:"wrap"}}>
+        {l.county&&<span>📍 {l.county}</span>}
+        <span>🕐 {ago(l.created_at)}</span>
+        {l.seller_avg_rating>0&&<span>⭐ {Number(l.seller_avg_rating).toFixed(1)}</span>}
+      </div>
+      <div style={{display:"flex",gap:10}}>
+        <button onClick={()=>onOpen&&onOpen(l)} style={{flex:1,background:"#fff",color:"#1428A0",border:"none",padding:"15px",fontSize:15,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)"}}>View Details</button>
+        <button onClick={()=>{if(!user){onSignIn&&onSignIn();return;}onLockIn&&onLockIn(l);}} style={{background:"#1428A0",color:"#fff",border:"none",padding:"15px 16px",fontSize:13,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",whiteSpace:"nowrap"}}>I'm Interested</button>
+      </div>
+    </div>
+
+    {/* Swipe hint on first card */}
+    {idx===0&&listings.length>1&&<div style={{position:"absolute",bottom:96,left:"50%",transform:"translateX(-50%)",color:"rgba(255,255,255,.4)",fontSize:11,textAlign:"center",pointerEvents:"none",zIndex:10,whiteSpace:"nowrap"}}>Swipe up for next listing ↑</div>}
+  </div>;
+}
+
+// ── HOT RIGHT NOW — horizontal scroll of popular listings ─────────────────────
+function HotRightNow({onOpen,savedIds,onToggleSave,user}){
+  const [items,setItems]=useState([]);
+  useEffect(()=>{api("/api/listings?sort=popular&limit=10").then(d=>setItems(d.listings||[])).catch(()=>{});},[]);
+  if(!items.length)return null;
+  return<div style={{marginBottom:8}}>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px 6px"}}>
+      <div style={{fontWeight:700,fontSize:15,color:"#1A1A1A"}}>🔥 Hot Right Now</div>
+      <div style={{fontSize:11,color:"#AAAAAA",fontWeight:500}}>Most viewed today</div>
+    </div>
+    <div style={{display:"flex",gap:10,overflowX:"auto",padding:"4px 16px 12px",WebkitOverflowScrolling:"touch",msOverflowStyle:"none",scrollbarWidth:"none"}}>
+      {items.map(l=>{
+        const photo=Array.isArray(l.photos)?l.photos.find(p=>typeof p==="string")||l.photos[0]?.url||null:null;
+        const isNew=Date.now()-new Date(l.created_at)<12*3600000;
+        return<div key={l.id} onClick={()=>onOpen&&onOpen(l)} style={{flexShrink:0,width:150,cursor:"pointer"}}>
+          <div style={{width:150,height:150,borderRadius:12,overflow:"hidden",background:"#F0F0F0",position:"relative",marginBottom:7}}>
+            {photo?<img src={photo} alt={l.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{width:"100%",height:"100%",background:"linear-gradient(135deg,#E8E8E8,#D0D0D0)"}}/>}
+            {isNew&&<div style={{position:"absolute",top:6,left:6,background:"#10b981",color:"#fff",fontSize:9,fontWeight:800,padding:"2px 7px",borderRadius:4}}>NEW</div>}
+            {l.interest_count>0&&<div style={{position:"absolute",bottom:6,left:6,background:"rgba(220,38,38,.85)",color:"#fff",fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:10}}>🔥 {l.interest_count}</div>}
+            {l.view_count>100&&<div style={{position:"absolute",top:6,right:6,background:"rgba(0,0,0,.6)",color:"#fff",fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:10}}>👁 {l.view_count}</div>}
+          </div>
+          <div style={{fontSize:12,fontWeight:700,color:"#1A1A1A",lineHeight:1.3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{l.title}</div>
+          <div style={{fontSize:13,fontWeight:800,color:"#1428A0",marginTop:2}}>KSh {Number(l.price).toLocaleString("en-KE")}</div>
+        </div>;
+      })}
+    </div>
+  </div>;
+}
+
 // ── ALL LISTINGS PAGE — Full standalone /listings page ────────────────────────
 function AllListingsPage({user,token,notify,onBack,onOpenListing,onToggleSave,savedIds,onPostAd,onSignIn,initialFilter}){
   const [listings,setListings]=useState([]);
   const [total,setTotal]=useState(0);
   const [loading,setLoading]=useState(true);
+  const [loadingMore,setLoadingMore]=useState(false);
   const [vm,setVm]=useState("grid");
   const [searchInput,setSearchInput]=useState(initialFilter?.q||"");
   const [search,setSearch]=useState(initialFilter?.q||"");
@@ -3689,12 +3867,13 @@ function AllListingsPage({user,token,notify,onBack,onOpenListing,onToggleSave,sa
   const [maxPrice,setMaxPrice]=useState(initialFilter?.maxPrice||"");
   const [sort,setSort]=useState(initialFilter?.sort||"newest");
   const [pg,setPg]=useState(1);
+  const loaderRef=useRef(null);
   const PER=24;
   const filterCat=CATS.find(c=>c.name===category);
   const hasFilters=search||category||subcat||county||minPrice||maxPrice||sort!=="newest";
 
   useEffect(()=>{
-    setLoading(true);
+    if(pg===1)setLoading(true);else setLoadingMore(true);
     const p=new URLSearchParams({page:pg,limit:PER,sort});
     if(search)p.set("search",search);
     if(category)p.set("category",category);
@@ -3702,9 +3881,24 @@ function AllListingsPage({user,token,notify,onBack,onOpenListing,onToggleSave,sa
     if(county)p.set("county",county);
     if(minPrice)p.set("minPrice",minPrice);
     if(maxPrice)p.set("maxPrice",maxPrice);
-    api(`/api/listings?${p}`).then(d=>{setListings(d.listings||[]);setTotal(d.total||0);})
-      .catch(()=>{}).finally(()=>setLoading(false));
+    api(`/api/listings?${p}`).then(d=>{
+      setListings(prev=>pg===1?(d.listings||[]):[...prev,...(d.listings||[])]);
+      setTotal(d.total||0);
+    }).catch(()=>{}).finally(()=>{setLoading(false);setLoadingMore(false);});
   },[search,category,subcat,county,minPrice,maxPrice,sort,pg]);
+
+  // Reset to page 1 when filters change
+  useEffect(()=>{setPg(1);},[search,category,subcat,county,minPrice,maxPrice,sort]);
+
+  // Infinite scroll observer
+  useEffect(()=>{
+    if(!loaderRef.current)return;
+    const obs=new IntersectionObserver(([e])=>{
+      if(e.isIntersecting&&!loadingMore&&!loading&&listings.length<total){setPg(p=>p+1);}
+    },{threshold:0.1});
+    obs.observe(loaderRef.current);
+    return()=>obs.disconnect();
+  },[loadingMore,loading,listings.length,total]);
 
   const clearFilters=()=>{setSearchInput("");setSearch("");setCategory("");setSubcat("");setCounty("");setMinPrice("");setMaxPrice("");setSort("newest");setPg(1);};
 
@@ -3781,11 +3975,10 @@ function AllListingsPage({user,token,notify,onBack,onOpenListing,onToggleSave,sa
           <div className={vm==="grid"?"g3":"lvc"}>
             {listings.map(l=><ListingCard key={l.id} listing={l} onClick={()=>onOpenListing&&onOpenListing(l)} listView={vm==="list"} isSaved={savedIds?.has(l.id)} onSave={user?()=>onToggleSave&&onToggleSave(l):null}/>)}
           </div>
-          {Math.ceil(total/PER)>1&&<div style={{display:"flex",justifyContent:"center",gap:8,alignItems:"center",marginTop:32}}>
-            <button className="btn bs sm" onClick={()=>{setPg(p=>Math.max(1,p-1));window.scrollTo(0,0);}} disabled={pg<=1} style={{opacity:pg<=1?.4:1}}>← Prev</button>
-            <span style={{fontSize:13,color:"#888",fontWeight:500}}>Page {pg} of {Math.ceil(total/PER)}</span>
-            <button className="btn bp sm" onClick={()=>{setPg(p=>Math.min(Math.ceil(total/PER),p+1));window.scrollTo(0,0);}} disabled={pg>=Math.ceil(total/PER)} style={{opacity:pg>=Math.ceil(total/PER)?.4:1}}>Next →</button>
-          </div>}
+          <div ref={loaderRef} style={{height:60,display:"flex",alignItems:"center",justifyContent:"center",marginTop:16}}>
+            {loadingMore&&<Spin s="32px"/>}
+            {!loadingMore&&listings.length>=total&&total>0&&<div style={{fontSize:12,color:"#AAAAAA",fontWeight:500}}>All {total} listings loaded</div>}
+          </div>
         </>}
     </div>
   </div>;
@@ -3999,4 +4192,4 @@ function BuyersWantPage({user,token,notify,onBack,onIHaveThis,onSignIn}){
 
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 
-export { WekaSokoLogo, Spin, Toast, Modal, FF, Counter, ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal, WatermarkedImage, Lightbox, AuthModal, ShareModal, PayModal, ChatModal, PostAdModal, ListingCard, LeaveReviewBtn, ReportListingBtn, VerificationBanner, DetailModal, MarkSoldModal, RoleSwitcher, PostRequestModal, WhatBuyersWant, SoldSection, SoldCard, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab, ProfileSection, PasswordSection, VerificationSection, MobileDashboard, Dashboard, PWABanner, Pager, MobileRequestsTab, MobileLayout, BuyersWantPage, AllListingsPage, SoldPage };
+export { WekaSokoLogo, Spin, Toast, Modal, FF, Counter, ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal, WatermarkedImage, Lightbox, AuthModal, ShareModal, PayModal, ChatModal, PostAdModal, ListingCard, LeaveReviewBtn, ReportListingBtn, VerificationBanner, DetailModal, MarkSoldModal, RoleSwitcher, PostRequestModal, WhatBuyersWant, SoldSection, SoldCard, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab, ProfileSection, PasswordSection, VerificationSection, MobileDashboard, Dashboard, PWABanner, Pager, MobileRequestsTab, MobileLayout, BuyersWantPage, AllListingsPage, SoldPage, SwipeFeed, HotRightNow };
