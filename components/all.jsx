@@ -195,10 +195,36 @@ function Counter({to}){
 }
 
 // ── IMAGE UPLOADER ────────────────────────────────────────────────────────────
+function compressImage(file){
+  return new Promise(resolve=>{
+    // Skip small files or non-images
+    if(!file.type.startsWith("image/")||file.size<300*1024){resolve(file);return;}
+    const canvas=document.createElement("canvas");
+    const img=new Image();
+    const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      URL.revokeObjectURL(url);
+      let{width,height}=img;
+      const MAX=1280;
+      if(width>MAX){height=Math.round(height*MAX/width);width=MAX;}
+      canvas.width=width;canvas.height=height;
+      canvas.getContext("2d").drawImage(img,0,0,width,height);
+      canvas.toBlob(blob=>{
+        const name=file.name.replace(/\.[^.]+$/,".jpg");
+        resolve(new File([blob],name,{type:"image/jpeg"}));
+      },"image/jpeg",0.82);
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);resolve(file);};
+    img.src=url;
+  });
+}
+
 function ImageUploader({images,setImages}){
   const ref=useRef(null);
-  const add=files=>{
-    const n=Array.from(files).slice(0,8-images.length).map(f=>({file:f,preview:URL.createObjectURL(f)}));
+  const add=async files=>{
+    const picked=Array.from(files).slice(0,8-images.length);
+    const compressed=await Promise.all(picked.map(f=>compressImage(f)));
+    const n=compressed.map(f=>({file:f,preview:URL.createObjectURL(f)}));
     setImages(p=>[...p,...n].slice(0,8));
   };
   const remove=i=>setImages(p=>{URL.revokeObjectURL(p[i].preview);return p.filter((_,j)=>j!==i);});
