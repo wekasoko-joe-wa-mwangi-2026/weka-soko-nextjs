@@ -3621,6 +3621,7 @@ function MobileLayout({
         user={user} token={token}
         onOpen={(l)=>{setSwipeFeedIdx(null);openListing(l);}}
         onLockIn={handleLockIn}
+        onMessage={(l)=>{if(!user){setModal({type:"auth",mode:"login"});return;}setModal({type:"chat",listing:l});}}
         savedIds={savedIds} onToggleSave={onToggleSave}
         onSignIn={()=>setModal({type:"auth",mode:"login"})}
         onPostAd={()=>{setSwipeFeedIdx(null);postAd();}}
@@ -3634,6 +3635,7 @@ function MobileLayout({
     {mobileTab==="discover"&&<SwipeFeed
       user={user} token={token}
       onOpen={openListing} onLockIn={handleLockIn}
+      onMessage={(l)=>{if(!user){setModal({type:"auth",mode:"login"});return;}setModal({type:"chat",listing:l});}}
       savedIds={savedIds} onToggleSave={onToggleSave}
       onSignIn={()=>setModal({type:"auth",mode:"login"})}
       onPostAd={()=>{
@@ -3715,7 +3717,7 @@ function MobileLayout({
 
 
 // ── SWIPE FEED — TikTok-style full-screen listing discovery ───────────────────
-function SwipeFeed({user,token,onOpen,onLockIn,savedIds,onToggleSave,onSignIn,onPostAd,initialListings,startIndex,onClose}){
+function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,onSignIn,onPostAd,initialListings,startIndex,onClose}){
   const [listings,setListings]=useState(initialListings&&initialListings.length?[...initialListings]:[]);
   const [total,setTotal]=useState(0);
   const [loading,setLoading]=useState(!(initialListings&&initialListings.length));
@@ -3823,6 +3825,12 @@ function SwipeFeed({user,token,onOpen,onLockIn,savedIds,onToggleSave,onSignIn,on
           <svg width="20" height="20" viewBox="0 0 24 24" fill={isSaved?"#fff":"none"} stroke="#fff" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
         </div>
         <span style={{color:"#fff",fontSize:10,fontWeight:700,textShadow:"0 1px 3px rgba(0,0,0,.7)"}}>{isSaved?"Saved":"Save"}</span>
+      </button>
+      <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onMessage&&onMessage(l);}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,background:"none",border:"none",cursor:"pointer",padding:0}}>
+        <div style={{width:46,height:46,borderRadius:"50%",background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",border:"2px solid rgba(255,255,255,.35)",backdropFilter:"blur(4px)"}}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        </div>
+        <span style={{color:"#fff",fontSize:10,fontWeight:700,textShadow:"0 1px 3px rgba(0,0,0,.7)"}}>Message</span>
       </button>
       <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
         <div style={{width:46,height:46,borderRadius:"50%",background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",border:"2px solid rgba(255,255,255,.2)",backdropFilter:"blur(4px)"}}>
