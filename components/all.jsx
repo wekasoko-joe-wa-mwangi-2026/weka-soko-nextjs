@@ -3858,11 +3858,16 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
   const [total,setTotal]=useState(0);
   const [loading,setLoading]=useState(!(initialListings&&initialListings.length));
   const [idx,setIdx]=useState(typeof startIndex==="number"?startIndex:0);
+  const [dragY,setDragY]=useState(0);
+  const [animating,setAnimating]=useState(false);
+  const containerRef=useRef(null);
   const fetching=useRef(false);
-  const startY=useRef(null);
-  const startX=useRef(null);
+  const animating_=useRef(false);
+  const startYRef=useRef(null);
+  const startXRef=useRef(null);
   const PER=20;
 
+  // Initial data fetch
   useEffect(()=>{
     if(initialListings&&initialListings.length){
       api(`/api/listings?sort=newest&limit=1&page=1`).then(d=>setTotal(d.total||0)).catch(()=>{});
@@ -3874,30 +3879,130 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[]);
 
+  // Non-passive touchmove listener — prevents page scroll during swipe
+  useEffect(()=>{
+    const el=containerRef.current;
+    if(!el)return;
+    const onMove=e=>{
+      if(startYRef.current===null||animating_.current)return;
+      const dx=Math.abs(e.touches[0].clientX-startXRef.current);
+      if(dx>30){startYRef.current=null;return;}
+      e.preventDefault();
+      const dy=e.touches[0].clientY-startYRef.current;
+      // Elastic resistance beyond ±120px
+      const clamped=dy>0?Math.min(dy,120+Math.max(0,dy-120)*0.2):Math.max(dy,-120+Math.min(0,dy+120)*0.2);
+      setDragY(clamped);
+    };
+    el.addEventListener('touchmove',onMove,{passive:false});
+    return()=>el.removeEventListener('touchmove',onMove);
+  },[]);
+
   const fetchMore=()=>{
     if(fetching.current)return;
     fetching.current=true;
     const pg=Math.ceil(listings.length/PER)+1;
     api(`/api/listings?sort=newest&limit=${PER}&page=${pg}`)
       .then(d=>{
-        const more=d.listings||[];
         setTotal(d.total||0);
-        setListings(prev=>{const ids=new Set(prev.map(l=>l.id));return [...prev,...more.filter(l=>!ids.has(l.id))];});
+        setListings(prev=>{const ids=new Set(prev.map(l=>l.id));return[...prev,...(d.listings||[]).filter(l=>!ids.has(l.id))];});
       }).catch(()=>{}).finally(()=>{fetching.current=false;});
   };
 
-  const goNext=()=>{
-    if(idx<listings.length-1)setIdx(i=>i+1);
-    if(idx>=listings.length-5&&listings.length<total)fetchMore();
+  const snapTo=(newIdx)=>{
+    if(animating_.current||newIdx<0||newIdx>=listings.length)return false;
+    animating_.current=true;
+    setAnimating(true);
+    setDragY(newIdx>idx?-window.innerHeight:window.innerHeight);
+    setTimeout(()=>{
+      setIdx(newIdx);
+      setDragY(0);
+      setAnimating(false);
+      animating_.current=false;
+      if(newIdx>=listings.length-5&&listings.length<total)fetchMore();
+    },300);
+    return true;
   };
-  const goPrev=()=>{if(idx>0)setIdx(i=>i-1);};
 
-  const onTouchStart=e=>{startY.current=e.touches[0].clientY;startX.current=e.touches[0].clientX;};
+  const onTouchStart=e=>{
+    if(animating_.current)return;
+    startYRef.current=e.touches[0].clientY;
+    startXRef.current=e.touches[0].clientX;
+  };
   const onTouchEnd=e=>{
-    const diffY=startY.current-e.changedTouches[0].clientY;
-    const diffX=Math.abs(startX.current-e.changedTouches[0].clientX);
-    if(diffX>40||Math.abs(diffY)<40)return;
-    if(diffY>0)goNext();else goPrev();
+    if(startYRef.current===null||animating_.current)return;
+    const dy=startYRef.current-e.changedTouches[0].clientY;
+    startYRef.current=null;
+    if(dy>55&&idx<listings.length-1){snapTo(idx+1);}
+    else if(dy<-55&&idx>0){snapTo(idx-1);}
+    else{setAnimating(true);setDragY(0);setTimeout(()=>setAnimating(false),280);}
+  };
+
+  // Render a single card slide (prev=-1, current=0, next=1)
+  const renderSlide=(offset)=>{
+    const cardIdx=idx+offset;
+    if(cardIdx<0||cardIdx>=listings.length)return null;
+    const l=listings[cardIdx];
+    const photo=Array.isArray(l.photos)?l.photos.find(p=>typeof p==="string")||l.photos[0]?.url||null:null;
+    const isNew=Date.now()-new Date(l.created_at)<12*3600000;
+    const isExpiring=l.expires_at&&new Date(l.expires_at)-Date.now()<3*86400000&&new Date(l.expires_at)>Date.now();
+    const isSaved=savedIds?.has(l.id);
+    const baseY=offset*100;// in vh units
+    const ty=`calc(${baseY}vh + ${dragY}px)`;
+    return(
+      <div key={l.id} style={{position:"absolute",inset:0,transform:`translateY(${ty})`,transition:animating?"transform .3s cubic-bezier(.25,.46,.45,.94)":"none",willChange:"transform",background:"#000",overflow:"hidden"}}>
+        {photo
+          ?<img src={photo} alt={l.title} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",opacity:.88}}/>
+          :<div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,#1428A0 0%,#0a1060 100%)"}}/>}
+        <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,rgba(0,0,0,.35) 0%,transparent 30%,transparent 45%,rgba(0,0,0,.9) 100%)",pointerEvents:"none"}}/>
+        {/* Bottom content — only interactive on current card */}
+        {offset===0&&<>
+          {/* Right actions */}
+          <div style={{position:"absolute",right:14,bottom:190,display:"flex",flexDirection:"column",gap:16,alignItems:"center",zIndex:10}}>
+            {[
+              {icon:<svg width="20" height="20" viewBox="0 0 24 24" fill={isSaved?"#fff":"none"} stroke="#fff" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>,label:isSaved?"Saved":"Save",bg:isSaved?"#1428A0":"rgba(0,0,0,.6)",action:()=>{if(!user){onSignIn&&onSignIn();return;}onToggleSave&&onToggleSave(l);}},
+              {icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>,label:"Message",bg:"rgba(0,0,0,.6)",action:()=>{if(!user){onSignIn&&onSignIn();return;}onMessage&&onMessage(l);}},
+            ].map((btn,i)=>(
+              <button key={i} onClick={e=>{e.stopPropagation();btn.action();}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",padding:0}}>
+                <div style={{width:46,height:46,borderRadius:"50%",background:btn.bg,display:"flex",alignItems:"center",justifyContent:"center",border:"2px solid rgba(255,255,255,.35)",backdropFilter:"blur(6px)"}}>{btn.icon}</div>
+                <span style={{color:"#fff",fontSize:10,fontWeight:700,textShadow:"0 1px 4px rgba(0,0,0,.8)"}}>{btn.label}</span>
+              </button>
+            ))}
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+              <div style={{width:46,height:46,borderRadius:"50%",background:"rgba(0,0,0,.6)",display:"flex",alignItems:"center",justifyContent:"center",border:"2px solid rgba(255,255,255,.2)",backdropFilter:"blur(6px)"}}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </div>
+              <span style={{color:"rgba(255,255,255,.8)",fontSize:10,fontWeight:700,textShadow:"0 1px 4px rgba(0,0,0,.8)"}}>{l.view_count||0}</span>
+            </div>
+            {l.interest_count>0&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+              <div style={{width:46,height:46,borderRadius:"50%",background:"rgba(0,0,0,.6)",display:"flex",alignItems:"center",justifyContent:"center",border:"2px solid rgba(255,255,255,.2)",backdropFilter:"blur(6px)"}}><span style={{fontSize:20}}>🔥</span></div>
+              <span style={{color:"#ff6b6b",fontSize:10,fontWeight:700,textShadow:"0 1px 4px rgba(0,0,0,.8)"}}>{l.interest_count}</span>
+            </div>}
+          </div>
+          {/* Bottom info */}
+          <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"0 16px 96px",zIndex:10}}>
+            <div style={{fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"rgba(255,255,255,.6)",marginBottom:3}}>{l.category}{l.subcat?` · ${l.subcat}`:""}</div>
+            <div style={{fontSize:19,fontWeight:700,color:"#fff",lineHeight:1.25,marginBottom:4,textShadow:"0 1px 6px rgba(0,0,0,.7)"}}>{l.title}</div>
+            <div style={{fontSize:26,fontWeight:800,color:"#fff",marginBottom:5,letterSpacing:"-.01em",textShadow:"0 1px 6px rgba(0,0,0,.7)"}}>KSh {Number(l.price).toLocaleString("en-KE")}</div>
+            <div style={{fontSize:12,color:"rgba(255,255,255,.6)",marginBottom:12,display:"flex",gap:12,flexWrap:"wrap"}}>
+              {l.county&&<span>📍 {l.county}</span>}
+              <span>🕐 {ago(l.created_at)}</span>
+              {l.seller_avg_rating>0&&<span>⭐ {Number(l.seller_avg_rating).toFixed(1)}</span>}
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>onOpen&&onOpen(l)} style={{flex:1,background:"rgba(255,255,255,.15)",color:"#fff",border:"1.5px solid rgba(255,255,255,.45)",padding:"13px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",backdropFilter:"blur(8px)"}}>View Details</button>
+              <button onClick={()=>{if(!user){onSignIn&&onSignIn();return;}onLockIn&&onLockIn(l);}} style={{background:"#1428A0",color:"#fff",border:"none",padding:"13px 14px",fontSize:13,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",whiteSpace:"nowrap",boxShadow:"0 4px 14px rgba(20,40,160,.5)"}}>I'm Interested</button>
+            </div>
+          </div>
+          {/* Badges */}
+          <div style={{position:"absolute",top:onClose?60:14,left:14,display:"flex",flexDirection:"column",gap:5,zIndex:10}}>
+            {isNew&&<div style={{background:"#10b981",color:"#fff",fontSize:10,fontWeight:800,padding:"4px 10px",borderRadius:6,letterSpacing:".06em"}}>NEW</div>}
+            {isExpiring&&<div style={{background:"#f59e0b",color:"#fff",fontSize:10,fontWeight:800,padding:"4px 10px",borderRadius:6}}>EXPIRING SOON</div>}
+          </div>
+          {/* Swipe hint */}
+          {idx===0&&listings.length>1&&<div style={{position:"absolute",bottom:86,left:"50%",transform:"translateX(-50%)",color:"rgba(255,255,255,.35)",fontSize:11,textAlign:"center",pointerEvents:"none",zIndex:5,whiteSpace:"nowrap"}}>↑ swipe up for next</div>}
+        </>}
+      </div>
+    );
   };
 
   if(loading&&!listings.length)return<div style={{height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#000"}}><Spin s="48px"/></div>;
@@ -3908,99 +4013,36 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
     <button onClick={()=>onPostAd&&onPostAd()} style={{background:"#1428A0",color:"#fff",border:"none",padding:"14px 28px",fontSize:14,fontWeight:700,borderRadius:10,cursor:"pointer",fontFamily:"var(--fn)",marginTop:8}}>+ Post an Ad</button>
   </div>;
 
-  const l=listings[idx];
-  if(!l)return null;
-  const photo=Array.isArray(l.photos)?l.photos.find(p=>typeof p==="string")||l.photos[0]?.url||null:null;
-  const isNew=Date.now()-new Date(l.created_at)<12*3600000;
-  const isExpiring=l.expires_at&&new Date(l.expires_at)-Date.now()<3*86400000&&new Date(l.expires_at)-Date.now()>0;
-  const isSaved=savedIds?.has(l.id);
-
-  // Visible progress dots (max 7 shown)
   const visCount=Math.min(listings.length,7);
   const visStart=Math.max(0,Math.min(idx-3,listings.length-visCount));
 
-  return<div style={{height:"100vh",width:"100%",background:"#000",position:"relative",overflow:"hidden",userSelect:"none",WebkitUserSelect:"none"}}
-    onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+  return(
+    <div ref={containerRef} style={{height:"100vh",width:"100%",background:"#000",position:"relative",overflow:"hidden",userSelect:"none",WebkitUserSelect:"none",touchAction:"none"}}
+      onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
 
-    {/* Full-bleed photo */}
-    {photo
-      ?<img src={photo} alt={l.title} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",opacity:.85}}/>
-      :<div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,#1428A0 0%,#0a1060 100%)"}}/>}
+      {/* Prev / Current / Next slides */}
+      {renderSlide(-1)}
+      {renderSlide(1)}
+      {renderSlide(0)}
 
-    {/* Gradient overlays */}
-    <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,rgba(0,0,0,.4) 0%,transparent 25%,transparent 50%,rgba(0,0,0,.85) 100%)",pointerEvents:"none"}}/>
-
-    {/* Progress dots — top center */}
-    <div style={{position:"absolute",top:16,left:0,right:0,display:"flex",justifyContent:"center",gap:5,zIndex:10,pointerEvents:"none"}}>
-      {Array.from({length:visCount},(_,i)=>{
-        const absI=visStart+i;
-        return<div key={absI} style={{width:absI===idx?20:6,height:6,borderRadius:3,background:absI<idx?"rgba(255,255,255,.7)":absI===idx?"#fff":"rgba(255,255,255,.3)",transition:"all .2s"}}/>;
-      })}
-    </div>
-
-    {/* Back button — shown when opened from card tap */}
-    {onClose&&<button onClick={onClose} style={{position:"absolute",top:14,left:14,width:38,height:38,borderRadius:"50%",background:"rgba(0,0,0,.6)",border:"2px solid rgba(255,255,255,.3)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:20,backdropFilter:"blur(4px)"}}>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
-    </button>}
-
-    {/* Counter pill — top right */}
-    <div style={{position:"absolute",top:14,right:14,background:"rgba(0,0,0,.55)",color:"#fff",fontSize:12,fontWeight:700,padding:"5px 12px",borderRadius:20,zIndex:10,backdropFilter:"blur(4px)"}}>
-      {idx+1} / {total}
-    </div>
-
-    {/* Badges — top left, shifted down when back button is shown */}
-    <div style={{position:"absolute",top:onClose?60:14,left:14,display:"flex",flexDirection:"column",gap:5,zIndex:10}}>
-      {isNew&&<div style={{background:"#10b981",color:"#fff",fontSize:10,fontWeight:800,padding:"4px 10px",borderRadius:6,letterSpacing:".06em"}}>NEW</div>}
-      {isExpiring&&<div style={{background:"#f59e0b",color:"#fff",fontSize:10,fontWeight:800,padding:"4px 10px",borderRadius:6}}>EXPIRING SOON</div>}
-    </div>
-
-    {/* Right actions column */}
-    <div style={{position:"absolute",right:14,bottom:160,display:"flex",flexDirection:"column",gap:18,alignItems:"center",zIndex:10}}>
-      <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onToggleSave&&onToggleSave(l);}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,background:"none",border:"none",cursor:"pointer",padding:0}}>
-        <div style={{width:46,height:46,borderRadius:"50%",background:isSaved?"#1428A0":"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",border:`2px solid ${isSaved?"#1428A0":"rgba(255,255,255,.4)"}`,backdropFilter:"blur(4px)"}}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill={isSaved?"#fff":"none"} stroke="#fff" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
-        </div>
-        <span style={{color:"#fff",fontSize:10,fontWeight:700,textShadow:"0 1px 3px rgba(0,0,0,.7)"}}>{isSaved?"Saved":"Save"}</span>
-      </button>
-      <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onMessage&&onMessage(l);}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,background:"none",border:"none",cursor:"pointer",padding:0}}>
-        <div style={{width:46,height:46,borderRadius:"50%",background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",border:"2px solid rgba(255,255,255,.35)",backdropFilter:"blur(4px)"}}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-        </div>
-        <span style={{color:"#fff",fontSize:10,fontWeight:700,textShadow:"0 1px 3px rgba(0,0,0,.7)"}}>Message</span>
-      </button>
-      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-        <div style={{width:46,height:46,borderRadius:"50%",background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",border:"2px solid rgba(255,255,255,.2)",backdropFilter:"blur(4px)"}}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-        </div>
-        <span style={{color:"rgba(255,255,255,.8)",fontSize:10,fontWeight:700,textShadow:"0 1px 3px rgba(0,0,0,.7)"}}>{l.view_count||0}</span>
+      {/* Fixed UI — always on top, not part of swipe stack */}
+      {/* Progress dots */}
+      <div style={{position:"absolute",top:16,left:0,right:0,display:"flex",justifyContent:"center",gap:5,zIndex:20,pointerEvents:"none"}}>
+        {Array.from({length:visCount},(_,i)=>{
+          const absI=visStart+i;
+          return<div key={absI} style={{width:absI===idx?20:6,height:6,borderRadius:3,background:absI<idx?"rgba(255,255,255,.6)":absI===idx?"#fff":"rgba(255,255,255,.25)",transition:"all .2s"}}/>;
+        })}
       </div>
-      {l.interest_count>0&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-        <div style={{width:46,height:46,borderRadius:"50%",background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",border:"2px solid rgba(255,255,255,.2)",backdropFilter:"blur(4px)"}}>
-          <span style={{fontSize:20}}>🔥</span>
-        </div>
-        <span style={{color:"#ff6b6b",fontSize:10,fontWeight:700,textShadow:"0 1px 3px rgba(0,0,0,.7)"}}>{l.interest_count}</span>
-      </div>}
-    </div>
-
-    {/* Bottom info + actions */}
-    <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"0 16px 100px",zIndex:10}}>
-      <div style={{fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"rgba(255,255,255,.65)",marginBottom:4}}>{l.category}{l.subcat?` · ${l.subcat}`:""}</div>
-      <div style={{fontSize:20,fontWeight:700,color:"#fff",lineHeight:1.25,marginBottom:5,textShadow:"0 1px 6px rgba(0,0,0,.6)"}}>{l.title}</div>
-      <div style={{fontSize:28,fontWeight:800,color:"#fff",marginBottom:6,letterSpacing:"-.01em",textShadow:"0 1px 6px rgba(0,0,0,.6)"}}>KSh {Number(l.price).toLocaleString("en-KE")}</div>
-      <div style={{fontSize:12,color:"rgba(255,255,255,.65)",marginBottom:14,display:"flex",gap:14,flexWrap:"wrap"}}>
-        {l.county&&<span>📍 {l.county}</span>}
-        <span>🕐 {ago(l.created_at)}</span>
-        {l.seller_avg_rating>0&&<span>⭐ {Number(l.seller_avg_rating).toFixed(1)}</span>}
-      </div>
-      <div style={{display:"flex",gap:10}}>
-        <button onClick={()=>onOpen&&onOpen(l)} style={{flex:1,background:"#fff",color:"#1428A0",border:"none",padding:"15px",fontSize:15,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)"}}>View Details</button>
-        <button onClick={()=>{if(!user){onSignIn&&onSignIn();return;}onLockIn&&onLockIn(l);}} style={{background:"#1428A0",color:"#fff",border:"none",padding:"15px 16px",fontSize:13,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",whiteSpace:"nowrap"}}>I'm Interested</button>
+      {/* Back button */}
+      {onClose&&<button onClick={onClose} style={{position:"absolute",top:14,left:14,width:38,height:38,borderRadius:"50%",background:"rgba(0,0,0,.6)",border:"2px solid rgba(255,255,255,.3)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:20,backdropFilter:"blur(4px)"}}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      </button>}
+      {/* Counter pill */}
+      <div style={{position:"absolute",top:14,right:14,background:"rgba(0,0,0,.55)",color:"#fff",fontSize:12,fontWeight:700,padding:"5px 12px",borderRadius:20,zIndex:20,backdropFilter:"blur(4px)"}}>
+        {idx+1} / {total}
       </div>
     </div>
-
-    {/* Swipe hint on first card */}
-    {idx===0&&listings.length>1&&<div style={{position:"absolute",bottom:96,left:"50%",transform:"translateX(-50%)",color:"rgba(255,255,255,.4)",fontSize:11,textAlign:"center",pointerEvents:"none",zIndex:10,whiteSpace:"nowrap"}}>Swipe up for next listing ↑</div>}
-  </div>;
+  );
 }
 
 // ── HOT RIGHT NOW — horizontal scroll of popular listings ─────────────────────
