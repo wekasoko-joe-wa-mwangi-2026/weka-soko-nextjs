@@ -3867,6 +3867,7 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
   const animating_=useRef(false);
   const startYRef=useRef(null);
   const startXRef=useRef(null);
+  const swipeDir=useRef(null); // 'vertical' | 'horizontal' | null — locked on first movement
   const PER=20;
 
   // Reset photo index whenever the active ad changes
@@ -3898,17 +3899,23 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[]);
 
-  // Non-passive touchmove — prevents page scroll during vertical swipe
+  // Non-passive touchmove — direction-locked: vertical = track drag, horizontal = ignore
   useEffect(()=>{
     const el=containerRef.current;
     if(!el)return;
     const onMove=e=>{
       if(startYRef.current===null||animating_.current)return;
-      const dx=Math.abs(e.touches[0].clientX-startXRef.current);
-      // If mostly horizontal, cancel vertical swipe (let photo taps work)
-      if(dx>30){startYRef.current=null;return;}
-      e.preventDefault();
+      const dx=e.touches[0].clientX-startXRef.current;
       const dy=e.touches[0].clientY-startYRef.current;
+      // Lock direction on first 8px of movement
+      if(swipeDir.current===null){
+        if(Math.abs(dx)>8||Math.abs(dy)>8){
+          swipeDir.current=Math.abs(dy)>=Math.abs(dx)?'vertical':'horizontal';
+        }
+        return; // wait until direction is decided
+      }
+      if(swipeDir.current!=='vertical')return; // horizontal — ignore, let photo taps handle it
+      e.preventDefault();
       // Elastic resistance beyond ±120px
       const clamped=dy>0?Math.min(dy,120+Math.max(0,dy-120)*0.2):Math.max(dy,-120+Math.min(0,dy+120)*0.2);
       setDragY(clamped);
@@ -3947,11 +3954,15 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
     if(animating_.current)return;
     startYRef.current=e.touches[0].clientY;
     startXRef.current=e.touches[0].clientX;
+    swipeDir.current=null; // reset direction lock for each new gesture
   };
   const onTouchEnd=e=>{
     if(startYRef.current===null||animating_.current)return;
     const dy=startYRef.current-e.changedTouches[0].clientY;
+    const wasVertical=swipeDir.current==='vertical';
     startYRef.current=null;
+    swipeDir.current=null;
+    if(!wasVertical){setDragY(0);return;} // horizontal gesture — don't navigate
     if(dy>55&&idx<listings.length-1){snapTo(idx+1);}
     else if(dy<-55&&idx>0){snapTo(idx-1);}
     else{setAnimating(true);setDragY(0);setTimeout(()=>setAnimating(false),280);}
