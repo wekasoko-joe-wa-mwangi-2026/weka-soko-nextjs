@@ -3853,21 +3853,24 @@ function MobileLayout({
 }
 
 
-// ── SWIPE FEED — Tinder-style horizontal listing discovery ────────────────────
+// ── SWIPE FEED — vertical scroll between ads, tap edges to browse photos ──────
 function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,onSignIn,onPostAd,initialListings,startIndex,onClose,filter}){
   const [listings,setListings]=useState(initialListings&&initialListings.length?[...initialListings]:[]);
   const [total,setTotal]=useState(0);
   const [loading,setLoading]=useState(!(initialListings&&initialListings.length));
   const [idx,setIdx]=useState(typeof startIndex==="number"?startIndex:0);
-  const [dragX,setDragX]=useState(0);
+  const [photoIdx,setPhotoIdx]=useState(0); // photo index within current ad
+  const [dragY,setDragY]=useState(0);
   const [animating,setAnimating]=useState(false);
   const containerRef=useRef(null);
   const fetching=useRef(false);
   const animating_=useRef(false);
-  const startXRef=useRef(null);
   const startYRef=useRef(null);
-  const touchStartTimeRef=useRef(null);
+  const startXRef=useRef(null);
   const PER=20;
+
+  // Reset photo index whenever the active ad changes
+  useEffect(()=>{setPhotoIdx(0);},[idx]);
 
   // Build filter query params (respects active category/search/county)
   const filterQuery=useMemo(()=>{
@@ -3895,20 +3898,20 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[]);
 
-  // Non-passive touchmove — prevents page scroll while swiping horizontally
+  // Non-passive touchmove — prevents page scroll during vertical swipe
   useEffect(()=>{
     const el=containerRef.current;
     if(!el)return;
     const onMove=e=>{
-      if(startXRef.current===null||animating_.current)return;
-      const dy=Math.abs(e.touches[0].clientY-startYRef.current);
-      // If mostly vertical, cancel horizontal swipe
-      if(dy>30){startXRef.current=null;return;}
+      if(startYRef.current===null||animating_.current)return;
+      const dx=Math.abs(e.touches[0].clientX-startXRef.current);
+      // If mostly horizontal, cancel vertical swipe (let photo taps work)
+      if(dx>30){startYRef.current=null;return;}
       e.preventDefault();
-      const dx=e.touches[0].clientX-startXRef.current;
+      const dy=e.touches[0].clientY-startYRef.current;
       // Elastic resistance beyond ±120px
-      const clamped=dx>0?Math.min(dx,120+Math.max(0,dx-120)*0.2):Math.max(dx,-120+Math.min(0,dx+120)*0.2);
-      setDragX(clamped);
+      const clamped=dy>0?Math.min(dy,120+Math.max(0,dy-120)*0.2):Math.max(dy,-120+Math.min(0,dy+120)*0.2);
+      setDragY(clamped);
     };
     el.addEventListener('touchmove',onMove,{passive:false});
     return()=>el.removeEventListener('touchmove',onMove);
@@ -3929,11 +3932,10 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
     if(animating_.current||newIdx<0||newIdx>=listings.length)return false;
     animating_.current=true;
     setAnimating(true);
-    // slide left for next, slide right for prev
-    setDragX(newIdx>idx?-window.innerWidth:window.innerWidth);
+    setDragY(newIdx>idx?-window.innerHeight:window.innerHeight);
     setTimeout(()=>{
       setIdx(newIdx);
-      setDragX(0);
+      setDragY(0);
       setAnimating(false);
       animating_.current=false;
       if(newIdx>=listings.length-5&&listings.length<total)fetchMore();
@@ -3943,59 +3945,48 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
 
   const onTouchStart=e=>{
     if(animating_.current)return;
-    startXRef.current=e.touches[0].clientX;
     startYRef.current=e.touches[0].clientY;
-    touchStartTimeRef.current=Date.now();
+    startXRef.current=e.touches[0].clientX;
   };
-
   const onTouchEnd=e=>{
-    if(startXRef.current===null||animating_.current)return;
-    const endX=e.changedTouches[0].clientX;
-    const endY=e.changedTouches[0].clientY;
-    const dx=startXRef.current-endX; // positive = swiped left = go next
-    const dy=Math.abs(endY-startYRef.current);
-    const duration=Date.now()-touchStartTimeRef.current;
-    const totalMove=Math.abs(dx)+dy;
-
-    startXRef.current=null;
+    if(startYRef.current===null||animating_.current)return;
+    const dy=startYRef.current-e.changedTouches[0].clientY;
     startYRef.current=null;
-
-    // Tinder-style tap: quick touch with minimal movement
-    if(duration<220&&totalMove<20){
-      const tapX=e.changedTouches[0].clientX;
-      if(tapX>window.innerWidth/2){
-        if(!snapTo(idx+1)){setDragX(0);}
-      } else {
-        if(!snapTo(idx-1)){setDragX(0);}
-      }
-      return;
-    }
-
-    // Horizontal swipe: left = next, right = prev
-    if(dx>55&&idx<listings.length-1){snapTo(idx+1);}
-    else if(dx<-55&&idx>0){snapTo(idx-1);}
-    else{setAnimating(true);setDragX(0);setTimeout(()=>setAnimating(false),280);}
+    if(dy>55&&idx<listings.length-1){snapTo(idx+1);}
+    else if(dy<-55&&idx>0){snapTo(idx-1);}
+    else{setAnimating(true);setDragY(0);setTimeout(()=>setAnimating(false),280);}
   };
 
-  // Render a single card slide (offset: -1=left, 0=current, +1=right)
+  // Render a single card slide (offset: -1=above, 0=current, +1=below)
   const renderSlide=(offset)=>{
     const cardIdx=idx+offset;
     if(cardIdx<0||cardIdx>=listings.length)return null;
     const l=listings[cardIdx];
-    const photo=Array.isArray(l.photos)?l.photos.find(p=>typeof p==="string")||l.photos[0]?.url||null:null;
+    // Build ordered photo array
+    const photos=Array.isArray(l.photos)
+      ?l.photos.map(p=>typeof p==="string"?p:p?.url).filter(Boolean)
+      :[];
+    // For the current card use photoIdx, for adjacent cards always show first photo
+    const activePhoto=offset===0?photos[photoIdx]||null:photos[0]||null;
     const isNew=Date.now()-new Date(l.created_at)<12*3600000;
     const isExpiring=l.expires_at&&new Date(l.expires_at)-Date.now()<3*86400000&&new Date(l.expires_at)>Date.now();
     const isSaved=savedIds?.has(l.id);
-    const baseX=offset*100; // in vw units
-    const tx=`calc(${baseX}vw + ${dragX}px)`;
+    const baseY=offset*100; // in vh units
+    const ty=`calc(${baseY}vh + ${dragY}px)`;
     return(
-      <div key={l.id} style={{position:"absolute",inset:0,transform:`translateX(${tx})`,transition:animating?"transform .3s cubic-bezier(.25,.46,.45,.94)":"none",willChange:"transform",background:"#000",overflow:"hidden"}}>
-        {photo
-          ?<img src={photo} alt={l.title} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",opacity:.88}}/>
+      <div key={l.id} style={{position:"absolute",inset:0,transform:`translateY(${ty})`,transition:animating?"transform .3s cubic-bezier(.25,.46,.45,.94)":"none",willChange:"transform",background:"#000",overflow:"hidden"}}>
+        {activePhoto
+          ?<img src={activePhoto} alt={l.title} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",opacity:.88}}/>
           :<div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,#1428A0 0%,#0a1060 100%)"}}/>}
         <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,rgba(0,0,0,.35) 0%,transparent 30%,transparent 45%,rgba(0,0,0,.9) 100%)",pointerEvents:"none"}}/>
-        {/* Interactive content — only on the current (centre) card */}
+        {/* Interactive content — only on the current card */}
         {offset===0&&<>
+          {/* Photo dots — shown inside the card when there are multiple photos */}
+          {photos.length>1&&<div style={{position:"absolute",top:onClose?58:12,left:"50%",transform:"translateX(-50%)",display:"flex",gap:4,zIndex:15,pointerEvents:"none"}}>
+            {photos.map((_,i)=>(
+              <div key={i} style={{width:i===photoIdx?16:5,height:5,borderRadius:3,background:i===photoIdx?"#fff":"rgba(255,255,255,.4)",transition:"all .2s"}}/>
+            ))}
+          </div>}
           {/* Right actions */}
           <div style={{position:"absolute",right:14,bottom:190,display:"flex",flexDirection:"column",gap:16,alignItems:"center",zIndex:10}}>
             {[
@@ -4038,11 +4029,15 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
             {isNew&&<div style={{background:"#10b981",color:"#fff",fontSize:10,fontWeight:800,padding:"4px 10px",borderRadius:6,letterSpacing:".06em"}}>NEW</div>}
             {isExpiring&&<div style={{background:"#f59e0b",color:"#fff",fontSize:10,fontWeight:800,padding:"4px 10px",borderRadius:6}}>EXPIRING SOON</div>}
           </div>
-          {/* Swipe / tap hint */}
-          {idx===0&&listings.length>1&&<div style={{position:"absolute",bottom:86,left:"50%",transform:"translateX(-50%)",color:"rgba(255,255,255,.35)",fontSize:11,textAlign:"center",pointerEvents:"none",zIndex:5,whiteSpace:"nowrap"}}>← tap sides or swipe →</div>}
-          {/* Invisible tap zones — left/right halves for Tinder-style navigation */}
-          <div style={{position:"absolute",top:0,left:0,width:"40%",bottom:"30%",zIndex:9}} onClick={()=>snapTo(idx-1)}/>
-          <div style={{position:"absolute",top:0,right:0,width:"40%",bottom:"30%",zIndex:9}} onClick={()=>snapTo(idx+1)}/>
+          {/* Swipe hint */}
+          {idx===0&&listings.length>1&&<div style={{position:"absolute",bottom:86,left:"50%",transform:"translateX(-50%)",color:"rgba(255,255,255,.35)",fontSize:11,textAlign:"center",pointerEvents:"none",zIndex:5,whiteSpace:"nowrap"}}>↑ swipe up for next ad</div>}
+          {/* Invisible edge tap zones — cycle through this ad's photos */}
+          {photos.length>1&&<>
+            <div style={{position:"absolute",top:0,left:0,width:"18%",bottom:"32%",zIndex:9,cursor:"pointer"}}
+              onClick={e=>{e.stopPropagation();setPhotoIdx(p=>Math.max(0,p-1));}}/>
+            <div style={{position:"absolute",top:0,right:0,width:"18%",bottom:"32%",zIndex:9,cursor:"pointer"}}
+              onClick={e=>{e.stopPropagation();setPhotoIdx(p=>Math.min(photos.length-1,p+1));}}/>
+          </>}
         </>}
       </div>
     );
