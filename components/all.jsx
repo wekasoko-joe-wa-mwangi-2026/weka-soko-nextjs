@@ -1228,17 +1228,100 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
 
 // ── LISTING CARD ──────────────────────────────────────────────────────────────
 function ListingCard({listing:l,onClick,listView,isSaved,onSave}){
-  const photo=Array.isArray(l.photos)?l.photos.find(p=>typeof p==="string")||l.photos[0]?.url||null:null;
-  return <div className={`lcard${listView?" lcard-list":""}`} onClick={onClick}>
-    <div className="lthumb">
-      {photo?<WatermarkedImage src={photo} alt={l.title} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>:<span style={{opacity:.15}}><svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span>}
-      {l.status==="sold"&&<div className="sold-badge">SOLD</div>}
-      {Date.now()-new Date(l.created_at)<12*3600000&&l.status!=="sold"&&<div style={{position:"absolute",top:8,left:8,background:"#10b981",color:"#fff",fontSize:9,fontWeight:800,padding:"3px 8px",borderRadius:4,letterSpacing:".06em",textTransform:"uppercase"}}>NEW</div>}
-      {l.expires_at&&new Date(l.expires_at)-Date.now()<3*86400000&&new Date(l.expires_at)-Date.now()>0&&<div style={{position:"absolute",top:8,left:onSave?8:8,background:"#f59e0b",color:"#fff",fontSize:9,fontWeight:800,padding:"3px 8px",borderRadius:4,letterSpacing:".04em",textTransform:"uppercase",marginTop:Date.now()-new Date(l.created_at)<12*3600000?24:0}}>EXPIRING</div>}
-      {l.locked_buyer_id&&!l.is_unlocked&&<div style={{position:"absolute",bottom:0,left:0,right:0,background:"#1D1D1D",color:"#fff",fontSize:10,fontWeight:700,padding:"5px 10px",letterSpacing:".04em",textTransform:"uppercase"}}>Buyer Interested</div>}
-      {onSave&&<button onClick={e=>{e.stopPropagation();onSave();}} style={{position:"absolute",top:8,right:8,background:"rgba(255,255,255,.92)",border:"none",borderRadius:"50%",width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,.2)",padding:0}} title={isSaved?"Remove from saved":"Save listing"}>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill={isSaved?"#1428A0":"none"} stroke="#1428A0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-      </button>}
+  const photos=Array.isArray(l.photos)?l.photos.map(p=>typeof p==="string"?p:p?.url).filter(Boolean):[];
+  // panels: photos (or placeholder) + info slide
+  const panels=photos.length>0?[...photos,"info"]:["noPhoto","info"];
+  const [slide,setSlide]=useState(0);
+  const touchRef=useRef(null);
+  const swiped=useRef(false);
+
+  const onTouchStart=e=>{
+    touchRef.current={x:e.touches[0].clientX,y:e.touches[0].clientY};
+    swiped.current=false;
+  };
+  const onTouchEnd=e=>{
+    if(!touchRef.current)return;
+    const dx=e.changedTouches[0].clientX-touchRef.current.x;
+    const dy=e.changedTouches[0].clientY-touchRef.current.y;
+    touchRef.current=null;
+    if(Math.abs(dx)>36&&Math.abs(dx)>Math.abs(dy)*1.2){
+      swiped.current=true;
+      setSlide(s=>dx<0?Math.min(s+1,panels.length-1):Math.max(s-1,0));
+    }
+  };
+
+  const isInfo=slide===panels.length-1;
+  const isNew=Date.now()-new Date(l.created_at)<12*3600000&&l.status!=="sold";
+  const isExpiring=l.expires_at&&new Date(l.expires_at)-Date.now()<3*86400000&&new Date(l.expires_at)-Date.now()>0;
+
+  const handleCardClick=()=>{
+    if(swiped.current){swiped.current=false;return;}
+    if(isInfo)return;
+    onClick&&onClick();
+  };
+
+  return <div className={`lcard${listView?" lcard-list":""}`} onClick={handleCardClick}>
+    <div className="lthumb" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      {/* Sliding track */}
+      <div style={{display:"flex",height:"100%",width:`${panels.length*100}%`,transform:`translateX(${-slide*(100/panels.length)}%)`,transition:"transform .28s cubic-bezier(.4,0,.2,1)"}}>
+        {panels.map((p,i)=>(
+          <div key={i} style={{width:`${100/panels.length}%`,height:"100%",flexShrink:0,position:"relative",overflow:"hidden"}}>
+            {p==="info"
+              ?<div style={{width:"100%",height:"100%",background:"linear-gradient(160deg,#1428A0 0%,#0a1870 100%)",display:"flex",flexDirection:"column",justifyContent:"space-between",padding:"14px 14px 12px",boxSizing:"border-box"}}
+                  onClick={e=>e.stopPropagation()}>
+                  <div>
+                    <div style={{fontSize:10,fontWeight:800,letterSpacing:".1em",textTransform:"uppercase",color:"rgba(255,255,255,.55)",marginBottom:6}}>About this Ad</div>
+                    {l.description&&<div style={{fontSize:12,color:"rgba(255,255,255,.92)",lineHeight:1.6,display:"-webkit-box",WebkitLineClamp:4,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{l.description}</div>}
+                  </div>
+                  <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                      {l.location&&<span style={{background:"rgba(255,255,255,.14)",borderRadius:20,padding:"2px 8px",fontSize:10,color:"#fff",display:"flex",alignItems:"center",gap:3}}><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>{l.location}</span>}
+                      {l.view_count>0&&<span style={{background:"rgba(255,255,255,.14)",borderRadius:20,padding:"2px 8px",fontSize:10,color:"#fff"}}>{l.view_count} views</span>}
+                      {l.interest_count>0&&<span style={{background:"rgba(255,59,48,.35)",borderRadius:20,padding:"2px 8px",fontSize:10,color:"#fff",fontWeight:700}}>🔥 {l.interest_count} interested</span>}
+                      {l.seller_avg_rating>0&&<span style={{background:"rgba(255,200,0,.2)",borderRadius:20,padding:"2px 8px",fontSize:10,color:"#ffe066",fontWeight:700}}>★ {Number(l.seller_avg_rating).toFixed(1)}</span>}
+                    </div>
+                    <button onClick={e=>{e.stopPropagation();onClick&&onClick();}} style={{background:"#fff",color:"#1428A0",border:"none",borderRadius:7,padding:"7px 0",fontWeight:800,fontSize:12,cursor:"pointer",fontFamily:"var(--fn)",letterSpacing:"-.01em"}}>
+                      View Full Details →
+                    </button>
+                  </div>
+                </div>
+              :p==="noPhoto"
+                ?<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",background:"var(--sh)"}}><span style={{opacity:.15}}><svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span></div>
+                :<WatermarkedImage src={p} alt={l.title} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+            }
+          </div>
+        ))}
+      </div>
+
+      {/* Overlays — photos only */}
+      {!isInfo&&<>
+        {l.status==="sold"&&<div className="sold-badge">SOLD</div>}
+        {isNew&&<div style={{position:"absolute",top:8,left:8,background:"#10b981",color:"#fff",fontSize:9,fontWeight:800,padding:"3px 8px",borderRadius:4,letterSpacing:".06em",textTransform:"uppercase"}}>NEW</div>}
+        {isExpiring&&<div style={{position:"absolute",top:8,left:8,background:"#f59e0b",color:"#fff",fontSize:9,fontWeight:800,padding:"3px 8px",borderRadius:4,letterSpacing:".04em",textTransform:"uppercase",marginTop:isNew?24:0}}>EXPIRING</div>}
+        {l.locked_buyer_id&&!l.is_unlocked&&<div style={{position:"absolute",bottom:0,left:0,right:0,background:"#1D1D1D",color:"#fff",fontSize:10,fontWeight:700,padding:"5px 10px",letterSpacing:".04em",textTransform:"uppercase"}}>Buyer Interested</div>}
+        {onSave&&<button onClick={e=>{e.stopPropagation();onSave();}} style={{position:"absolute",top:8,right:8,background:"rgba(255,255,255,.92)",border:"none",borderRadius:"50%",width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,.2)",padding:0}} title={isSaved?"Remove from saved":"Save listing"}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill={isSaved?"#1428A0":"none"} stroke="#1428A0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        </button>}
+      </>}
+
+      {/* Swipe hint — first panel only, fades after first swipe */}
+      {slide===0&&panels.length>1&&<div style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.45)",color:"#fff",borderRadius:20,fontSize:10,fontWeight:600,padding:"3px 8px",pointerEvents:"none",display:"flex",alignItems:"center",gap:3,backdropFilter:"blur(4px)"}}>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg>
+        swipe
+      </div>}
+
+      {/* Dot indicators */}
+      {panels.length>1&&<div style={{position:"absolute",bottom:6,left:0,right:0,display:"flex",justifyContent:"center",gap:4,pointerEvents:"none"}}>
+        {panels.map((_,i)=>(
+          <div key={i} style={{
+            width:i===panels.length-1?14:5,
+            height:5,borderRadius:3,
+            background:i===slide?"#fff":"rgba(255,255,255,.45)",
+            transition:"all .2s",
+            boxShadow:"0 1px 3px rgba(0,0,0,.3)"
+          }}/>
+        ))}
+      </div>}
     </div>
     <div style={{padding:"18px 20px",flex:1}}>
       <div style={{fontSize:12,fontWeight:700,letterSpacing:".06em",textTransform:"uppercase",color:"#888888",marginBottom:6}}>{l.category}</div>
