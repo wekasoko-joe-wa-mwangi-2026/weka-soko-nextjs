@@ -218,8 +218,9 @@ button{touch-action:manipulation;}
 .mob-tab span{font-size:10px;font-weight:600;letter-spacing:.02em;}
 .mob-tab.on{color:#1428A0;}
 .mob-tab.off{color:#AAAAAA;}
-.mob-tab.post-btn{background:#1428A0;border-radius:50%;width:52px;height:52px;margin-top:-14px;align-self:center;color:#fff;box-shadow:0 4px 14px rgba(20,40,160,.4);}
-.mob-tab.post-btn span{display:none;}
+.mob-tab.post-btn{background:#1428A0;border-radius:22px;width:82px;height:46px;margin-top:-8px;align-self:center;color:#fff;box-shadow:0 4px 16px rgba(20,40,160,.45);padding:0 6px;gap:2px;}
+.mob-tab.post-btn svg{width:16px;height:16px;}
+.mob-tab.post-btn span{display:block;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;}
 .mob-drawer{position:fixed;inset:0;z-index:300;display:flex;flex-direction:column;justify-content:flex-end;}
 .mob-drawer-bg{position:absolute;inset:0;background:rgba(0,0,0,.5);}
 .mob-drawer-panel{position:relative;background:#fff;border-radius:20px 20px 0 0;max-height:85vh;overflow-y:auto;padding:24px 20px 40px;}

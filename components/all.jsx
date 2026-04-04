@@ -3488,6 +3488,8 @@ function MobileLayout({
     Other:"https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=140&h=140&fit=crop",
   };
 
+  const [swipeFeedIdx,setSwipeFeedIdx]=useState(null);
+
   const postAd=()=>{
     if(!user){setModal({type:"auth",mode:"signup"});return;}
     if(user.role==="buyer"){
@@ -3577,7 +3579,7 @@ function MobileLayout({
             :<div className="mob-cards">
               {listings.map(l=>{
                 const photo=Array.isArray(l.photos)?l.photos.find(p=>typeof p==="string")||l.photos[0]?.url||null:null;
-                return <div key={l.id} className="mob-lcard" onClick={()=>openListing(l)} style={{position:"relative"}}>
+                return <div key={l.id} className="mob-lcard" onClick={()=>setSwipeFeedIdx(listings.findIndex(x=>x.id===l.id))} style={{position:"relative"}}>
                   <div className="mob-lcard-img">
                     {photo?<img src={photo} alt={l.title}/>:<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",opacity:.15}}><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>}
                   </div>
@@ -3613,6 +3615,21 @@ function MobileLayout({
 
     </>}
 
+    {/* ── SWIPE OVERLAY — opened when user taps a listing card ── */}
+    {swipeFeedIdx!==null&&<div style={{position:"fixed",inset:0,zIndex:500}}>
+      <SwipeFeed
+        user={user} token={token}
+        onOpen={(l)=>{setSwipeFeedIdx(null);openListing(l);}}
+        onLockIn={handleLockIn}
+        savedIds={savedIds} onToggleSave={onToggleSave}
+        onSignIn={()=>setModal({type:"auth",mode:"login"})}
+        onPostAd={()=>{setSwipeFeedIdx(null);postAd();}}
+        initialListings={listings}
+        startIndex={swipeFeedIdx}
+        onClose={()=>setSwipeFeedIdx(null)}
+      />
+    </div>}
+
     {/* ── DISCOVER TAB ── */}
     {mobileTab==="discover"&&<SwipeFeed
       user={user} token={token}
@@ -3635,8 +3652,8 @@ function MobileLayout({
     <div className="mob-bottombar">
       {[
         {id:"home",icon:<svg viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/><path d="M9 21V12h6v9" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/></svg>,label:"Home"},
-        {id:"discover",icon:<svg viewBox="0 0 24 24" fill="none"><polygon points="5 3 19 12 5 21 5 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,label:"Discover"},
-        {id:"post",icon:<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M12 8v8M8 12h8" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/></svg>,label:"Post",isPost:true},
+        {id:"discover",icon:<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,label:"Discover"},
+        {id:"post",icon:<svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>,label:"Post Ad",isPost:true},
         {id:"dashboard",icon:<svg viewBox="0 0 24 24" fill="none"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>,label:user?user.name?.split(" ")[0]:"Account"},
         {id:"requests",icon:<svg viewBox="0 0 24 24" fill="none"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M9 12h6M9 16h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>,label:"Requests"},
       ].map(t=>(
@@ -3651,7 +3668,7 @@ function MobileLayout({
             setMobileTab(t.id);
           }}>
           {t.icon}
-          {!t.isPost&&<span>{t.label}{t.id==="dashboard"&&notifCount>0?` (${notifCount})`:""}</span>}
+          <span>{t.label}{t.id==="dashboard"&&notifCount>0?` (${notifCount})`:""}</span>
         </button>
       ))}
     </div>
@@ -3698,27 +3715,42 @@ function MobileLayout({
 
 
 // ── SWIPE FEED — TikTok-style full-screen listing discovery ───────────────────
-function SwipeFeed({user,token,onOpen,onLockIn,savedIds,onToggleSave,onSignIn,onPostAd}){
-  const [listings,setListings]=useState([]);
+function SwipeFeed({user,token,onOpen,onLockIn,savedIds,onToggleSave,onSignIn,onPostAd,initialListings,startIndex,onClose}){
+  const [listings,setListings]=useState(initialListings&&initialListings.length?[...initialListings]:[]);
   const [total,setTotal]=useState(0);
-  const [loading,setLoading]=useState(true);
-  const [idx,setIdx]=useState(0);
-  const [fetchPg,setFetchPg]=useState(1);
+  const [loading,setLoading]=useState(!(initialListings&&initialListings.length));
+  const [idx,setIdx]=useState(typeof startIndex==="number"?startIndex:0);
+  const fetching=useRef(false);
   const startY=useRef(null);
   const startX=useRef(null);
   const PER=20;
 
   useEffect(()=>{
-    api(`/api/listings?sort=newest&limit=${PER}&page=${fetchPg}`)
+    if(initialListings&&initialListings.length){
+      api(`/api/listings?sort=newest&limit=1&page=1`).then(d=>setTotal(d.total||0)).catch(()=>{});
+    } else {
+      api(`/api/listings?sort=newest&limit=${PER}&page=1`)
+        .then(d=>{setListings(d.listings||[]);setTotal(d.total||0);})
+        .catch(()=>{}).finally(()=>setLoading(false));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[]);
+
+  const fetchMore=()=>{
+    if(fetching.current)return;
+    fetching.current=true;
+    const pg=Math.ceil(listings.length/PER)+1;
+    api(`/api/listings?sort=newest&limit=${PER}&page=${pg}`)
       .then(d=>{
-        setListings(prev=>fetchPg===1?(d.listings||[]):[...prev,...(d.listings||[])]);
+        const more=d.listings||[];
         setTotal(d.total||0);
-      }).catch(()=>{}).finally(()=>setLoading(false));
-  },[fetchPg]);
+        setListings(prev=>{const ids=new Set(prev.map(l=>l.id));return [...prev,...more.filter(l=>!ids.has(l.id))];});
+      }).catch(()=>{}).finally(()=>{fetching.current=false;});
+  };
 
   const goNext=()=>{
-    if(idx<listings.length-1){setIdx(i=>i+1);}
-    if(idx>=listings.length-5&&listings.length<total){setFetchPg(p=>p+1);}
+    if(idx<listings.length-1)setIdx(i=>i+1);
+    if(idx>=listings.length-5&&listings.length<total)fetchMore();
   };
   const goPrev=()=>{if(idx>0)setIdx(i=>i-1);};
 
@@ -3768,13 +3800,18 @@ function SwipeFeed({user,token,onOpen,onLockIn,savedIds,onToggleSave,onSignIn,on
       })}
     </div>
 
+    {/* Back button — shown when opened from card tap */}
+    {onClose&&<button onClick={onClose} style={{position:"absolute",top:14,left:14,width:38,height:38,borderRadius:"50%",background:"rgba(0,0,0,.6)",border:"2px solid rgba(255,255,255,.3)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:20,backdropFilter:"blur(4px)"}}>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+    </button>}
+
     {/* Counter pill — top right */}
     <div style={{position:"absolute",top:14,right:14,background:"rgba(0,0,0,.55)",color:"#fff",fontSize:12,fontWeight:700,padding:"5px 12px",borderRadius:20,zIndex:10,backdropFilter:"blur(4px)"}}>
       {idx+1} / {total}
     </div>
 
-    {/* Badges — top left */}
-    <div style={{position:"absolute",top:14,left:14,display:"flex",flexDirection:"column",gap:5,zIndex:10}}>
+    {/* Badges — top left, shifted down when back button is shown */}
+    <div style={{position:"absolute",top:onClose?60:14,left:14,display:"flex",flexDirection:"column",gap:5,zIndex:10}}>
       {isNew&&<div style={{background:"#10b981",color:"#fff",fontSize:10,fontWeight:800,padding:"4px 10px",borderRadius:6,letterSpacing:".06em"}}>NEW</div>}
       {isExpiring&&<div style={{background:"#f59e0b",color:"#fff",fontSize:10,fontWeight:800,padding:"4px 10px",borderRadius:6}}>EXPIRING SOON</div>}
     </div>
