@@ -1026,21 +1026,26 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
         reason_for_sale:f.reason,location:f.location,county:f.county}).forEach(([k,v])=>v&&fd.append(k,v));
       if(f.subcat)fd.append("subcat",f.subcat);
       if(linkedRequest?.id)fd.append("linked_request_id",linkedRequest.id);
-      // is_contact_public: true only if seller chose Pay Now AND payment succeeds
-      // For Pay Later (or edit): start as false, update after payment
       fd.append("is_contact_public","false");
-      images.forEach(img=>img.file&&fd.append("photos",img.file));
+      // For edits keep photos in same request; for new listings upload photos
+      // separately after creation so Cloudinary latency never blocks the POST.
+      if(isEdit) images.forEach(img=>img.file&&fd.append("photos",img.file));
       const url=isEdit?`/api/listings/${listing.id}`:"/api/listings";
       const method=isEdit?"PATCH":"POST";
       const result=await api(url,{method,body:fd},token);
       if(isEdit){onSuccess(result);onClose();notify("Ad updated!","success");return;}
       const lid=result.id||result.listing?.id;
       setCreatedListingId(lid);
+      // Upload photos in the background — listing is already created.
+      // If Cloudinary is slow the user isn't blocked; photos appear shortly after.
+      if(images.length&&lid){
+        const pfd=new FormData();
+        images.forEach(img=>img.file&&pfd.append("photos",img.file));
+        api(`/api/listings/${lid}`,{method:"PATCH",body:pfd},token).catch(()=>{});
+      }
       if(payNow){
-        // Open M-Pesa modal immediately
         setShowPayModal(true);
       } else {
-        // Pay Later — listing is live but contact hidden
         onSuccess(result);onClose();
         notify("Ad submitted! It's under review — you'll be notified once it goes live.","info");
       }
