@@ -805,7 +805,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       }}
       onSignIn={()=>setModal({type:"auth",mode:"login"})}
       initialFilter={filter}
-    />
+    />}
     {page==="requests"&&<BuyersWantPage user={user} token={token} notify={notify}
       onBack={()=>{setPage("home");if(typeof window!=='undefined')window.history.pushState({},"","/");}}
       onIHaveThis={(request,action)=>{
