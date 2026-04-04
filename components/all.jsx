@@ -2591,7 +2591,7 @@ function MobileDashboard({
       {mobSection==="home"&&stats&&<div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",background:"rgba(0,0,0,.2)",borderTop:"1px solid rgba(255,255,255,.1)"}}>
         {(user.role==="seller"
           ?[{l:"Ads",v:stats.totalListings||0},{l:"Active",v:stats.activeListings||0},{l:"Sold",v:stats.soldListings||0},{l:"Views",v:stats.totalViews||0}]
-          :[{l:"Saved",v:(savedListings||[]).length||0},{l:"Requests",v:myRequests.length||0},{l:"Alerts",v:unreadCount||0},{l:"Chats",v:threads.length||0}]
+          :[{l:"Saved",v:(savedListings||[]).length||0},{l:"Wanted",v:myRequests.length||0},{l:"Alerts",v:unreadCount||0},{l:"Chats",v:threads.length||0}]
         ).map(s=>(
           <div key={s.l} style={{padding:"12px 4px",textAlign:"center"}}>
             <div style={{fontSize:20,fontWeight:800,color:"#fff",lineHeight:1}}>{s.v}</div>
@@ -2637,7 +2637,7 @@ function MobileDashboard({
               {icon:"box",label:"My Ads",sub:`${stats?.activeListings||0} active`,action:()=>setMobSection("ads")},
               {icon:"fire",label:"Buyers",sub:`${stats?.buyersWaiting||0} waiting`,action:()=>setMobSection("ads")},
               {icon:"trophy",label:"Sold Items",sub:`${stats?.soldListings||0} sold`,action:()=>setMobSection("ads")},
-              {icon:"cart",label:"Requests",sub:`${myRequests.length} active`,action:()=>setMobSection("requests")},
+              {icon:"cart",label:"Wanted Ads",sub:`${myRequests.length} active`,action:()=>setMobSection("requests")},
             ].map(a=>(
               <button key={a.label} onClick={a.action} style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:14,padding:"16px",textAlign:"left",cursor:"pointer",fontFamily:"var(--fn)"}}>
                 <div style={{marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center"}}>{a.icon==="box"?<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>:a.icon==="fire"?<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M12 2c0 0-5 4-5 9a5 5 0 0 0 10 0c0-5-5-9-5-9z"/><path d="M12 12c0 0-2 1.5-2 3a2 2 0 0 0 4 0c0-1.5-2-3-2-3z"/></svg>:a.icon==="trophy"?<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="8 21 12 17 16 21"/><line x1="12" y1="17" x2="12" y2="11"/><path d="M7 4H4a2 2 0 0 0-2 2v1a5 5 0 0 0 5 5"/><path d="M17 4h3a2 2 0 0 1 2 2v1a5 5 0 0 1-5 5"/><rect x="7" y="2" width="10" height="10" rx="1"/></svg>:a.icon==="cart"?<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>:a.icon==="heart"?<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>:a.icon==="chat"?<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>:a.icon==="bell"?<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>:null}</div>
@@ -2647,7 +2647,7 @@ function MobileDashboard({
             ))}
             {user.role==="buyer"&&[
               {icon:"heart",label:"Saved",sub:`${(savedListings||[]).length} items`,action:()=>setMobSection("ads")},
-              {icon:"cart",label:"Requests",sub:`${myRequests.length} active`,action:()=>setMobSection("requests")},
+              {icon:"cart",label:"Wanted Ads",sub:`${myRequests.length} active`,action:()=>setMobSection("requests")},
               {icon:"chat",label:"Messages",sub:`${threads.length} chats`,action:()=>setMobSection("notif")},
               {icon:"bell",label:"Alerts",sub:`${unreadCount} unread`,action:()=>setMobSection("notif")},
             ].map(a=>(
@@ -2718,7 +2718,7 @@ function MobileDashboard({
 
       {/* ── REQUESTS SECTION ─────────────────────────────────────────────── */}
       {!loading&&mobSection==="requests"&&<div style={{padding:"16px"}}>
-        <div style={{fontSize:16,fontWeight:700,color:"#1A1A1A",marginBottom:16}}>My Requests</div>
+        <div style={{fontSize:16,fontWeight:700,color:"#1A1A1A",marginBottom:16}}>What Buyers Want</div>
         <MyRequestsTab token={token} notify={notify} user={user}/>
       </div>}
 
@@ -2948,8 +2948,8 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
         {/* Tab row — flush to bottom of hero */}
         <div style={{display:"flex",gap:0,overflowX:"auto",borderBottom:"none",WebkitOverflowScrolling:"touch"}}>
           {(user.role==="seller"
-            ?[["overview","Overview"],["notifications","Notifications"+(unreadCount>0?` (${unreadCount})`:"")] ,["ads","My Ads"],["sold","Sold"],["requests","Requests"],["reviews","Reviews"],["settings","Settings"]]
-            :[["overview","Overview"],["notifications","Notifications"+(unreadCount>0?` (${unreadCount})`:"")] ,["saved","Saved"+(savedListings.length>0?` (${savedListings.length})`:"")],["interests","My Interests"],["pitches","Pitches Received"],["requests","Requests"],["reviews","Reviews"],["settings","Settings"]]
+            ?[["overview","Overview"],["notifications","Notifications"+(unreadCount>0?` (${unreadCount})`:"")] ,["ads","My Ads"],["sold","Sold"],["requests","What Buyers Want"],["reviews","Reviews"],["settings","Settings"]]
+            :[["overview","Overview"],["notifications","Notifications"+(unreadCount>0?` (${unreadCount})`:"")] ,["saved","Saved"+(savedListings.length>0?` (${savedListings.length})`:"")],["interests","My Interests"],["pitches","Pitches Received"],["requests","What Buyers Want"],["reviews","Reviews"],["settings","Settings"]]
           ).map(([id,label])=>(
             <button key={id} onClick={()=>setTab(id)} style={{padding:"14px 22px",border:"none",background:"transparent",cursor:"pointer",fontSize:13,fontWeight:700,letterSpacing:".04em",whiteSpace:"nowrap",color:tab===id?"#fff":"rgba(255,255,255,.55)",borderBottom:tab===id?"3px solid #fff":"3px solid transparent",transition:"all .15s",fontFamily:"var(--fn)"}}>
               {label}
@@ -3269,21 +3269,74 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
 // ── PWA INSTALL BANNER ────────────────────────────────────────────────────────
 function PWABanner({onDismiss}){
   const [deferredPrompt,setDeferredPrompt]=useState(null);
+  const [isIOS,setIsIOS]=useState(false);
+  const [isStandalone,setIsStandalone]=useState(false);
+  const [notifPerm,setNotifPerm]=useState(null);
+  const [showIOSGuide,setShowIOSGuide]=useState(false);
+
   useEffect(()=>{
+    const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
+    const standalone=window.matchMedia("(display-mode: standalone)").matches||!!window.navigator.standalone;
+    setIsIOS(ios);
+    setIsStandalone(standalone);
+    if("Notification" in window) setNotifPerm(Notification.permission);
     const h=e=>{e.preventDefault();setDeferredPrompt(e);};
     window.addEventListener("beforeinstallprompt",h);
     return()=>window.removeEventListener("beforeinstallprompt",h);
   },[]);
-  if(!deferredPrompt)return null;
-  const install=async()=>{deferredPrompt.prompt();const{outcome}=await deferredPrompt.userChoice;if(outcome==="accepted"){onDismiss();}setDeferredPrompt(null);};
-  return <div className="pwa-banner">
-    <span><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span>
-    <div style={{flex:1}}>
-      <div style={{fontWeight:700,fontSize:14,display:"flex",alignItems:"center",gap:8}}><WekaSokoLogo size={22} iconOnly/>Install Weka Soko App</div>
-      <div style={{fontSize:12,color:"#888888"}}>Get faster access & offline browsing</div>
-    </div>
-    <button className="btn bp sm" onClick={install}>Install</button>
-    <button className="btn bgh sm" onClick={onDismiss}>Close</button>
+
+  const requestNotif=async()=>{
+    if(!("Notification" in window))return;
+    const perm=await Notification.requestPermission();
+    setNotifPerm(perm);
+    if(perm==="granted"){
+      new Notification("Weka Soko",{body:"Notifications enabled! You'll be alerted for new messages and offers.",icon:"/icon-192.png"});
+    }
+  };
+
+  const install=async()=>{
+    if(!deferredPrompt)return;
+    deferredPrompt.prompt();
+    const{outcome}=await deferredPrompt.userChoice;
+    if(outcome==="accepted")onDismiss();
+    setDeferredPrompt(null);
+  };
+
+  const canInstall=deferredPrompt||(isIOS&&!isStandalone);
+  const needsNotif="Notification" in window&&notifPerm==="default";
+  if(!canInstall&&!needsNotif)return null;
+
+  return <div className="pwa-banner" style={{flexDirection:"column",gap:0,padding:0,overflow:"hidden"}}>
+    {canInstall&&<div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderBottom:needsNotif?"1px solid #E8E8E8":"none"}}>
+      <span style={{flexShrink:0,color:"#1428A0"}}><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontWeight:700,fontSize:13,color:"#1A1A1A"}}>Install Weka Soko on your phone</div>
+        <div style={{fontSize:11,color:"#888",marginTop:1}}>{isIOS?"Tap Share → Add to Home Screen for the full app":"Get instant access, faster loading & offline browsing"}</div>
+      </div>
+      {isIOS
+        ?<button className="btn bp sm" style={{fontSize:12,whiteSpace:"nowrap"}} onClick={()=>setShowIOSGuide(g=>!g)}>{showIOSGuide?"Got it ✓":"How?"}</button>
+        :<button className="btn bp sm" style={{fontSize:12,whiteSpace:"nowrap"}} onClick={install}>Install</button>
+      }
+      <button onClick={onDismiss} style={{background:"none",border:"none",cursor:"pointer",color:"#AAAAAA",padding:"4px",flexShrink:0,fontSize:16,lineHeight:1}}>✕</button>
+    </div>}
+    {canInstall&&isIOS&&showIOSGuide&&<div style={{padding:"10px 14px",background:"#F8F9FF",borderBottom:needsNotif?"1px solid #E8E8E8":"none",fontSize:12,color:"#444",display:"flex",gap:8,alignItems:"flex-start"}}>
+      <span style={{fontSize:20}}>📱</span>
+      <div>
+        <div style={{fontWeight:700,marginBottom:4,color:"#1428A0"}}>Add to Home Screen (iOS Safari)</div>
+        <div>1. Tap the <strong>Share</strong> button <span style={{fontSize:14}}>⎘</span> at the bottom of Safari</div>
+        <div>2. Scroll down and tap <strong>"Add to Home Screen"</strong></div>
+        <div>3. Tap <strong>Add</strong> — done! Open the app like any other app</div>
+      </div>
+    </div>}
+    {needsNotif&&<div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px"}}>
+      <span style={{flexShrink:0,color:"#F59E0B"}}><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontWeight:700,fontSize:13,color:"#1A1A1A"}}>Enable sound & visual alerts</div>
+        <div style={{fontSize:11,color:"#888",marginTop:1}}>Get notified instantly when buyers message you or lock in</div>
+      </div>
+      <button className="btn" style={{background:"#F59E0B",color:"#fff",border:"none",fontSize:12,padding:"7px 12px",borderRadius:8,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",whiteSpace:"nowrap"}} onClick={requestNotif}>Allow</button>
+      {!canInstall&&<button onClick={onDismiss} style={{background:"none",border:"none",cursor:"pointer",color:"#AAAAAA",padding:"4px",flexShrink:0,fontSize:16,lineHeight:1}}>✕</button>}
+    </div>}
   </div>;
 }
 
