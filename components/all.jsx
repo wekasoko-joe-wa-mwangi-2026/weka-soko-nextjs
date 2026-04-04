@@ -2752,7 +2752,8 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
   const unreadCount=(notifs.filter(n=>!n.is_read).length||0)+(threads.reduce((a,t)=>a+parseInt(t.unread_count||0),0)||0);
 
   // ── Mobile detection ────────────────────────────────────────────────────────
-  const isMobile = window.innerWidth < 768;
+  const [isMobile, setIsMobile] = useState(()=>typeof window!=='undefined'?window.innerWidth<768:false);
+  useEffect(()=>{const check=()=>setIsMobile(window.innerWidth<768);window.addEventListener('resize',check);return()=>window.removeEventListener('resize',check);},[]);
   const [mobSection, setMobSection] = useState("home"); // home|ads|requests|notifications|settings
 
   // ── MOBILE DASHBOARD ─────────────────────────────────────────────────────────
@@ -3329,18 +3330,18 @@ function MobileLayout({
     </div>
 
     {/* ── CONTENT ── */}
-    {mobileTab==="home"&&<>
+    {(mobileTab==="home"||mobileTab==="search")&&<>
 
-      {/* Hero banner */}
-      {!filter.q&&!filter.cat&&pg===1&&<div className="mob-hero-banner">
+      {/* Hero banner — only on home tab, hidden in search mode */}
+      {mobileTab==="home"&&!filter.q&&!filter.cat&&pg===1&&<div className="mob-hero-banner">
         <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"rgba(255,255,255,.6)",marginBottom:8}}>Kenya's Resell Platform</div>
         <div style={{fontSize:22,fontWeight:800,color:"#fff",lineHeight:1.2,marginBottom:10}}>Buy & Sell<br/>Anything in Kenya</div>
         <div style={{fontSize:13,color:"rgba(255,255,255,.75)",marginBottom:16}}>Post free. Pay KSh 250 only when a buyer locks in.</div>
         <button onClick={postAd} style={{background:"#fff",color:"#1428A0",border:"none",padding:"11px 22px",borderRadius:10,fontSize:14,fontWeight:700,fontFamily:"var(--fn)",cursor:"pointer"}}>+ Post an Ad for Free</button>
       </div>}
 
-      {/* Categories */}
-      <div className="mob-section">
+      {/* Categories — hidden in search mode */}
+      {mobileTab==="home"&&<div className="mob-section">
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px 4px"}}>
           <div className="mob-section-title" style={{padding:0}}>Categories</div>
           {filter.cat&&<button onClick={()=>{setFilter(p=>({...p,cat:""}));setPg(1);}} style={{fontSize:12,color:"#1428A0",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--fn)",fontWeight:600}}>Clear</button>}
@@ -3354,7 +3355,7 @@ function MobileLayout({
             </div>
           ))}
         </div>
-      </div>
+      </div>}
 
       {/* Filter row */}
       <div style={{display:"flex",gap:8,padding:"8px 12px",overflowX:"auto",WebkitOverflowScrolling:"touch"}}>

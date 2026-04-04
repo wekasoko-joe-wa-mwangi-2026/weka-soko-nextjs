@@ -340,43 +340,57 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
   };
 
   // Mobile layout
-  if(isMobile&&page!=="dashboard"&&page!=="sold") return <>
-    <MobileLayout
-      user={user} token={token} notify={notify}
-      page={page} setPage={setPage}
-      listings={listings} total={total} loading={loading}
-      filter={filter} setFilter={setFilter} pg={pg} setPg={setPg}
-      stats={stats} counties={counties}
-      modal={modal} setModal={setModal}
-      notifCount={notifCount}
-      mobileFiltersOpen={mobileFiltersOpen} setMobileFiltersOpen={setMobileFiltersOpen}
-      mobileTab={mobileTab} setMobileTab={setMobileTab}
-      openListing={openListing} handleLockIn={handleLockIn}
-    />
-    {modal?.type==="auth"&&<AuthModal defaultMode={modal.mode} onClose={closeModal} onAuth={handleAuth} notify={notify}/>}
-    {modal?.type==="post"&&token&&<PostAdModal onClose={closeModal} token={token} notify={notify} linkedRequest={modal.linkedRequest||null} onSuccess={l=>{setListings(p=>[l,...p]);setTotal(t=>t+1);}}/>}
-    {modal?.type==="detail"&&<DetailModal listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}
-      onShare={()=>setModal({type:"share",listing:modal.listing})}
-      onChat={()=>{if(!user){notify("Sign in to chat","warning");setModal({type:"auth",mode:"login"});return;}setModal({type:"chat",listing:modal.listing});}}
-      onLockIn={()=>handleLockIn(modal.listing)}
-      onUnlock={()=>setModal({type:"pay",payType:"unlock",listing:modal.listing})}
-      onEscrow={()=>{if(!user){notify("Sign in first","warning");setModal({type:"auth",mode:"login"});return;}setModal({type:"pay",payType:"escrow",listing:modal.listing});}}
-    />}
-    {modal?.type==="chat"&&user&&<ChatModal listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}/>}
-    {modal?.type==="share"&&<ShareModal listing={modal.listing} onClose={closeModal}/>}
-    {modal?.type==="pay"&&user&&<PayModal type={modal.payType} listingId={modal.listing.id}
-      amount={modal.payType==="unlock"?250:modal.listing.price+Math.round(modal.listing.price*0.075)}
-      purpose={modal.payType==="unlock"?`Unlock buyer contact: ${modal.listing.title}`:`Escrow for: ${modal.listing.title}`}
-      token={token} user={user} allowVoucher={true}
-      onSuccess={async(result)=>{
-        if(result.listing){const ul=result.listing;setListings(p=>p.map(l=>l.id===ul.id?ul:l));closeModal();setTimeout(()=>setModal({type:"detail",listing:ul}),200);notify("Contact details revealed!","success");return;}
-        try{const fresh=await apiCall(`/api/listings/${modal.listing.id}`,{},token);const ul=fresh.listing||fresh;setListings(p=>p.map(l=>l.id===ul.id?ul:l));closeModal();setTimeout(()=>setModal({type:"detail",listing:ul}),200);}catch{closeModal();}
-        notify(modal.payType==="unlock"?"Buyer contact revealed!":"Escrow activated!","success");
-      }}
-      onClose={closeModal} notify={notify}/>}
-    {toast&&<Toast key={toast.id} msg={toast.msg} type={toast.type} onClose={()=>setToast(null)}/>}
-    {resetToken&&<ResetPasswordModal token={resetToken} notify={notify} onClose={()=>{setResetToken(null);setModal({type:"auth",mode:"login"});}}/>}
-  </>;
+  if(isMobile&&page!=="sold"){
+    // Mobile dashboard — show Dashboard directly (it renders MobileDashboard internally), no desktop nav
+    if(page==="dashboard"&&user) return <>
+      <Dashboard user={user} token={token} notify={notify}
+        onPostAd={()=>{setPage("home");if(typeof window !== 'undefined') window.history.pushState({},"","/");setModal({type:"post"});}}
+        onClose={()=>{setPage("home");setMobileTab("home");if(typeof window !== 'undefined') window.history.pushState({},"","/");}}
+        onUserUpdate={updated=>{const m={...user,...updated};setUser(m);localStorage.setItem("ws_user",JSON.stringify(m));}}
+        initialTab={typeof window !== 'undefined' && window.location.pathname.startsWith("/dashboard/")?window.location.pathname.split("/dashboard/")[1]:undefined}
+      />
+      {toast&&<Toast key={toast.id} msg={toast.msg} type={toast.type} onClose={()=>setToast(null)}/>}
+      {resetToken&&<ResetPasswordModal token={resetToken} notify={notify} onClose={()=>{setResetToken(null);}}/>}
+    </>;
+    // Mobile home/requests/search
+    return <>
+      <MobileLayout
+        user={user} token={token} notify={notify}
+        page={page} setPage={setPage}
+        listings={listings} total={total} loading={loading}
+        filter={filter} setFilter={setFilter} pg={pg} setPg={setPg}
+        stats={stats} counties={counties}
+        modal={modal} setModal={setModal}
+        notifCount={notifCount}
+        mobileFiltersOpen={mobileFiltersOpen} setMobileFiltersOpen={setMobileFiltersOpen}
+        mobileTab={mobileTab} setMobileTab={setMobileTab}
+        openListing={openListing} handleLockIn={handleLockIn}
+      />
+      {modal?.type==="auth"&&<AuthModal defaultMode={modal.mode} onClose={closeModal} onAuth={handleAuth} notify={notify}/>}
+      {modal?.type==="post"&&token&&<PostAdModal onClose={closeModal} token={token} notify={notify} linkedRequest={modal.linkedRequest||null} onSuccess={l=>{setListings(p=>[l,...p]);setTotal(t=>t+1);}}/>}
+      {modal?.type==="detail"&&<DetailModal listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}
+        onShare={()=>setModal({type:"share",listing:modal.listing})}
+        onChat={()=>{if(!user){notify("Sign in to chat","warning");setModal({type:"auth",mode:"login"});return;}setModal({type:"chat",listing:modal.listing});}}
+        onLockIn={()=>handleLockIn(modal.listing)}
+        onUnlock={()=>setModal({type:"pay",payType:"unlock",listing:modal.listing})}
+        onEscrow={()=>{if(!user){notify("Sign in first","warning");setModal({type:"auth",mode:"login"});return;}setModal({type:"pay",payType:"escrow",listing:modal.listing});}}
+      />}
+      {modal?.type==="chat"&&user&&<ChatModal listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}/>}
+      {modal?.type==="share"&&<ShareModal listing={modal.listing} onClose={closeModal}/>}
+      {modal?.type==="pay"&&user&&<PayModal type={modal.payType} listingId={modal.listing.id}
+        amount={modal.payType==="unlock"?250:modal.listing.price+Math.round(modal.listing.price*0.075)}
+        purpose={modal.payType==="unlock"?`Unlock buyer contact: ${modal.listing.title}`:`Escrow for: ${modal.listing.title}`}
+        token={token} user={user} allowVoucher={true}
+        onSuccess={async(result)=>{
+          if(result.listing){const ul=result.listing;setListings(p=>p.map(l=>l.id===ul.id?ul:l));closeModal();setTimeout(()=>setModal({type:"detail",listing:ul}),200);notify("Contact details revealed!","success");return;}
+          try{const fresh=await apiCall(`/api/listings/${modal.listing.id}`,{},token);const ul=fresh.listing||fresh;setListings(p=>p.map(l=>l.id===ul.id?ul:l));closeModal();setTimeout(()=>setModal({type:"detail",listing:ul}),200);}catch{closeModal();}
+          notify(modal.payType==="unlock"?"Buyer contact revealed!":"Escrow activated!","success");
+        }}
+        onClose={closeModal} notify={notify}/>}
+      {toast&&<Toast key={toast.id} msg={toast.msg} type={toast.type} onClose={()=>setToast(null)}/>}
+      {resetToken&&<ResetPasswordModal token={resetToken} notify={notify} onClose={()=>{setResetToken(null);setModal({type:"auth",mode:"login"});}}/>}
+    </>;
+  }
 
   // Desktop layout
   return <>
