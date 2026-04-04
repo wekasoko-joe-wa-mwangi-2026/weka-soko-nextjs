@@ -105,7 +105,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       if (sub) {
         if(typeof window !== 'undefined') window.__initialDashTab = sub;
       }
-    } else if (section === 'requests') {
+    } else if (section === 'requests' || params.get('tab') === 'requests') {
       setPage('home');
       setMobileTab('requests');
     } else {
@@ -151,7 +151,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
   useEffect(() => {
     if (page === 'sold') navTo('/sold');
     else if (page === 'dashboard') navTo('/dashboard');
-    else if (page === 'home' && mobileTab === 'requests') navTo('/requests');
+    else if (page === 'home' && mobileTab === 'requests') navTo('/?tab=requests');
   }, [page, mobileTab, navTo]);
 
   useEffect(() => {
@@ -168,7 +168,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     if (filter.sort && filter.sort !== 'newest') p.set('sort', filter.sort);
     if (pg > 1) p.set('pg', String(pg));
     const qs = p.toString();
-    navTo(qs ? `/listings?${qs}` : '/');
+    navTo(qs ? `/?${qs}` : '/');
   }, [page, filter, pg, mobileTab, navTo]);
 
   // ── END URL ROUTER ─────────────────────────────────────────────────────────
