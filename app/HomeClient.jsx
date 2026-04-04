@@ -23,6 +23,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
   const [notifCount,setNotifCount]=useState(0);
   const socketRef=useRef(null);
   const [resetToken,setResetToken]=useState(null);
+  const [savedIds,setSavedIds]=useState(new Set());
 
   const notify=useCallback((msg,type="info")=>setToast({msg,type,id:Date.now()}),[]);
 
@@ -183,6 +184,26 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       apiCall("/api/auth/me",{},t).then(u=>{setUser(u);localStorage.setItem("ws_user",JSON.stringify(u));}).catch(()=>{localStorage.removeItem("ws_token");localStorage.removeItem("ws_user");setUser(null);setToken(null);});
     }
   },[]);
+
+  // Saved IDs — fetch when user logs in
+  useEffect(()=>{
+    if(!token)return;
+    apiCall("/api/listings/buyer/saved/ids",{},token).then(ids=>{
+      if(Array.isArray(ids))setSavedIds(new Set(ids));
+    }).catch(()=>{});
+  },[token]);
+
+  const handleToggleSave=useCallback(async(listing)=>{
+    if(!user||!token){setModal({type:"auth",mode:"login"});return;}
+    const newSaved=!savedIds.has(listing.id);
+    setSavedIds(prev=>{const s=new Set(prev);newSaved?s.add(listing.id):s.delete(listing.id);return s;});
+    try{
+      await apiCall(`/api/listings/${listing.id}/save`,{method:"POST"},token);
+    }catch{
+      setSavedIds(prev=>{const s=new Set(prev);newSaved?s.delete(listing.id):s.add(listing.id);return s;});
+    }
+    notify(newSaved?"Saved!":"Removed from saved","success");
+  },[user,token,savedIds,notify]);
 
   // Stats — fetch on load + poll every 30s
   useEffect(()=>{
@@ -374,6 +395,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         onLockIn={()=>handleLockIn(modal.listing)}
         onUnlock={()=>setModal({type:"pay",payType:"unlock",listing:modal.listing})}
         onEscrow={()=>{if(!user){notify("Sign in first","warning");setModal({type:"auth",mode:"login"});return;}setModal({type:"pay",payType:"escrow",listing:modal.listing});}}
+        isSaved={savedIds.has(modal.listing?.id)} onSave={user?()=>handleToggleSave(modal.listing):null}
       />}
       {modal?.type==="chat"&&user&&<ChatModal listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}/>}
       {modal?.type==="share"&&<ShareModal listing={modal.listing} onClose={closeModal}/>}
@@ -568,7 +590,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
 
           {loading?<div style={{textAlign:"center",padding:"80px 0"}}><Spin s="40px"/></div>
             :listings.length===0?<div className="empty"><div style={{fontSize:56,marginBottom:16,opacity:.15}}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><h3 style={{fontWeight:700,fontSize:20,marginBottom:8}}>No listings found</h3><p style={{color:"#767676"}}>Try a different search or filter</p></div>
-            :<div className={vm==="grid"?"g3":"lvc"}>{listings.map(l=><ListingCard key={l.id} listing={l} onClick={()=>openListing(l)} listView={vm==="list"}/>)}</div>}
+            :<div className={vm==="grid"?"g3":"lvc"}>{listings.map(l=><ListingCard key={l.id} listing={l} onClick={()=>openListing(l)} listView={vm==="list"} isSaved={savedIds.has(l.id)} onSave={user?()=>handleToggleSave(l):null}/>)}</div>}
 
           <Pager total={total} perPage={PER_PAGE} page={pg} onChange={p=>{setPg(p);if(typeof window !== 'undefined') window.scrollTo({top:400,behavior:"smooth"});}}/>
         </div>
@@ -617,6 +639,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       onLockIn={()=>handleLockIn(modal.listing)}
       onUnlock={()=>setModal({type:"pay",payType:"unlock",listing:modal.listing})}
       onEscrow={()=>{if(!user){notify("Sign in first","warning");setModal({type:"auth",mode:"login"});return;}setModal({type:"pay",payType:"escrow",listing:modal.listing});}}
+      isSaved={savedIds.has(modal.listing?.id)} onSave={user?()=>handleToggleSave(modal.listing):null}
     />}
     {modal?.type==="chat"&&user&&<ChatModal listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}/>}
     {modal?.type==="share"&&<ShareModal listing={modal.listing} onClose={closeModal}/>}

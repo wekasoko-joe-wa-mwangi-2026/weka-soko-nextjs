@@ -1202,13 +1202,16 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
 }
 
 // ── LISTING CARD ──────────────────────────────────────────────────────────────
-function ListingCard({listing:l,onClick,listView}){
+function ListingCard({listing:l,onClick,listView,isSaved,onSave}){
   const photo=Array.isArray(l.photos)?l.photos.find(p=>typeof p==="string")||l.photos[0]?.url||null:null;
   return <div className={`lcard${listView?" lcard-list":""}`} onClick={onClick}>
     <div className="lthumb">
       {photo?<WatermarkedImage src={photo} alt={l.title} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>:<span style={{opacity:.15}}><svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span>}
       {l.status==="sold"&&<div className="sold-badge">SOLD</div>}
       {l.locked_buyer_id&&!l.is_unlocked&&<div style={{position:"absolute",bottom:0,left:0,right:0,background:"#1D1D1D",color:"#fff",fontSize:10,fontWeight:700,padding:"5px 10px",letterSpacing:".04em",textTransform:"uppercase"}}>Buyer Interested</div>}
+      {onSave&&<button onClick={e=>{e.stopPropagation();onSave();}} style={{position:"absolute",top:8,right:8,background:"rgba(255,255,255,.92)",border:"none",borderRadius:"50%",width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,.2)",padding:0}} title={isSaved?"Remove from saved":"Save listing"}>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill={isSaved?"#1428A0":"none"} stroke="#1428A0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      </button>}
     </div>
     <div style={{padding:"18px 20px",flex:1}}>
       <div style={{fontSize:12,fontWeight:700,letterSpacing:".06em",textTransform:"uppercase",color:"#888888",marginBottom:6}}>{l.category}</div>
@@ -1359,7 +1362,7 @@ function VerificationBanner({user,token,notify}){
   </div>;
 }
 
-function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnlock,onEscrow,notify}){
+function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnlock,onEscrow,notify,isSaved,onSave}){
   const isSeller=user?.id===l.seller_id;
   const isBuyer=user?.id===l.locked_buyer_id;
   const photos=Array.isArray(l.photos)?l.photos.map(p=>typeof p==="string"?p:p?.url).filter(Boolean):[];
@@ -1370,6 +1373,10 @@ function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnl
   return <Modal title={l.title} onClose={onClose} large footer={
     <div style={{width:"100%",display:"flex",gap:8,flexWrap:"wrap"}}>
       <button className="btn bgh sm" onClick={onShare}>↗ Share</button>
+      {user&&onSave&&<button className="btn bgh sm" onClick={onSave} style={{display:"flex",alignItems:"center",gap:5}}>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill={isSaved?"currentColor":"none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        {isSaved?"Saved":"Save"}
+      </button>}
       {user&&!isSeller&&<button className="btn bs sm" onClick={onChat}>Chat with Seller</button>}
       {isSeller&&<button className="btn bs sm" onClick={onChat}>View Messages</button>}
       {!isSeller&&l.status==="active"&&!l.locked_buyer_id&&user&&<button className="btn bg2 sm" onClick={onLockIn}>I'm Interested — Lock In</button>}
@@ -2433,7 +2440,7 @@ function VerificationSection({user, token, notify}){
 
 // ── MOBILE DASHBOARD ─────────────────────────────────────────────────────────
 function MobileDashboard({
-  user,token,notify,listings,buyerInterests,myRequests,notifs,threads,
+  user,token,notify,listings,buyerInterests,savedListings,myRequests,notifs,threads,
   stats,loading,unreadCount,mobSection,setMobSection,
   onPostAd,onClose,onUserUpdate,
   setSelectedListing,selectedListing,showPayModal,setShowPayModal,
@@ -2487,7 +2494,7 @@ function MobileDashboard({
       {mobSection==="home"&&stats&&<div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",background:"rgba(0,0,0,.2)",borderTop:"1px solid rgba(255,255,255,.1)"}}>
         {(user.role==="seller"
           ?[{l:"Ads",v:stats.totalListings||0},{l:"Active",v:stats.activeListings||0},{l:"Sold",v:stats.soldListings||0},{l:"Views",v:stats.totalViews||0}]
-          :[{l:"Saved",v:buyerInterests.length||0},{l:"Requests",v:myRequests.length||0},{l:"Alerts",v:unreadCount||0},{l:"Chats",v:threads.length||0}]
+          :[{l:"Saved",v:(savedListings||[]).length||0},{l:"Requests",v:myRequests.length||0},{l:"Alerts",v:unreadCount||0},{l:"Chats",v:threads.length||0}]
         ).map(s=>(
           <div key={s.l} style={{padding:"12px 4px",textAlign:"center"}}>
             <div style={{fontSize:20,fontWeight:800,color:"#fff",lineHeight:1}}>{s.v}</div>
@@ -2542,7 +2549,7 @@ function MobileDashboard({
               </button>
             ))}
             {user.role==="buyer"&&[
-              {icon:"heart",label:"Saved",sub:`${buyerInterests.length} items`,action:()=>setMobSection("ads")},
+              {icon:"heart",label:"Saved",sub:`${(savedListings||[]).length} items`,action:()=>setMobSection("ads")},
               {icon:"cart",label:"Requests",sub:`${myRequests.length} active`,action:()=>setMobSection("requests")},
               {icon:"chat",label:"Messages",sub:`${threads.length} chats`,action:()=>setMobSection("notif")},
               {icon:"bell",label:"Alerts",sub:`${unreadCount} unread`,action:()=>setMobSection("notif")},
@@ -2583,14 +2590,14 @@ function MobileDashboard({
       {/* ── ADS / INTERESTS SECTION ──────────────────────────────────────── */}
       {!loading&&mobSection==="ads"&&<div style={{padding:"16px"}}>
         <div style={{fontSize:16,fontWeight:700,color:"#1A1A1A",marginBottom:16}}>{user.role==="seller"?"My Ads":"Saved Items"}</div>
-        {(user.role==="seller"?listings:buyerInterests).length===0
+        {(user.role==="seller"?listings:(savedListings||[])).length===0
           ?<div style={{textAlign:"center",padding:"60px 20px",color:"#AAAAAA"}}>
-              <div style={{marginBottom:12,opacity:.2}}>{user.role==="seller"?<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>:<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>}</div>
+              <div style={{marginBottom:12,opacity:.2}}>{user.role==="seller"?<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>:<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>}</div>
               <div style={{fontWeight:700,marginBottom:6}}>{user.role==="seller"?"No ads yet":"Nothing saved yet"}</div>
-              <div style={{fontSize:13,marginBottom:20}}>{user.role==="seller"?"Post your first ad to get started":"Items you lock in appear here"}</div>
+              <div style={{fontSize:13,marginBottom:20}}>{user.role==="seller"?"Post your first ad to get started":"Tap the bookmark icon on any listing to save it"}</div>
               {user.role==="seller"&&<button className="btn bp" style={{borderRadius:10}} onClick={onPostAd}>+ Post an Ad</button>}
             </div>
-          :(user.role==="seller"?listings:buyerInterests).map(l=>{
+          :(user.role==="seller"?listings:(savedListings||[])).map(l=>{
             const photo=Array.isArray(l.photos)?l.photos.find(p=>typeof p==="string")||l.photos[0]?.url||null:null;
             return <div key={l.id} style={{background:"#fff",borderRadius:14,marginBottom:10,border:"1px solid #EBEBEB",overflow:"hidden"}}>
               <div style={{display:"flex",gap:12,padding:"12px"}}>
@@ -2732,6 +2739,7 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
   },[tab]);
   const [listings,setListings]=useState([]);
   const [buyerInterests,setBuyerInterests]=useState([]);
+  const [savedListings,setSavedListings]=useState([]);
   const [myRequests,setMyRequests]=useState([]);
   const [notifs,setNotifs]=useState([]);
   const [threads,setThreads]=useState([]);
@@ -2753,6 +2761,7 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
         ]);
         if(user.role==="buyer"){
           api("/api/listings/buyer/interests",{},token).catch(()=>[]).then(r=>setBuyerInterests(Array.isArray(r)?r:[]));
+          api("/api/listings/buyer/saved",{},token).catch(()=>[]).then(r=>setSavedListings(Array.isArray(r)?r:[]));
         }
         api("/api/requests/mine",{},token).catch(()=>[]).then(r=>setMyRequests(Array.isArray(r)?r:[]));
         const lArr=Array.isArray(ls)?ls:(ls.listings||[]);
@@ -2798,7 +2807,7 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
   // ── MOBILE DASHBOARD ─────────────────────────────────────────────────────────
   if(isMobile) return <MobileDashboard
     user={user} token={token} notify={notify}
-    listings={listings} buyerInterests={buyerInterests}
+    listings={listings} buyerInterests={buyerInterests} savedListings={savedListings}
     myRequests={myRequests} notifs={notifs} threads={threads}
     stats={stats} loading={loading}
     unreadCount={unreadCount}
@@ -2843,7 +2852,7 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
         <div style={{display:"flex",gap:0,overflowX:"auto",borderBottom:"none",WebkitOverflowScrolling:"touch"}}>
           {(user.role==="seller"
             ?[["overview","Overview"],["notifications","Notifications"+(unreadCount>0?` (${unreadCount})`:"")] ,["ads","My Ads"],["sold","Sold"],["requests","Requests"],["reviews","Reviews"],["settings","Settings"]]
-            :[["overview","Overview"],["notifications","Notifications"+(unreadCount>0?` (${unreadCount})`:"")] ,["interests","My Interests"],["pitches","Pitches Received"],["requests","Requests"],["reviews","Reviews"],["settings","Settings"]]
+            :[["overview","Overview"],["notifications","Notifications"+(unreadCount>0?` (${unreadCount})`:"")] ,["saved","Saved"+(savedListings.length>0?` (${savedListings.length})`:"")],["interests","My Interests"],["pitches","Pitches Received"],["requests","Requests"],["reviews","Reviews"],["settings","Settings"]]
           ).map(([id,label])=>(
             <button key={id} onClick={()=>setTab(id)} style={{padding:"14px 22px",border:"none",background:"transparent",cursor:"pointer",fontSize:13,fontWeight:700,letterSpacing:".04em",whiteSpace:"nowrap",color:tab===id?"#fff":"rgba(255,255,255,.55)",borderBottom:tab===id?"3px solid #fff":"3px solid transparent",transition:"all .15s",fontFamily:"var(--fn)"}}>
               {label}
@@ -2998,6 +3007,36 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
           </div>
         ))}
       </div>
+    </>}
+
+    {!loading&&tab==="saved"&&<>
+      <h3 style={{fontSize:15,fontWeight:700,marginBottom:16,letterSpacing:"-.01em"}}>Saved Listings ({savedListings.length})</h3>
+      {savedListings.length===0
+        ?<div style={{textAlign:"center",padding:"60px 20px",background:"#f9f9f9",border:"1px dashed #E5E5E5"}}>
+          <div style={{marginBottom:12,opacity:.2,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></div>
+          <p style={{fontWeight:700,marginBottom:6}}>No saved listings yet</p>
+          <p style={{fontSize:13,color:"#888888"}}>Tap the bookmark icon on any listing to save it for later</p>
+          <button className="btn bp" style={{marginTop:14}} onClick={onClose}>Browse Listings →</button>
+        </div>
+        :<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:14}}>
+          {savedListings.map(l=>{
+            const photo=Array.isArray(l.photos)?l.photos.find(p=>typeof p==="string")||l.photos[0]?.url||null:null;
+            return <div key={l.id} style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:6,overflow:"hidden",transition:"box-shadow .2s"}}
+              onMouseOver={e=>e.currentTarget.style.boxShadow="0 4px 20px rgba(0,0,0,.08)"}
+              onMouseOut={e=>e.currentTarget.style.boxShadow="none"}>
+              <div style={{height:140,background:"#F5F5F5",overflow:"hidden",position:"relative"}}>
+                {photo?<img src={photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100%",opacity:.15}}><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>}
+                <span className={`badge ${l.status==="active"||l.status==="locked"?"bg-g":l.status==="sold"?"bg-y":"bg-m"}`} style={{position:"absolute",top:8,right:8,fontSize:10}}>{l.status}</span>
+              </div>
+              <div style={{padding:"14px 16px"}}>
+                <div style={{fontWeight:700,fontSize:14,marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.title}</div>
+                <div style={{fontSize:14,fontWeight:700,color:"#111111",marginBottom:8}}>{fmtKES(l.price)}</div>
+                {l.location&&<div style={{fontSize:11,color:"#888888",marginBottom:8}}><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {l.location}</div>}
+                <button className="btn bs sm" style={{width:"100%",fontSize:11}} onClick={()=>setSelectedListing(l)}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View</button>
+              </div>
+            </div>;
+          })}
+        </div>}
     </>}
 
     {!loading&&tab==="interests"&&<>
