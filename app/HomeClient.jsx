@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { apiCall, fmtKES, ago, CATS, KENYA_COUNTIES, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
-import { WekaSokoLogo, Spin, Toast, Modal, FF, Counter, ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal, WatermarkedImage, Lightbox, AuthModal, ShareModal, PayModal, ChatModal, PostAdModal, ListingCard, LeaveReviewBtn, ReportListingBtn, VerificationBanner, DetailModal, MarkSoldModal, RoleSwitcher, PostRequestModal, WhatBuyersWant, SoldSection, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab, ProfileSection, PasswordSection, VerificationSection, MobileDashboard, Dashboard, PWABanner, Pager, MobileRequestsTab, MobileLayout, BuyersWantPage } from '@/components/all';
+import { WekaSokoLogo, Spin, Toast, Modal, FF, Counter, ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal, WatermarkedImage, Lightbox, AuthModal, ShareModal, PayModal, ChatModal, PostAdModal, ListingCard, LeaveReviewBtn, ReportListingBtn, VerificationBanner, DetailModal, MarkSoldModal, RoleSwitcher, PostRequestModal, WhatBuyersWant, SoldSection, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab, ProfileSection, PasswordSection, VerificationSection, MobileDashboard, Dashboard, PWABanner, Pager, MobileRequestsTab, MobileLayout, BuyersWantPage, AllListingsPage, SoldPage } from '@/components/all';
 
 export default function HomeClient({ initialListings, initialTotal, initialStats, initialCounties, initialFilter, initialPage }) {
   const [user,setUser]=useState(null);
@@ -13,7 +13,8 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
   const [total,setTotal]=useState(initialTotal||0);
   const [loading,setLoading]=useState(true);
   const [stats,setStats]=useState(initialStats||{users:0,activeAds:0,sold:0,revenue:0});
-  const [filter,setFilter]=useState(initialFilter||{cat:"",q:"",county:"",minPrice:"",maxPrice:"",sort:"newest"});
+  const [filter,setFilter]=useState(initialFilter||{cat:"",subcat:"",q:"",county:"",minPrice:"",maxPrice:"",sort:"newest"});
+  const [searchInput,setSearchInput]=useState("");
   const [counties,setCounties]=useState(initialCounties||[]);
   const [pg,setPg]=useState(initialPage||1);
   const [vm,setVm]=useState("grid");
@@ -101,6 +102,8 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
 
     if (section === 'sold') {
       setPage('sold');
+    } else if (section === 'listings') {
+      setPage('listings');
     } else if (section === 'dashboard') {
       setPage('dashboard');
       if (sub) {
@@ -114,12 +117,13 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     } else {
       setPage('home');
       const cat = params.get('cat') || '';
+      const subcat = params.get('subcat') || '';
       const q = params.get('q') || '';
       const county = params.get('county') || '';
       const sort = params.get('sort') || 'newest';
       const pg_val = parseInt(params.get('pg') || '1');
-      if (cat || q || county || sort !== 'newest' || pg_val > 1) {
-        setFilter(f => ({ ...f, cat, q, county, sort }));
+      if (cat || subcat || q || county || sort !== 'newest' || pg_val > 1) {
+        setFilter(f => ({ ...f, cat, subcat, q, county, sort }));
         if (pg_val > 1) setPg(pg_val);
       }
       const listingId = params.get('listing');
@@ -153,13 +157,14 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
 
   useEffect(() => {
     if (page === 'sold') navTo('/sold');
+    else if (page === 'listings') navTo('/listings');
     else if (page === 'dashboard') navTo('/dashboard');
     else if (page === 'requests') navTo('/requests');
     else if (page === 'home' && mobileTab === 'requests') navTo('/?tab=requests');
   }, [page, mobileTab, navTo]);
 
   useEffect(() => {
-    if (page !== 'home' || mobileTab === 'requests') return;
+    if (page !== 'home' || mobileTab === 'requests' || page === 'listings') return;
     // Don't overwrite URL if auth/reset tokens are present
     if (typeof window !== 'undefined') {
       const _s = window.location.search;
@@ -167,10 +172,10 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     }
     const p = new URLSearchParams();
     if (filter.cat) p.set('cat', filter.cat);
+    if (filter.subcat) p.set('subcat', filter.subcat);
     if (filter.q) p.set('q', filter.q);
     if (filter.county) p.set('county', filter.county);
     if (filter.sort && filter.sort !== 'newest') p.set('sort', filter.sort);
-    if (pg > 1) p.set('pg', String(pg));
     const qs = p.toString();
     navTo(qs ? `/?${qs}` : '/');
   }, [page, filter, pg, mobileTab, navTo]);
@@ -226,8 +231,9 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     const load=async(silent=false)=>{
       if(!silent)setLoading(true);
       try{
-        const p=new URLSearchParams({page:pg,limit:PER_PAGE,sort:filter.sort||"newest"});
+        const p=new URLSearchParams({page:1,limit:48,sort:filter.sort||"newest"});
         if(filter.cat)p.set("category",filter.cat);
+        if(filter.subcat)p.set("subcat",filter.subcat);
         if(filter.q)p.set("search",filter.q);
         if(filter.county)p.set("county",filter.county);
         if(filter.minPrice)p.set("minPrice",filter.minPrice);
@@ -364,7 +370,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
   };
 
   // Mobile layout
-  if(isMobile&&page!=="sold"){
+  if(isMobile&&page!=="sold"&&page!=="listings"){
     // Mobile dashboard — show Dashboard directly (it renders MobileDashboard internally), no desktop nav
     if(page==="dashboard"&&user) return <>
       <Dashboard user={user} token={token} notify={notify}
@@ -439,11 +445,61 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     </>;
   }
 
+  // Mobile sold page
+  if(isMobile&&page==="sold") return <>
+    <SoldPage token={token} user={user} onBack={()=>{setPage("home");setMobileTab("home");if(typeof window!=='undefined')window.history.pushState({},"","/");}}/>
+    {toast&&<Toast key={toast.id} msg={toast.msg} type={toast.type} onClose={()=>setToast(null)}/>}
+  </>;
+
+  // Mobile all listings page
+  if(isMobile&&page==="listings") return <>
+    <AllListingsPage
+      user={user} token={token} notify={notify} savedIds={savedIds}
+      onBack={()=>{setPage("home");setMobileTab("home");if(typeof window!=='undefined')window.history.pushState({},"","/");}}
+      onOpenListing={openListing}
+      onToggleSave={handleToggleSave}
+      onPostAd={()=>{
+        if(user?.role==="buyer"){
+          if(typeof window!=='undefined'&&window.confirm("Switch to Seller to post ads?"))
+            apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token).then(d=>{const u={...user,...d.user};setUser(u);localStorage.setItem("ws_user",JSON.stringify(u));notify("Switched to Seller!","success");setModal({type:"post"});}).catch(e=>notify(e.message,"error"));
+          return;
+        }
+        setModal({type:"post"});
+      }}
+      onSignIn={()=>setModal({type:"auth",mode:"login"})}
+      initialFilter={filter}
+    />
+    {modal?.type==="auth"&&<AuthModal defaultMode={modal.mode} onClose={closeModal} onAuth={handleAuth} notify={notify}/>}
+    {modal?.type==="post"&&token&&<PostAdModal onClose={closeModal} token={token} notify={notify} onSuccess={l=>{setListings(p=>[l,...p]);setTotal(t=>t+1);}}/>}
+    {modal?.type==="detail"&&<DetailModal listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}
+      onShare={()=>setModal({type:"share",listing:modal.listing})}
+      onChat={()=>{if(!user){notify("Sign in to chat","warning");setModal({type:"auth",mode:"login"});return;}setModal({type:"chat",listing:modal.listing});}}
+      onLockIn={()=>handleLockIn(modal.listing)}
+      onUnlock={()=>setModal({type:"pay",payType:"unlock",listing:modal.listing})}
+      onEscrow={()=>{if(!user){notify("Sign in first","warning");setModal({type:"auth",mode:"login"});return;}setModal({type:"pay",payType:"escrow",listing:modal.listing});}}
+      isSaved={savedIds.has(modal.listing?.id)} onSave={user?()=>handleToggleSave(modal.listing):null}
+    />}
+    {modal?.type==="chat"&&user&&<ChatModal listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}/>}
+    {modal?.type==="share"&&<ShareModal listing={modal.listing} onClose={closeModal}/>}
+    {modal?.type==="pay"&&user&&<PayModal type={modal.payType} listingId={modal.listing.id}
+      amount={modal.payType==="unlock"?250:modal.listing.price+Math.round(modal.listing.price*0.075)}
+      purpose={modal.payType==="unlock"?`Unlock buyer contact: ${modal.listing.title}`:`Escrow for: ${modal.listing.title}`}
+      token={token} user={user} allowVoucher={true}
+      onSuccess={async(result)=>{
+        if(result.listing){const ul=result.listing;setListings(p=>p.map(l=>l.id===ul.id?ul:l));closeModal();setTimeout(()=>setModal({type:"detail",listing:ul}),200);notify("Contact details revealed!","success");return;}
+        try{const fresh=await apiCall(`/api/listings/${modal.listing.id}`,{},token);const ul=fresh.listing||fresh;setListings(p=>p.map(l=>l.id===ul.id?ul:l));closeModal();setTimeout(()=>setModal({type:"detail",listing:ul}),200);}catch{closeModal();}
+        notify(modal.payType==="unlock"?"Buyer contact revealed!":"Escrow activated!","success");
+      }}
+      onClose={closeModal} notify={notify}/>}
+    {toast&&<Toast key={toast.id} msg={toast.msg} type={toast.type} onClose={()=>setToast(null)}/>}
+    {resetToken&&<ResetPasswordModal token={resetToken} notify={notify} onClose={()=>{setResetToken(null);setModal({type:"auth",mode:"login"});}}/>}
+  </>;
+
   // Desktop layout
   return <>
     {/* NAV */}
     <nav className="nav">
-      <div className="logo" onClick={()=>{setPage("home");setFilter({cat:"",q:"",county:"",minPrice:"",maxPrice:"",sort:"newest"});setPg(1);if(typeof window !== 'undefined') window.history.pushState({},"","/");}} style={{color:"#1428A0"}}><WekaSokoLogo size={38}/></div>
+      <div className="logo" onClick={()=>{setPage("home");setFilter({cat:"",subcat:"",q:"",county:"",minPrice:"",maxPrice:"",sort:"newest"});setSearchInput("");setPg(1);if(typeof window !== 'undefined') window.history.pushState({},"","/");}} style={{color:"#1428A0"}}><WekaSokoLogo size={38}/></div>
       <div style={{display:"flex",gap:8,alignItems:"center"}}>
         <button className="bgh" style={{color:"#636363",fontSize:13,background:"transparent",border:"none",cursor:"pointer",fontFamily:"var(--fn)",padding:"8px 14px",whiteSpace:"nowrap"}} onClick={()=>{if(page==="sold"){setPage("home");if(typeof window !== 'undefined') window.history.pushState({},"","/");}else{setPage("sold");if(typeof window !== 'undefined') window.history.pushState({},"","/sold");}}}>Sold Items</button>
         {user?<>
@@ -467,7 +523,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     </nav>
 
     {/* ── HERO + CATEGORIES side by side ── */}
-    {page!=="dashboard"&&page!=="sold"&&page!=="requests"&&<div style={{background:"#FFFFFF",borderBottom:"1px solid #EBEBEB"}}>
+    {page!=="dashboard"&&page!=="sold"&&page!=="requests"&&page!=="listings"&&<div style={{background:"#FFFFFF",borderBottom:"1px solid #EBEBEB"}}>
       <div style={{display:"flex",alignItems:"stretch",minHeight:460,flexWrap:"wrap"}}>
 
         {/* LEFT — hero text */}
@@ -540,14 +596,32 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       </div>
     </div>}
 
-    {page!=="dashboard"&&page!=="sold"&&page!=="requests"&&<main style={{padding:"clamp(20px,4vw,40px) clamp(16px,4vw,48px) 80px"}}>
+    {page!=="dashboard"&&page!=="sold"&&page!=="requests"&&page!=="listings"&&<main style={{padding:"clamp(20px,4vw,40px) clamp(16px,4vw,48px) 80px"}}>
       <div style={{display:"flex",gap:24,alignItems:"flex-start",flexWrap:"wrap"}}>
 
         {/* LEFT SIDEBAR */}
         <div style={{width:"min(240px,100%)",flexShrink:0,display:"flex",flexDirection:"column",gap:14}}>
           <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:14,padding:"20px 18px"}}>
             <div style={{fontSize:12,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:12}}>Search</div>
-            <input style={{width:"100%",padding:"11px 14px",border:"1.5px solid #E0E0E0",borderRadius:10,outline:"none",fontSize:14,fontFamily:"var(--fn)",color:"#1A1A1A",background:"#FAFAFA"}} placeholder="Search listings..." value={filter.q} onChange={e=>{setFilter(p=>({...p,q:e.target.value}));setPg(1);}}/>
+            <div style={{display:"flex",gap:0,border:"1.5px solid #E0E0E0",borderRadius:10,overflow:"hidden",background:"#FAFAFA"}}>
+              <input style={{flex:1,padding:"10px 12px",border:"none",outline:"none",fontSize:14,fontFamily:"var(--fn)",color:"#1A1A1A",background:"transparent",minWidth:0}}
+                placeholder="Search listings..." value={searchInput}
+                onChange={e=>setSearchInput(e.target.value)}
+                onKeyDown={e=>{if(e.key==="Enter"){setFilter(p=>({...p,q:searchInput}));setPg(1);}}}/>
+              <button style={{background:"#1428A0",color:"#fff",border:"none",padding:"0 14px",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"var(--fn)",flexShrink:0}}
+                onClick={()=>{setFilter(p=>({...p,q:searchInput}));setPg(1);}}>Go</button>
+            </div>
+          </div>
+          <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:14,padding:"20px 18px"}}>
+            <div style={{fontSize:12,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:12}}>Category</div>
+            <select className="inp" style={{borderRadius:8,fontSize:14,marginBottom:filter.cat?10:0}} value={filter.cat} onChange={e=>{setFilter(p=>({...p,cat:e.target.value,subcat:""}));setPg(1);}}>
+              <option value="">All Categories</option>
+              {CATS.map(c=><option key={c.name} value={c.name}>{c.name}</option>)}
+            </select>
+            {filter.cat&&<select className="inp" style={{borderRadius:8,fontSize:14}} value={filter.subcat} onChange={e=>{setFilter(p=>({...p,subcat:e.target.value}));setPg(1);}}>
+              <option value="">All Subcategories</option>
+              {(CATS.find(c=>c.name===filter.cat)?.sub||[]).map(s=><option key={s} value={s}>{s}</option>)}
+            </select>}
           </div>
           <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:14,padding:"20px 18px"}}>
             <div style={{fontSize:12,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:12}}>Price Range (KSh)</div>
@@ -563,8 +637,8 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
               {counties.map(c=><option key={c} value={c}>{c}</option>)}
             </select>
           </div>
-          {(filter.cat||filter.county||filter.minPrice||filter.maxPrice||filter.q)&&
-            <button className="btn bs" style={{width:"100%",borderRadius:10,fontSize:14}} onClick={()=>{setFilter({cat:"",q:"",county:"",minPrice:"",maxPrice:"",sort:"newest"});setPg(1);}}>Clear All Filters</button>}
+          {(filter.cat||filter.subcat||filter.county||filter.minPrice||filter.maxPrice||filter.q)&&
+            <button className="btn bs" style={{width:"100%",borderRadius:10,fontSize:14}} onClick={()=>{setFilter({cat:"",subcat:"",q:"",county:"",minPrice:"",maxPrice:"",sort:"newest"});setSearchInput("");setPg(1);}}>Clear All Filters</button>}
           <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:14,padding:"20px 18px"}}>
             <div style={{fontSize:12,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:4}}>Community</div>
             <div style={{fontSize:16,fontWeight:700,color:"#1A1A1A",marginBottom:12}}>Buyers Want</div>
@@ -618,7 +692,12 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
             :listings.length===0?<div className="empty"><div style={{fontSize:56,marginBottom:16,opacity:.15}}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><h3 style={{fontWeight:700,fontSize:20,marginBottom:8}}>No listings found</h3><p style={{color:"#767676"}}>Try a different search or filter</p></div>
             :<div className={vm==="grid"?"g3":"lvc"}>{listings.map(l=><ListingCard key={l.id} listing={l} onClick={()=>openListing(l)} listView={vm==="list"} isSaved={savedIds.has(l.id)} onSave={user?()=>handleToggleSave(l):null}/>)}</div>}
 
-          <Pager total={total} perPage={PER_PAGE} page={pg} onChange={p=>{setPg(p);if(typeof window !== 'undefined') window.scrollTo({top:400,behavior:"smooth"});}}/>
+          {!loading&&total>0&&<div style={{textAlign:"center",marginTop:24}}>
+            <button style={{background:"#1428A0",color:"#fff",border:"none",padding:"13px 32px",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:9,boxShadow:"0 2px 8px rgba(20,40,160,.2)"}}
+              onClick={()=>{setPage("listings");if(typeof window!=='undefined')window.history.pushState({},"","/listings");}}>
+              View All Listings ({total}) →
+            </button>
+          </div>}
         </div>
       </div>
 
@@ -630,6 +709,19 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
             <div style={{fontSize:14,fontWeight:500,color:"rgba(255,255,255,.7)",marginTop:8,letterSpacing:".02em"}}>{s.label}</div>
           </div>
         ))}
+      </div>
+
+      {/* RECENTLY SOLD */}
+      <div style={{marginTop:64,paddingTop:56,borderTop:"2px solid #EBEBEB"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:24,gap:12,flexWrap:"wrap"}}>
+          <div>
+            <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"#767676",marginBottom:6}}>Marketplace Activity</div>
+            <h2 style={{fontSize:22,fontWeight:700,letterSpacing:"-.02em",color:"#1A1A1A"}}>Recently Sold</h2>
+          </div>
+          <button style={{background:"#1D1D1D",color:"#fff",border:"none",padding:"10px 22px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:8}}
+            onClick={()=>{setPage("sold");if(typeof window!=='undefined')window.history.pushState({},"","/sold");}}>View All Sold Items →</button>
+        </div>
+        <SoldSection compact={true} onViewAll={()=>{setPage("sold");if(typeof window!=='undefined')window.history.pushState({},"","/sold");}}/>
       </div>
 
       {/* HOW IT WORKS */}
@@ -697,20 +789,23 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     />}
     {resetToken&&<ResetPasswordModal token={resetToken} notify={notify} onClose={()=>{setResetToken(null);setModal({type:"auth",mode:"login"});}}/>}
 
-    {page==="sold"&&<div style={{minHeight:"100vh",background:"#F0F0F0"}}>
-      <div style={{background:"#1D1D1D",padding:"clamp(28px,4vw,52px) clamp(16px,4vw,40px) clamp(28px,4vw,48px)"}}>
-        <div>
-          <button onClick={()=>setPage("home")} style={{background:"transparent",border:"1px solid rgba(255,255,255,.35)",color:"#fff",padding:"7px 16px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"var(--fn)",marginBottom:28,display:"inline-flex",alignItems:"center",gap:6,letterSpacing:".02em",borderRadius:8}}>Back to Marketplace</button>
-          <div style={{marginBottom:14,opacity:.9}}><WekaSokoLogo size={26}/></div>
-          <div style={{fontSize:11,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"rgba(255,255,255,.55)",marginBottom:10}}>Sold Listings</div>
-          <h1 style={{fontSize:"clamp(30px,5vw,54px)",fontWeight:700,letterSpacing:"-.03em",color:"#fff",lineHeight:1.05,marginBottom:14}}>Sold on Weka Soko</h1>
-          <p style={{fontSize:15,color:"rgba(255,255,255,.7)",maxWidth:500,lineHeight:1.75}}>Real items. Real buyers. Every listing below found a home through Weka Soko.</p>
-        </div>
-      </div>
-      <div style={{padding:"44px 48px 80px"}}>
-        <SoldSection token={token} user={user}/>
-      </div>
-    </div>}
+    {page==="sold"&&<SoldPage token={token} user={user} onBack={()=>{setPage("home");if(typeof window!=='undefined')window.history.pushState({},"","/");}}/>}
+    {page==="listings"&&<AllListingsPage
+      user={user} token={token} notify={notify} savedIds={savedIds}
+      onBack={()=>{setPage("home");if(typeof window!=='undefined')window.history.pushState({},"","/");}}
+      onOpenListing={openListing}
+      onToggleSave={handleToggleSave}
+      onPostAd={()=>{
+        if(user?.role==="buyer"){
+          if(typeof window!=='undefined'&&window.confirm("You're currently a Buyer. Switch to Seller to post ads?"))
+            apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token).then(d=>{const u={...user,...d.user};setUser(u);localStorage.setItem("ws_user",JSON.stringify(u));notify("Switched to Seller!","success");setModal({type:"post"});}).catch(e=>notify(e.message,"error"));
+          return;
+        }
+        setModal({type:"post"});
+      }}
+      onSignIn={()=>setModal({type:"auth",mode:"login"})}
+      initialFilter={filter}
+    />
     {page==="requests"&&<BuyersWantPage user={user} token={token} notify={notify}
       onBack={()=>{setPage("home");if(typeof window!=='undefined')window.history.pushState({},"","/");}}
       onIHaveThis={(request,action)=>{

@@ -1891,31 +1891,68 @@ function WhatBuyersWant({user,token,notify,onSignIn,compact=false,onIHaveThis,on
   </div>;
 }
 
-function SoldSection({token,user}){
-  const [items,setItems]=useState([]);
-  const [loading,setLoading]=useState(true);
-  const [pg,setPg]=useState(1);
-  const [total,setTotal]=useState(0);
-  const [cat,setCat]=useState("");
-  const PER=12;
-
-  // How long from listing to sold
+// Shared sold item card — used in SoldSection and SoldPage
+function SoldCard({l,showContact=false}){
+  const photo=Array.isArray(l.photos)?l.photos.find(p=>typeof p==="string")||l.photos[0]?.url||null:null;
+  const fmtDate=ts=>{if(!ts)return"";return new Date(ts).toLocaleDateString("en-KE",{day:"numeric",month:"short",year:"numeric"});};
   const duration=(created,sold)=>{
     if(!created||!sold)return null;
     const ms=new Date(sold).getTime()-new Date(created).getTime();
     if(ms<0)return null;
     const days=Math.floor(ms/86400000);
-    if(days===0)return"same day";
-    if(days===1)return"1 day";
-    if(days<7)return`${days} days`;
-    if(days<30)return`${Math.floor(days/7)} week${Math.floor(days/7)>1?"s":""}`;
-    return`${Math.floor(days/30)} month${Math.floor(days/30)>1?"s":""}`;
+    if(days===0)return"same day";if(days===1)return"1 day";
+    if(days<7)return`${days} days`;if(days<30)return`${Math.floor(days/7)}w`;
+    return`${Math.floor(days/30)}mo`;
   };
+  const dur=duration(l.created_at,l.sold_at);
+  return<div style={{background:"#fff",border:"1px solid #E5E5E5",overflow:"hidden",borderRadius:12,display:"flex",flexDirection:"column"}}>
+    <div style={{aspectRatio:"4/3",background:"#F0F0F0",position:"relative",overflow:"hidden",flexShrink:0}}>
+      {photo?<img src={photo} alt={l.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+        :<span style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",opacity:.15}}><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span>}
+      <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.52)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <span style={{background:"#fff",color:"#1428A0",fontSize:11,fontWeight:700,padding:"5px 14px",letterSpacing:".08em",textTransform:"uppercase"}}>SOLD</span>
+      </div>
+      {l.sold_channel&&<div style={{position:"absolute",top:8,left:8,background:"rgba(0,0,0,.75)",color:"#fff",fontSize:10,fontWeight:700,padding:"3px 8px"}}>{l.sold_channel==="platform"?"Via WekaSoko":"Elsewhere"}</div>}
+      {l.avg_rating>0&&<div style={{position:"absolute",top:8,right:8,background:"rgba(0,0,0,.65)",color:"#fff",fontSize:11,fontWeight:700,padding:"3px 8px",display:"flex",alignItems:"center",gap:3}}>
+        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="#FFD700" stroke="#FFD700" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>{Number(l.avg_rating).toFixed(1)}
+      </div>}
+    </div>
+    <div style={{padding:"14px 16px",flex:1,display:"flex",flexDirection:"column",gap:0}}>
+      <div style={{fontSize:10,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#767676",marginBottom:4}}>{l.category}</div>
+      <div style={{fontWeight:700,fontSize:14,lineHeight:1.3,marginBottom:6,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.title}</div>
+      <div style={{fontSize:18,fontWeight:700,color:"#111111",letterSpacing:"-.02em",marginBottom:10}}>{fmtKES(l.price)}</div>
+      <div style={{background:"#F6F6F6",padding:"9px 11px",fontSize:11,lineHeight:1.9,borderRadius:8,marginBottom:8}}>
+        <div style={{display:"flex",justifyContent:"space-between",color:"#1428A0"}}>
+          <span>Listed</span><span style={{fontWeight:600}}>{fmtDate(l.created_at)}</span>
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",color:"#111"}}>
+          <span>Sold</span><span style={{fontWeight:600}}>{fmtDate(l.sold_at)}</span>
+        </div>
+        {dur&&<div style={{marginTop:3,paddingTop:5,borderTop:"1px solid #E5E5E5",color:"#636363",display:"flex",justifyContent:"space-between"}}>
+          <span>Time to sell</span><span style={{fontWeight:700,color:"#111"}}>{dur}</span>
+        </div>}
+      </div>
+      <div style={{fontSize:11,color:"#767676",marginBottom:showContact?8:0}}>
+        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {l.county||l.location||"Kenya"}
+      </div>
+      {showContact&&<div style={{borderTop:"1px solid #F0F0F0",paddingTop:8,display:"flex",flexDirection:"column",gap:5}}>
+        <div style={{fontSize:11,fontWeight:700,letterSpacing:".06em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:2}}>Contacts</div>
+        <div style={{fontSize:12,display:"flex",flexDirection:"column",gap:4}}>
+          <div><span style={{fontWeight:600,color:"#1428A0"}}>Seller: </span><span style={{color:"#222"}}>{l.seller_name||"—"}</span>{l.seller_phone&&<span style={{color:"#636363"}}> · {l.seller_phone}</span>}{l.seller_email&&<span style={{color:"#636363",fontSize:11}}> · {l.seller_email}</span>}</div>
+          {l.buyer_name&&<div><span style={{fontWeight:600,color:"#059669"}}>Buyer: </span><span style={{color:"#222"}}>{l.buyer_name}</span>{l.buyer_phone&&<span style={{color:"#636363"}}> · {l.buyer_phone}</span>}{l.buyer_email&&<span style={{color:"#636363",fontSize:11}}> · {l.buyer_email}</span>}</div>}
+        </div>
+      </div>}
+    </div>
+  </div>;
+}
 
-  const fmtDate=ts=>{
-    if(!ts)return"";
-    return new Date(ts).toLocaleDateString("en-KE",{day:"numeric",month:"short",year:"numeric"});
-  };
+function SoldSection({token,user,compact=false,onViewAll}){
+  const [items,setItems]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [pg,setPg]=useState(1);
+  const [total,setTotal]=useState(0);
+  const [cat,setCat]=useState("");
+  const PER=compact?12:20;
 
   useEffect(()=>{
     setLoading(true);
@@ -1924,7 +1961,7 @@ function SoldSection({token,user}){
     api(`/api/listings/sold?${params}`).then(d=>{
       setItems(d.listings||[]);setTotal(d.total||0);
     }).catch(()=>{}).finally(()=>setLoading(false));
-  },[pg,cat]);
+  },[pg,cat,PER]);
 
   if(loading)return<div style={{textAlign:"center",padding:60}}><Spin s="36px"/></div>;
 
@@ -1935,85 +1972,31 @@ function SoldSection({token,user}){
   </div>;
 
   return<>
-    {/* Stats bar */}
-    <div style={{display:"flex",gap:0,border:"1px solid #E5E5E5",marginBottom:28,background:"#fff",borderRadius:12,overflow:"hidden",flexWrap:"wrap"}}>
-      {[
-        {label:"Total Sales",val:total},
-        {label:"Categories",val:[...new Set(items.map(i=>i.category))].length},
-        {label:"Avg Price",val:"KSh "+Math.round(items.reduce((a,l)=>a+(parseFloat(l.price)||0),0)/items.length).toLocaleString("en-KE")},
-      ].map((s,i)=>(
-        <div key={s.label} style={{flex:1,padding:"18px 20px",borderRight:i<2?"1px solid #E5E5E5":"none",textAlign:"center"}}>
-          <div style={{fontSize:22,fontWeight:700,letterSpacing:"-.02em",color:"#111111"}}>{s.val}</div>
-          <div style={{fontSize:11,fontWeight:600,letterSpacing:".06em",textTransform:"uppercase",color:"#767676",marginTop:3}}>{s.label}</div>
-        </div>
-      ))}
-    </div>
+    {!compact&&<>
+      <div style={{display:"flex",gap:0,border:"1px solid #E5E5E5",marginBottom:28,background:"#fff",borderRadius:12,overflow:"hidden",flexWrap:"wrap"}}>
+        {[{label:"Total Sales",val:total},{label:"Categories",val:[...new Set(items.map(i=>i.category))].length},{label:"Avg Price",val:"KSh "+Math.round(items.reduce((a,l)=>a+(parseFloat(l.price)||0),0)/Math.max(items.length,1)).toLocaleString("en-KE")}].map((s,i)=>(
+          <div key={s.label} style={{flex:1,padding:"18px 20px",borderRight:i<2?"1px solid #E5E5E5":"none",textAlign:"center"}}>
+            <div style={{fontSize:22,fontWeight:700,letterSpacing:"-.02em",color:"#111111"}}>{s.val}</div>
+            <div style={{fontSize:11,fontWeight:600,letterSpacing:".06em",textTransform:"uppercase",color:"#767676",marginTop:3}}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+      {[...new Set(items.map(l=>l.category))].length>1&&<div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:24}}>
+        <button onClick={()=>{setCat("");setPg(1);}} style={{padding:"7px 16px",background:cat===""?"#1D1D1D":"#F4F4F4",color:cat===""?"#fff":"#535353",border:"none",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",transition:"all .15s"}}>All</button>
+        {[...new Set(items.map(l=>l.category))].map(c=>(
+          <button key={c} onClick={()=>{setCat(c);setPg(1);}} style={{padding:"7px 16px",background:cat===c?"#1D1D1D":"#F4F4F4",color:cat===c?"#fff":"#535353",border:"none",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",transition:"all .15s"}}>{c}</button>
+        ))}
+      </div>}
+    </>}
 
-    {/* Category filter */}
-    {[...new Set(items.map(l=>l.category))].length>1&&<div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:24}}>
-      <button onClick={()=>{setCat("");setPg(1);}} style={{padding:"7px 16px",background:cat===""?"#1D1D1D":"#F4F4F4",color:cat===""?"#fff":"#535353",border:"none",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",transition:"all .15s"}}>All</button>
-      {[...new Set(items.map(l=>l.category))].map(c=>(
-        <button key={c} onClick={()=>{setCat(c);setPg(1);}} style={{padding:"7px 16px",background:cat===c?"#1D1D1D":"#F4F4F4",color:cat===c?"#fff":"#535353",border:"none",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",transition:"all .15s"}}>{c}</button>
-      ))}
-    </div>}
-
-    {/* Product grid */}
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:20}}>
-      {items.map(l=>{
-        const photo=Array.isArray(l.photos)?l.photos.find(p=>typeof p==="string")||l.photos[0]?.url||null:null;
-        const dur=duration(l.created_at,l.sold_at);
-        return<div key={l.id} style={{background:"#fff",border:"1px solid #E5E5E5",overflow:"hidden",borderRadius:12}}>
-          {/* Image */}
-          <div style={{aspectRatio:"4/3",background:"#F0F0F0",position:"relative",overflow:"hidden"}}>
-            {photo?<img src={photo} alt={l.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-              :<span style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",opacity:.15}}><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span>}
-            {/* SOLD overlay */}
-            <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <span style={{background:"#fff",color:"#1428A0",fontSize:11,fontWeight:700,padding:"5px 14px",letterSpacing:".08em",textTransform:"uppercase"}}>SOLD</span>
-            </div>
-            {/* Sale channel badge */}
-            {l.sold_channel&&<div style={{position:"absolute",top:8,left:8,background:"rgba(0,0,0,.75)",color:"#fff",fontSize:10,fontWeight:700,padding:"3px 8px"}}>
-              {l.sold_channel==="platform"?"Via WekaSoko":"Elsewhere"}
-            </div>}
-            {/* Rating */}
-            {l.avg_rating>0&&<div style={{position:"absolute",top:8,right:8,background:"rgba(0,0,0,.65)",color:"#fff",fontSize:11,fontWeight:700,padding:"3px 8px",display:"flex",alignItems:"center",gap:3}}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="#FFD700" stroke="#FFD700" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>{Number(l.avg_rating).toFixed(1)}
-            </div>}
-          </div>
-
-          {/* Info */}
-          <div style={{padding:"14px 16px"}}>
-            <div style={{fontSize:10,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#767676",marginBottom:4}}>{l.category}</div>
-            <div style={{fontWeight:700,fontSize:14,lineHeight:1.3,marginBottom:6,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.title}</div>
-            <div style={{fontSize:18,fontWeight:700,color:"#111111",letterSpacing:"-.02em",marginBottom:10}}>{fmtKES(l.price)}</div>
-
-            {/* Timeline — listed → sold */}
-            <div style={{background:"#F6F6F6",padding:"10px 12px",fontSize:11,lineHeight:1.8,borderRadius:8}}>
-              <div style={{display:"flex",justifyContent:"space-between",color:"#1428A0"}}>
-                <span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Listed</span>
-                <span style={{fontWeight:600}}>{fmtDate(l.created_at)}</span>
-              </div>
-              <div style={{display:"flex",justifyContent:"space-between",color:"#111111"}}>
-                <span>Sold</span>
-                <span style={{fontWeight:600}}>{fmtDate(l.sold_at)}</span>
-              </div>
-              {dur&&<div style={{marginTop:4,paddingTop:6,borderTop:"1px solid #E5E5E5",color:"#636363",display:"flex",justifyContent:"space-between"}}>
-                <span>Time to sell</span>
-                <span style={{fontWeight:700,color:"#111111"}}>{dur}</span>
-              </div>}
-            </div>
-
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",fontSize:11,color:"#767676",marginTop:8}}>
-              <span><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {l.county||l.location||"Kenya"}</span>
-              {l.review_count>0&&<span style={{color:"#FFD700"}}>{[...Array(Math.round(l.avg_rating||0))].map((_,i)=><svg key={i} xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>)}</span>}
-            </div>
-          </div>
-        </div>;
-      })}
+      {items.map(l=><SoldCard key={l.id} l={l} showContact={!compact}/>)}
     </div>
 
-    {/* Pagination */}
-    {Math.ceil(total/PER)>1&&<div style={{display:"flex",gap:6,justifyContent:"center",marginTop:32}}>
+    {compact&&onViewAll&&total>PER&&<div style={{textAlign:"center",marginTop:24}}>
+      <button onClick={onViewAll} style={{background:"#1D1D1D",color:"#fff",border:"none",padding:"12px 28px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:8}}>View All Sold Items ({total}) →</button>
+    </div>}
+    {!compact&&Math.ceil(total/PER)>1&&<div style={{display:"flex",gap:6,justifyContent:"center",marginTop:32}}>
       {pg>1&&<button className="btn bs sm" onClick={()=>setPg(p=>p-1)}>Prev</button>}
       <span style={{padding:"7px 14px",fontSize:13,color:"#767676",fontWeight:500}}>Page {pg} of {Math.ceil(total/PER)}</span>
       {pg<Math.ceil(total/PER)&&<button className="btn bs sm" onClick={()=>setPg(p=>p+1)}>Next</button>}
@@ -3691,6 +3674,197 @@ function MobileLayout({
 }
 
 
+// ── ALL LISTINGS PAGE — Full standalone /listings page ────────────────────────
+function AllListingsPage({user,token,notify,onBack,onOpenListing,onToggleSave,savedIds,onPostAd,onSignIn,initialFilter}){
+  const [listings,setListings]=useState([]);
+  const [total,setTotal]=useState(0);
+  const [loading,setLoading]=useState(true);
+  const [vm,setVm]=useState("grid");
+  const [searchInput,setSearchInput]=useState(initialFilter?.q||"");
+  const [search,setSearch]=useState(initialFilter?.q||"");
+  const [category,setCategory]=useState(initialFilter?.cat||"");
+  const [subcat,setSubcat]=useState(initialFilter?.subcat||"");
+  const [county,setCounty]=useState(initialFilter?.county||"");
+  const [minPrice,setMinPrice]=useState(initialFilter?.minPrice||"");
+  const [maxPrice,setMaxPrice]=useState(initialFilter?.maxPrice||"");
+  const [sort,setSort]=useState(initialFilter?.sort||"newest");
+  const [pg,setPg]=useState(1);
+  const PER=24;
+  const filterCat=CATS.find(c=>c.name===category);
+  const hasFilters=search||category||subcat||county||minPrice||maxPrice||sort!=="newest";
+
+  useEffect(()=>{
+    setLoading(true);
+    const p=new URLSearchParams({page:pg,limit:PER,sort});
+    if(search)p.set("search",search);
+    if(category)p.set("category",category);
+    if(subcat)p.set("subcat",subcat);
+    if(county)p.set("county",county);
+    if(minPrice)p.set("minPrice",minPrice);
+    if(maxPrice)p.set("maxPrice",maxPrice);
+    api(`/api/listings?${p}`).then(d=>{setListings(d.listings||[]);setTotal(d.total||0);})
+      .catch(()=>{}).finally(()=>setLoading(false));
+  },[search,category,subcat,county,minPrice,maxPrice,sort,pg]);
+
+  const clearFilters=()=>{setSearchInput("");setSearch("");setCategory("");setSubcat("");setCounty("");setMinPrice("");setMaxPrice("");setSort("newest");setPg(1);};
+
+  return<div style={{minHeight:"100vh",background:"#F7F7F7",fontFamily:"var(--fn)"}}>
+    {/* Header */}
+    <div style={{background:"linear-gradient(135deg,#1D1D1D 0%,#333 100%)",padding:"clamp(20px,4vw,40px) clamp(16px,4vw,48px) 0"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20,gap:12,flexWrap:"wrap"}}>
+        <div>
+          <button onClick={onBack} style={{background:"rgba(255,255,255,.15)",border:"none",borderRadius:8,padding:"8px 14px",color:"#fff",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"var(--fn)",display:"flex",alignItems:"center",gap:6,marginBottom:14}}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/></svg>Back
+          </button>
+          <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"rgba(255,255,255,.6)",marginBottom:6}}>Marketplace</div>
+          <h1 style={{fontSize:"clamp(24px,3vw,40px)",fontWeight:700,color:"#fff",letterSpacing:"-.02em",lineHeight:1.1}}>All Listings</h1>
+          <p style={{fontSize:13,color:"rgba(255,255,255,.7)",marginTop:6}}>{total} item{total!==1?"s":""} available</p>
+        </div>
+        {user&&<button style={{background:"#1428A0",color:"#fff",border:"none",padding:"12px 24px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:8,whiteSpace:"nowrap"}} onClick={onPostAd}>+ Post Ad</button>}
+        {!user&&<button style={{background:"#fff",color:"#1D1D1D",border:"none",padding:"12px 24px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:8,whiteSpace:"nowrap"}} onClick={onSignIn}>Sign In to Post</button>}
+      </div>
+      {/* Search bar */}
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",paddingBottom:20}}>
+        <div style={{display:"flex",flex:"2 1 300px",gap:0,border:"1.5px solid rgba(255,255,255,.3)",borderRadius:8,overflow:"hidden",background:"rgba(255,255,255,.1)",minWidth:0}}>
+          <input style={{flex:1,padding:"10px 14px",border:"none",outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"transparent",color:"#fff",minWidth:0}}
+            placeholder="Search listings..." value={searchInput}
+            onChange={e=>setSearchInput(e.target.value)}
+            onKeyDown={e=>{if(e.key==="Enter"){setSearch(searchInput);setPg(1);}}}/>
+          <button onClick={()=>{setSearch(searchInput);setPg(1);}} style={{background:"rgba(255,255,255,.2)",color:"#fff",border:"none",padding:"0 16px",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"var(--fn)",flexShrink:0}}>Search</button>
+        </div>
+        <select style={{padding:"10px 12px",border:"1.5px solid rgba(255,255,255,.3)",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"rgba(255,255,255,.1)",cursor:"pointer",color:"#fff",flex:"1 1 160px"}}
+          value={category} onChange={e=>{setCategory(e.target.value);setSubcat("");setPg(1);}}>
+          <option value="">All Categories</option>
+          {CATS.map(c=><option key={c.name} value={c.name} style={{color:"#000"}}>{c.name}</option>)}
+        </select>
+        {filterCat&&<select style={{padding:"10px 12px",border:"1.5px solid rgba(255,255,255,.3)",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"rgba(255,255,255,.1)",cursor:"pointer",color:"#fff",flex:"1 1 140px"}}
+          value={subcat} onChange={e=>{setSubcat(e.target.value);setPg(1);}}>
+          <option value="">All Subcategories</option>
+          {filterCat.sub.map(s=><option key={s} value={s} style={{color:"#000"}}>{s}</option>)}
+        </select>}
+      </div>
+    </div>
+    {/* Secondary filters */}
+    <div style={{background:"#fff",borderBottom:"1px solid #EBEBEB",padding:"12px clamp(16px,4vw,48px)",display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+      <select style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",color:"#444"}}
+        value={county} onChange={e=>{setCounty(e.target.value);setPg(1);}}>
+        <option value="">All Counties</option>
+        {KENYA_COUNTIES.map(c=><option key={c} value={c}>{c}</option>)}
+      </select>
+      <input style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",width:120}} type="number" placeholder="Min KSh" value={minPrice} onChange={e=>{setMinPrice(e.target.value);setPg(1);}}/>
+      <input style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",width:120}} type="number" placeholder="Max KSh" value={maxPrice} onChange={e=>{setMaxPrice(e.target.value);setPg(1);}}/>
+      <select style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",color:"#444"}}
+        value={sort} onChange={e=>{setSort(e.target.value);setPg(1);}}>
+        <option value="newest">Newest First</option>
+        <option value="oldest">Oldest First</option>
+        <option value="price_asc">Price: Low → High</option>
+        <option value="price_desc">Price: High → Low</option>
+        <option value="popular">Most Viewed</option>
+        <option value="expiring">Expiring Soon</option>
+      </select>
+      <div style={{display:"flex",gap:2}}>
+        <button onClick={()=>setVm("grid")} style={{background:vm==="grid"?"#1D1D1D":"#fff",color:vm==="grid"?"#fff":"#767676",border:"1px solid #E0E0E0",padding:"8px 12px",cursor:"pointer",fontSize:13,fontFamily:"var(--fn)",borderRadius:"6px 0 0 6px"}}>Grid</button>
+        <button onClick={()=>setVm("list")} style={{background:vm==="list"?"#1D1D1D":"#fff",color:vm==="list"?"#fff":"#767676",border:"1px solid #E0E0E0",borderLeft:"none",padding:"8px 12px",cursor:"pointer",fontSize:13,fontFamily:"var(--fn)",borderRadius:"0 6px 6px 0"}}>List</button>
+      </div>
+      {hasFilters&&<button style={{padding:"8px 14px",border:"1px solid #E0E0E0",borderRadius:8,background:"#fff",cursor:"pointer",fontSize:12,fontFamily:"var(--fn)",color:"#636363"}} onClick={clearFilters}>Clear All</button>}
+    </div>
+    {/* Content */}
+    <div style={{padding:"clamp(20px,3vw,40px) clamp(16px,4vw,48px) 80px"}}>
+      {loading?<div style={{textAlign:"center",padding:60}}><Spin s="40px"/></div>
+        :listings.length===0?<div style={{textAlign:"center",padding:"80px 20px",color:"#767676"}}>
+          <div style={{marginBottom:16,opacity:.2,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+          <div style={{fontWeight:700,fontSize:18,marginBottom:8}}>No listings found</div>
+          <div style={{fontSize:14,marginBottom:20}}>Try different filters</div>
+          {hasFilters&&<button className="btn bp" onClick={clearFilters}>Clear Filters</button>}
+        </div>
+        :<>
+          <div className={vm==="grid"?"g3":"lvc"}>
+            {listings.map(l=><ListingCard key={l.id} listing={l} onClick={()=>onOpenListing&&onOpenListing(l)} listView={vm==="list"} isSaved={savedIds?.has(l.id)} onSave={user?()=>onToggleSave&&onToggleSave(l):null}/>)}
+          </div>
+          {Math.ceil(total/PER)>1&&<div style={{display:"flex",justifyContent:"center",gap:8,alignItems:"center",marginTop:32}}>
+            <button className="btn bs sm" onClick={()=>{setPg(p=>Math.max(1,p-1));window.scrollTo(0,0);}} disabled={pg<=1} style={{opacity:pg<=1?.4:1}}>← Prev</button>
+            <span style={{fontSize:13,color:"#888",fontWeight:500}}>Page {pg} of {Math.ceil(total/PER)}</span>
+            <button className="btn bp sm" onClick={()=>{setPg(p=>Math.min(Math.ceil(total/PER),p+1));window.scrollTo(0,0);}} disabled={pg>=Math.ceil(total/PER)} style={{opacity:pg>=Math.ceil(total/PER)?.4:1}}>Next →</button>
+          </div>}
+        </>}
+    </div>
+  </div>;
+}
+
+// ── SOLD PAGE — Full standalone /sold page ─────────────────────────────────────
+function SoldPage({token,user,onBack}){
+  const [items,setItems]=useState([]);
+  const [total,setTotal]=useState(0);
+  const [loading,setLoading]=useState(true);
+  const [searchInput,setSearchInput]=useState("");
+  const [search,setSearch]=useState("");
+  const [cat,setCat]=useState("");
+  const [pg,setPg]=useState(1);
+  const PER=24;
+
+  useEffect(()=>{
+    setLoading(true);
+    const params=new URLSearchParams({page:pg,limit:PER});
+    if(cat)params.set("category",cat);
+    if(search)params.set("search",search);
+    api(`/api/listings/sold?${params}`).then(d=>{setItems(d.listings||[]);setTotal(d.total||0);})
+      .catch(()=>{}).finally(()=>setLoading(false));
+  },[pg,cat,search]);
+
+  return<div style={{minHeight:"100vh",background:"#111",fontFamily:"var(--fn)"}}>
+    {/* Dark header */}
+    <div style={{background:"#1D1D1D",padding:"clamp(20px,4vw,52px) clamp(16px,4vw,48px) 0"}}>
+      <button onClick={onBack} style={{background:"transparent",border:"1px solid rgba(255,255,255,.35)",color:"#fff",padding:"7px 16px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"var(--fn)",marginBottom:28,display:"inline-flex",alignItems:"center",gap:6,letterSpacing:".02em",borderRadius:8}}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/></svg>Back to Marketplace
+      </button>
+      <div style={{marginBottom:14,opacity:.9}}><WekaSokoLogo size={26} light/></div>
+      <div style={{fontSize:11,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"rgba(255,255,255,.55)",marginBottom:10}}>Sold Listings</div>
+      <h1 style={{fontSize:"clamp(30px,5vw,54px)",fontWeight:700,letterSpacing:"-.03em",color:"#fff",lineHeight:1.05,marginBottom:14}}>Sold on Weka Soko</h1>
+      <p style={{fontSize:15,color:"rgba(255,255,255,.7)",maxWidth:500,lineHeight:1.75,marginBottom:24}}>Real items. Real buyers. Every listing below found a home through Weka Soko.</p>
+      {/* Search + category */}
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",paddingBottom:20}}>
+        <div style={{display:"flex",flex:"2 1 280px",gap:0,border:"1.5px solid rgba(255,255,255,.25)",borderRadius:8,overflow:"hidden",background:"rgba(255,255,255,.08)",minWidth:0}}>
+          <input style={{flex:1,padding:"10px 14px",border:"none",outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"transparent",color:"#fff",minWidth:0}}
+            placeholder="Search sold items..." value={searchInput}
+            onChange={e=>setSearchInput(e.target.value)}
+            onKeyDown={e=>{if(e.key==="Enter"){setSearch(searchInput);setPg(1);}}}/>
+          <button onClick={()=>{setSearch(searchInput);setPg(1);}} style={{background:"rgba(255,255,255,.15)",color:"#fff",border:"none",padding:"0 16px",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"var(--fn)",flexShrink:0}}>Search</button>
+        </div>
+        <select style={{padding:"10px 12px",border:"1.5px solid rgba(255,255,255,.25)",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"rgba(255,255,255,.08)",cursor:"pointer",color:"#fff",flex:"1 1 160px"}}
+          value={cat} onChange={e=>{setCat(e.target.value);setPg(1);}}>
+          <option value="">All Categories</option>
+          {CATS.map(c=><option key={c.name} value={c.name} style={{color:"#000"}}>{c.name}</option>)}
+        </select>
+      </div>
+    </div>
+    <div style={{background:"#F0F0F0",padding:"clamp(28px,3vw,44px) clamp(16px,4vw,48px) 80px"}}>
+      {total>0&&<div style={{display:"flex",gap:0,border:"1px solid #E5E5E5",marginBottom:28,background:"#fff",borderRadius:12,overflow:"hidden",flexWrap:"wrap"}}>
+        {[{label:"Total Sales",val:total},{label:"Categories",val:[...new Set(items.map(i=>i.category))].length},{label:"Avg Price",val:items.length?"KSh "+Math.round(items.reduce((a,l)=>a+(parseFloat(l.price)||0),0)/items.length).toLocaleString("en-KE"):"—"}].map((s,i)=>(
+          <div key={s.label} style={{flex:1,padding:"18px 20px",borderRight:i<2?"1px solid #E5E5E5":"none",textAlign:"center"}}>
+            <div style={{fontSize:22,fontWeight:700,letterSpacing:"-.02em",color:"#111111"}}>{s.val}</div>
+            <div style={{fontSize:11,fontWeight:600,letterSpacing:".06em",textTransform:"uppercase",color:"#767676",marginTop:3}}>{s.label}</div>
+          </div>
+        ))}
+      </div>}
+      {loading?<div style={{textAlign:"center",padding:60}}><Spin s="40px"/></div>
+        :items.length===0?<div style={{textAlign:"center",padding:"80px 20px",color:"#767676"}}>
+          <div style={{fontWeight:700,fontSize:18,marginBottom:8}}>No sold items found</div>
+          {(cat||search)&&<button className="btn bs" style={{marginTop:12}} onClick={()=>{setCat("");setSearch("");setSearchInput("");}}>Clear Filters</button>}
+        </div>
+        :<>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:20,marginBottom:32}}>
+            {items.map(l=><SoldCard key={l.id} l={l} showContact={true}/>)}
+          </div>
+          {Math.ceil(total/PER)>1&&<div style={{display:"flex",justifyContent:"center",gap:8,alignItems:"center"}}>
+            <button className="btn bs sm" onClick={()=>{setPg(p=>Math.max(1,p-1));window.scrollTo(0,0);}} disabled={pg<=1} style={{opacity:pg<=1?.4:1}}>← Prev</button>
+            <span style={{fontSize:13,color:"#888",fontWeight:500}}>Page {pg} of {Math.ceil(total/PER)}</span>
+            <button className="btn bp sm" onClick={()=>{setPg(p=>Math.min(Math.ceil(total/PER),p+1));window.scrollTo(0,0);}} disabled={pg>=Math.ceil(total/PER)} style={{opacity:pg>=Math.ceil(total/PER)?.4:1}}>Next →</button>
+          </div>}
+        </>}
+    </div>
+  </div>;
+}
+
 // ── BUYERS WANT PAGE — Full standalone page ───────────────────────────────────
 function BuyersWantPage({user,token,notify,onBack,onIHaveThis,onSignIn}){
   const [requests,setRequests]=useState([]);
@@ -3825,4 +3999,4 @@ function BuyersWantPage({user,token,notify,onBack,onIHaveThis,onSignIn}){
 
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 
-export { WekaSokoLogo, Spin, Toast, Modal, FF, Counter, ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal, WatermarkedImage, Lightbox, AuthModal, ShareModal, PayModal, ChatModal, PostAdModal, ListingCard, LeaveReviewBtn, ReportListingBtn, VerificationBanner, DetailModal, MarkSoldModal, RoleSwitcher, PostRequestModal, WhatBuyersWant, SoldSection, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab, ProfileSection, PasswordSection, VerificationSection, MobileDashboard, Dashboard, PWABanner, Pager, MobileRequestsTab, MobileLayout, BuyersWantPage };
+export { WekaSokoLogo, Spin, Toast, Modal, FF, Counter, ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal, WatermarkedImage, Lightbox, AuthModal, ShareModal, PayModal, ChatModal, PostAdModal, ListingCard, LeaveReviewBtn, ReportListingBtn, VerificationBanner, DetailModal, MarkSoldModal, RoleSwitcher, PostRequestModal, WhatBuyersWant, SoldSection, SoldCard, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab, ProfileSection, PasswordSection, VerificationSection, MobileDashboard, Dashboard, PWABanner, Pager, MobileRequestsTab, MobileLayout, BuyersWantPage, AllListingsPage, SoldPage };
