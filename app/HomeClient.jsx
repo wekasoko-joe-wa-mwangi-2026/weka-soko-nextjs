@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { apiCall, fmtKES, ago, CATS, KENYA_COUNTIES, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
-import { WekaSokoLogo, Spin, Toast, Modal, FF, Counter, ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal, WatermarkedImage, Lightbox, AuthModal, ShareModal, PayModal, ChatModal, PostAdModal, ListingCard, LeaveReviewBtn, ReportListingBtn, VerificationBanner, DetailModal, MarkSoldModal, RoleSwitcher, PostRequestModal, WhatBuyersWant, SoldSection, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab, ProfileSection, PasswordSection, VerificationSection, MobileDashboard, Dashboard, PWABanner, Pager, MobileRequestsTab, MobileLayout } from '@/components/all';
+import { WekaSokoLogo, Spin, Toast, Modal, FF, Counter, ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal, WatermarkedImage, Lightbox, AuthModal, ShareModal, PayModal, ChatModal, PostAdModal, ListingCard, LeaveReviewBtn, ReportListingBtn, VerificationBanner, DetailModal, MarkSoldModal, RoleSwitcher, PostRequestModal, WhatBuyersWant, SoldSection, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab, ProfileSection, PasswordSection, VerificationSection, MobileDashboard, Dashboard, PWABanner, Pager, MobileRequestsTab, MobileLayout, BuyersWantPage } from '@/components/all';
 
 export default function HomeClient({ initialListings, initialTotal, initialStats, initialCounties, initialFilter, initialPage }) {
   const [user,setUser]=useState(null);
@@ -106,7 +106,9 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       if (sub) {
         if(typeof window !== 'undefined') window.__initialDashTab = sub;
       }
-    } else if (section === 'requests' || params.get('tab') === 'requests') {
+    } else if (section === 'requests') {
+      setPage('requests');
+    } else if (params.get('tab') === 'requests') {
       setPage('home');
       setMobileTab('requests');
     } else {
@@ -152,6 +154,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
   useEffect(() => {
     if (page === 'sold') navTo('/sold');
     else if (page === 'dashboard') navTo('/dashboard');
+    else if (page === 'requests') navTo('/requests');
     else if (page === 'home' && mobileTab === 'requests') navTo('/?tab=requests');
   }, [page, mobileTab, navTo]);
 
@@ -373,6 +376,28 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       {toast&&<Toast key={toast.id} msg={toast.msg} type={toast.type} onClose={()=>setToast(null)}/>}
       {resetToken&&<ResetPasswordModal token={resetToken} notify={notify} onClose={()=>{setResetToken(null);}}/>}
     </>;
+    // Mobile full buyers-want page
+    if(page==="requests") return <>
+      <BuyersWantPage user={user} token={token} notify={notify}
+        onBack={()=>{setPage("home");setMobileTab("home");if(typeof window!=='undefined')window.history.pushState({},"","/");}}
+        onIHaveThis={(request,action)=>{
+          if(!user){setModal({type:"auth",mode:"login"});return;}
+          if(action==="switch_to_seller"){
+            if(typeof window!=='undefined'&&window.confirm("You're currently a Buyer. Switch to Seller to post ads?"))
+              apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token)
+                .then(d=>{const u={...user,...d.user};setUser(u);localStorage.setItem("ws_user",JSON.stringify(u));notify("Switched to Seller! Now post your ad.","success");setModal({type:"post",linkedRequest:request});})
+                .catch(e=>notify(e.message,"error"));
+            return;
+          }
+          setModal({type:"post",linkedRequest:request});
+        }}
+        onSignIn={()=>setModal({type:"auth",mode:"login"})}
+      />
+      {modal?.type==="auth"&&<AuthModal defaultMode={modal.mode} onClose={closeModal} onAuth={handleAuth} notify={notify}/>}
+      {modal?.type==="post"&&token&&<PostAdModal onClose={closeModal} token={token} notify={notify} linkedRequest={modal.linkedRequest||null} onSuccess={l=>{setListings(p=>[l,...p]);setTotal(t=>t+1);}}/>}
+      {toast&&<Toast key={toast.id} msg={toast.msg} type={toast.type} onClose={()=>setToast(null)}/>}
+      {resetToken&&<ResetPasswordModal token={resetToken} notify={notify} onClose={()=>{setResetToken(null);}}/>}
+    </>;
     // Mobile home/requests/search
     return <>
       <MobileLayout
@@ -442,7 +467,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     </nav>
 
     {/* ── HERO + CATEGORIES side by side ── */}
-    {page!=="dashboard"&&page!=="sold"&&<div style={{background:"#FFFFFF",borderBottom:"1px solid #EBEBEB"}}>
+    {page!=="dashboard"&&page!=="sold"&&page!=="requests"&&<div style={{background:"#FFFFFF",borderBottom:"1px solid #EBEBEB"}}>
       <div style={{display:"flex",alignItems:"stretch",minHeight:460,flexWrap:"wrap"}}>
 
         {/* LEFT — hero text */}
@@ -515,7 +540,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       </div>
     </div>}
 
-    {page!=="dashboard"&&page!=="sold"&&<main style={{padding:"clamp(20px,4vw,40px) clamp(16px,4vw,48px) 80px"}}>
+    {page!=="dashboard"&&page!=="sold"&&page!=="requests"&&<main style={{padding:"clamp(20px,4vw,40px) clamp(16px,4vw,48px) 80px"}}>
       <div style={{display:"flex",gap:24,alignItems:"flex-start",flexWrap:"wrap"}}>
 
         {/* LEFT SIDEBAR */}
@@ -544,6 +569,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
             <div style={{fontSize:12,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:4}}>Community</div>
             <div style={{fontSize:16,fontWeight:700,color:"#1A1A1A",marginBottom:12}}>Buyers Want</div>
             <WhatBuyersWant user={user} token={token} notify={notify} onSignIn={()=>setModal({type:"auth",mode:"login"})} compact={true}
+              onViewAll={()=>{setPage("requests");if(typeof window!=='undefined')window.history.pushState({},"","/requests");}}
               onIHaveThis={(request,action)=>{
                 if(action==="switch_to_seller"){
                   apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token)
@@ -685,6 +711,21 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         <SoldSection token={token} user={user}/>
       </div>
     </div>}
+    {page==="requests"&&<BuyersWantPage user={user} token={token} notify={notify}
+      onBack={()=>{setPage("home");if(typeof window!=='undefined')window.history.pushState({},"","/");}}
+      onIHaveThis={(request,action)=>{
+        if(!user){setModal({type:"auth",mode:"login"});return;}
+        if(action==="switch_to_seller"){
+          if(typeof window!=='undefined'&&window.confirm("You're currently a Buyer. Switch to Seller to post ads?"))
+            apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token)
+              .then(d=>{const u={...user,...d.user};setUser(u);localStorage.setItem("ws_user",JSON.stringify(u));notify("Switched to Seller! Now post your ad.","success");setModal({type:"post",linkedRequest:request});})
+              .catch(e=>notify(e.message,"error"));
+          return;
+        }
+        setModal({type:"post",linkedRequest:request});
+      }}
+      onSignIn={()=>setModal({type:"auth",mode:"login"})}
+    />}
     {user&&!user.is_verified&&page==="home"&&<div style={{position:"sticky",top:60,zIndex:99,padding:"0 16px"}}><VerificationBanner user={user} token={token} notify={notify}/></div>}
     {page==="dashboard"&&user&&<Dashboard user={user} token={token} notify={notify} onPostAd={()=>{setPage("home");if(typeof window !== 'undefined') window.history.pushState({},"","/");setModal({type:"post"});}} onClose={()=>{setPage("home");if(typeof window !== 'undefined') window.history.pushState({},"","/");}} onUserUpdate={updated=>{const m={...user,...updated};setUser(m);localStorage.setItem("ws_user",JSON.stringify(m));}} initialTab={typeof window !== 'undefined' && window.location.pathname.startsWith("/dashboard/")?window.location.pathname.split("/dashboard/")[1]:undefined}/>}
     {toast&&<Toast key={toast.id} msg={toast.msg} type={toast.type} onClose={()=>setToast(null)}/>}

@@ -143,6 +143,40 @@ async function api(path, opts={}, token=null) {
   return data;
 }
 
+// ── CONTACT INFO DETECTION (client-side mirror of backend moderation) ─────────
+function checkContactInfo(text) {
+  if (!text) return false;
+  const t = String(text);
+  // Raw email / @ handle / URL
+  if (/[a-z0-9._%+\-]+[@＠][a-z0-9.\-]+\.[a-z]{2,}/i.test(t)) return true;
+  if (/\b\w{2,}\s+at\s+\w{2,}\s+dot\s+\w{2,}\b/i.test(t)) return true;
+  if (/@[a-z0-9_.]{3,}/i.test(t)) return true;
+  if (/https?:\/\/|www\.[a-z0-9]+\.[a-z]{2,}/i.test(t)) return true;
+  // Social media / messaging / contact hints
+  if (/\b(whatsapp|whats.?app|wa\.me|telegram|t\.me|signal|viber|snapchat|snap\b|instagram|insta\b|ig\b|facebook|fb\.com|twitter|x\.com|tiktok|dm me|call me|text me|reach me|my number|my phone|my email|my namba|nipa\s+call|nipigie)\b/i.test(t)) return true;
+  // Add me / find me on ...
+  if (/\b(add\s+me\s+(on|at)|find\s+me\s+(on|at)|follow\s+me\s+on|my\s+(ig|snap|insta|handle|username))\b/i.test(t)) return true;
+  // Digit sequence with separators (10+ digits)
+  if (/\d[\s.\-•/\\,]*\d[\s.\-•/\\,]*\d[\s.\-•/\\,]*\d[\s.\-•/\\,]*\d[\s.\-•/\\,]*\d[\s.\-•/\\,]*\d[\s.\-•/\\,]*\d[\s.\-•/\\,]*\d[\s.\-•/\\,]*\d/.test(t)) return true;
+  // Word-to-digit conversion then phone check
+  const norm = t.toLowerCase()
+    .replace(/\bzero\b/g,"0").replace(/\bone\b/g,"1").replace(/\btwo\b/g,"2")
+    .replace(/\bthree\b/g,"3").replace(/\bfour\b/g,"4").replace(/\bfive\b/g,"5")
+    .replace(/\bsix\b/g,"6").replace(/\bseven\b/g,"7").replace(/\beight\b/g,"8")
+    .replace(/\bnine\b/g,"9")
+    .replace(/\bsita\b/g,"6").replace(/\bsaba\b/g,"7").replace(/\bnane\b/g,"8")
+    .replace(/\btisa\b/g,"9").replace(/\bmoja\b/g,"1").replace(/\bmbili\b/g,"2")
+    .replace(/\btatu\b/g,"3").replace(/\btano\b/g,"5").replace(/\bne\b/g,"4");
+  const digits = norm.replace(/[^0-9]/g,"");
+  if (/07\d{8}|01\d{8}|2547\d{8}|2541\d{8}/.test(digits)) return true;
+  if (/0\d{9,}/.test(digits)) return true;
+  if (/254\d{9}/.test(digits)) return true;
+  // After word-to-digit, check for 10-digit sequence with separators
+  const normSep = norm.replace(/[^0-9\s.\-,]/g,"");
+  if (/\d[\s.\-,]*\d[\s.\-,]*\d[\s.\-,]*\d[\s.\-,]*\d[\s.\-,]*\d[\s.\-,]*\d[\s.\-,]*\d[\s.\-,]*\d[\s.\-,]*\d/.test(normSep)) return true;
+  return false;
+}
+
 // Convert VAPID base64 key to Uint8Array for PushManager.subscribe
 function urlBase64ToUint8Array(base64String) {
   const padding = "=".repeat((4 - base64String.length % 4) % 4);
@@ -1002,15 +1036,6 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
   const cat=CATS.find(c=>c.name===f.category);
   const [fieldErrors,setFieldErrors]=useState({});
 
-  const checkContactInfo=(text)=>{
-    const stripped=text.replace(/[\s.\-•*_,;]/g,"");
-    const hasPhone=/\d{10,}/.test(stripped)||/(0[17]\d[.\-\s]*){1}(\d[.\-\s]*){7}/.test(text);
-    const hasEmail=/[a-z0-9._%+\-]+\s*@\s*[a-z0-9.\-]+\s*\.\s*[a-z]{2,}/i.test(text);
-    const hasSocial=/\b(whatsapp|telegram|instagram|facebook|snapchat|tiktok|wa\.me|dm me|call me|text me|reach me|my number|my phone|my email)\b/i.test(text);
-    const hasWordDigits=/(zero|one|two|three|four|five|six|seven|eight|nine)[\s,\-]+(zero|one|two|three|four|five|six|seven|eight|nine)[\s,\-]+(zero|one|two|three|four|five|six|seven|eight|nine)[\s,\-]+(zero|one|two|three|four|five|six|seven|eight|nine)/i.test(text);
-    return hasPhone||hasEmail||hasSocial||hasWordDigits;
-  };
-
   const submitListing=async(payNow)=>{
     if(!f.reason.trim()||!f.location.trim()){notify("Please fill in all required fields.","warning");return;}
     const errs={};
@@ -1592,89 +1617,168 @@ function RoleSwitcher({user,token,notify,onSwitch}){
 // ── SOLD ITEMS SECTION ───────────────────────────────────────────────────────
 // ── POST REQUEST MODAL ─────────────────────────────────────────────────────
 function PostRequestModal({onClose,token,notify,onSuccess}){
-  const [f,setF]=useState({title:"",description:"",budget:"",county:""});
+  const [f,setF]=useState({title:"",description:"",budget:"",min_price:"",county:"",category:"",subcat:""});
   const [loading,setLoading]=useState(false);
+  const [fieldErrors,setFieldErrors]=useState({});
   const sf=(k,v)=>setF(p=>({...p,[k]:v}));
-  const COUNTIES=["Nairobi","Mombasa","Kisumu","Nakuru","Eldoret","Kiambu","Machakos","Kajiado","Meru","Nyeri","Kisii","Kakamega","Thika","Malindi","Nakuru","Garissa","Embu","Uasin Gishu","Trans Nzoia","Bungoma","Siaya","Homabay","Migori","Vihiga","Busia","Nandi","Kericho","Baringo","Laikipia","Samburu","West Pokot","Turkana","Marsabit","Mandera","Wajir","Tana River","Lamu","Taita Taveta","Kilifi","Kwale","Makueni","Kitui","Murang'a","Kirinyaga","Nyandarua","Isiolo","Naivasha"];
+  const cat=CATS.find(c=>c.name===f.category);
+
   const submit=async()=>{
     if(!f.title.trim()||!f.description.trim()){notify("Title and description are required","warning");return;}
+    // Contact info check
+    const errs={};
+    [["title",f.title],["description",f.description]].forEach(([k,v])=>{
+      if(v&&checkContactInfo(v))errs[k]="Cannot contain phone numbers, emails, or social handles";
+    });
+    if(Object.keys(errs).length){setFieldErrors(errs);notify("Remove contact info from flagged fields","warning");return;}
+    setFieldErrors({});
     setLoading(true);
     try{
-      const result=await api("/api/requests",{method:"POST",body:JSON.stringify({title:f.title.trim(),description:f.description.trim(),budget:f.budget||undefined,county:f.county||undefined})},token);
+      const body={title:f.title.trim(),description:f.description.trim()};
+      if(f.budget)body.budget=f.budget;
+      if(f.min_price)body.min_price=f.min_price;
+      if(f.county)body.county=f.county;
+      if(f.category)body.category=f.category;
+      if(f.subcat)body.subcat=f.subcat;
+      const result=await api("/api/requests",{method:"POST",body:JSON.stringify(body)},token);
       notify("Request posted! Sellers will be notified.","success");
       onSuccess(result);onClose();
     }catch(err){notify(err.message,"error");}
     finally{setLoading(false);}
   };
+
   return <Modal title="Post a Buyer Request" onClose={onClose} footer={
     <><button className="btn bs" onClick={onClose}>Cancel</button><button className="btn bp" onClick={submit} disabled={loading}>{loading?<Spin/>:"Post Request"}</button></>
   }>
-    <div className="alert ag" style={{marginBottom:16,fontSize:13}}>Tell sellers what you're looking for. They'll be notified when a matching item is listed.</div>
+    <div className="alert ag" style={{marginBottom:16,fontSize:13}}>Tell sellers what you're looking for. They'll be notified when a matching item is listed. <strong>Do not include contact info</strong> — use the platform chat instead.</div>
     <FF label="What are you looking for?" required>
-      <input className="inp" placeholder="e.g. iPhone 13 Pro, good condition" value={f.title} onChange={e=>sf("title",e.target.value)} maxLength={120}/>
-      <div style={{fontSize:11,color:"#888888",marginTop:3}}>{f.title.length}/120</div>
+      <input className={`inp${fieldErrors.title?" err":""}`} placeholder="e.g. iPhone 13 Pro, good condition" value={f.title} onChange={e=>{sf("title",e.target.value);if(fieldErrors.title)setFieldErrors(p=>({...p,title:""}));}} maxLength={120}/>
+      <div style={{display:"flex",justifyContent:"space-between",marginTop:3}}>
+        {fieldErrors.title?<span style={{fontSize:11,color:"#dc2626"}}>{fieldErrors.title}</span>:<span/>}
+        <span style={{fontSize:11,color:"#888888"}}>{f.title.length}/120</span>
+      </div>
     </FF>
     <FF label="Description" required hint="Be specific — condition, colour, specs, anything important">
-      <textarea className="inp" placeholder="e.g. Looking for iPhone 13 Pro 256GB in any colour, screen must be crack-free, battery health above 80%..." value={f.description} onChange={e=>sf("description",e.target.value)} rows={4}/>
+      <textarea className={`inp${fieldErrors.description?" err":""}`} placeholder="e.g. Looking for iPhone 13 Pro 256GB in any colour, screen must be crack-free, battery health above 80%..." value={f.description} onChange={e=>{sf("description",e.target.value);if(fieldErrors.description)setFieldErrors(p=>({...p,description:""}));}} rows={4}/>
+      {fieldErrors.description&&<div style={{fontSize:11,color:"#dc2626",marginTop:3}}>{fieldErrors.description}</div>}
     </FF>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+      <FF label="Category" hint="Optional">
+        <select className="inp" value={f.category} onChange={e=>{sf("category",e.target.value);sf("subcat","");}}>
+          <option value="">Any category</option>
+          {CATS.map(c=><option key={c.name} value={c.name}>{c.name}</option>)}
+        </select>
+      </FF>
+      <FF label="Subcategory" hint="Optional">
+        <select className="inp" value={f.subcat} onChange={e=>sf("subcat",e.target.value)} disabled={!cat}>
+          <option value="">Any</option>
+          {cat?.sub?.map(s=><option key={s} value={s}>{s}</option>)}
+        </select>
+      </FF>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
+      <FF label="Min Budget (KSh)" hint="Optional">
+        <input className="inp" type="number" placeholder="e.g. 5000" value={f.min_price} onChange={e=>sf("min_price",e.target.value)} min={0}/>
+      </FF>
       <FF label="Max Budget (KSh)" hint="Optional">
         <input className="inp" type="number" placeholder="e.g. 80000" value={f.budget} onChange={e=>sf("budget",e.target.value)} min={0}/>
       </FF>
       <FF label="County" hint="Optional">
         <select className="inp" value={f.county} onChange={e=>sf("county",e.target.value)}>
           <option value="">Any county</option>
-          {COUNTIES.map(c=><option key={c} value={c}>{c}</option>)}
+          {KENYA_COUNTIES.map(c=><option key={c} value={c}>{c}</option>)}
         </select>
       </FF>
     </div>
   </Modal>;
 }
 
+// ── SHARED BUYER REQUEST CARD ──────────────────────────────────────────────
+function RequestCard({r,user,token,notify,onIHaveThis,onDelete}){
+  const [expanded,setExpanded]=useState(false);
+  const deleteRequest=async()=>{
+    if(!window.confirm("Delete this request?"))return;
+    try{await api(`/api/requests/${r.id}`,{method:"DELETE"},token);onDelete&&onDelete(r.id);}
+    catch(err){notify(err.message,"error");}
+  };
+  return <div style={{background:"#fff",border:"1px solid #E5E5E5",padding:"18px 20px",transition:"border-color .15s",borderLeft:"3px solid #1428A0",borderRadius:12}}>
+    <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:6,gap:8}}>
+      <div>
+        <div style={{fontWeight:700,fontSize:15,lineHeight:1.3,letterSpacing:"-.01em",color:"#1A1A1A"}}>{r.title}</div>
+        {(r.category||r.subcat)&&<div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:4}}>
+          {r.category&&<span style={{background:"#EEF2FF",color:"#1428A0",padding:"2px 8px",fontSize:11,fontWeight:600,borderRadius:4}}>{r.category}</span>}
+          {r.subcat&&<span style={{background:"#F0F0F0",color:"#555",padding:"2px 8px",fontSize:11,fontWeight:600,borderRadius:4}}>{r.subcat}</span>}
+        </div>}
+      </div>
+      {user?.id===r.user_id&&<button onClick={deleteRequest} style={{background:"none",border:"none",cursor:"pointer",color:"#AEAEB2",fontSize:13,padding:"0 2px",flexShrink:0,fontFamily:"var(--fn)"}}>Close</button>}
+    </div>
+    <div style={{fontSize:12,color:"#636363",lineHeight:1.65,marginBottom:10}}>
+      {expanded||r.description.length<=120
+        ?r.description
+        :<>{r.description.slice(0,120)}... <button onClick={()=>setExpanded(true)} style={{background:"none",border:"none",cursor:"pointer",color:"#1428A0",fontSize:12,fontWeight:600,padding:0}}>More</button></>
+      }
+      {expanded&&r.description.length>120&&<button onClick={()=>setExpanded(false)} style={{background:"none",border:"none",cursor:"pointer",color:"#1428A0",fontSize:12,fontWeight:600,padding:"0 4px"}}>Less</button>}
+    </div>
+    <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
+      {r.min_price&&<span style={{background:"rgba(0,0,0,.05)",color:"#111",padding:"3px 10px",fontSize:11,fontWeight:700}}>From {fmtKES(r.min_price)}</span>}
+      {r.budget&&<span style={{background:"rgba(0,0,0,.05)",color:"#111",padding:"3px 10px",fontSize:11,fontWeight:700}}>{r.min_price?"Up to ":"Budget: "}{fmtKES(r.budget)}</span>}
+      {r.county&&<span style={{background:"#F0F0F0",color:"#1428A0",padding:"3px 10px",fontSize:11,fontWeight:600}}><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {r.county}</span>}
+    </div>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",fontSize:11,color:"#AEAEB2",borderTop:"1px solid #F0F0F0",paddingTop:10}}>
+      <span>{r.requester_anon||"Anonymous"} · {ago(r.created_at)}</span>
+      <div style={{display:"flex",gap:8,alignItems:"center"}}>
+        {parseInt(r.matching_listings)>0&&<span style={{color:"#1428A0",fontWeight:700}}>{r.matching_listings} match</span>}
+        <button className="btn bp sm" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onIHaveThis&&onIHaveThis(r)}>I Have This</button>
+      </div>
+    </div>
+  </div>;
+}
+
 // ── WHAT BUYERS WANT SECTION ───────────────────────────────────────────────
-function WhatBuyersWant({user,token,notify,onSignIn,compact=false,onIHaveThis}){
-  // ── Spec: "I Have This" handler — visible to ALL roles ──────────────────────
+function WhatBuyersWant({user,token,notify,onSignIn,compact=false,onIHaveThis,onViewAll}){
   const handleIHaveThis=(request)=>{
     if(!user){onSignIn();return;}
     if(user.role!=="seller"){
-      // Buyer/admin → prompt to switch to seller
       if(window.confirm("To respond to this buyer request you need a Seller account.\n\nSwitch to Seller now?")){
         onIHaveThis&&onIHaveThis(request,"switch_to_seller");
       }
       return;
     }
     if(user.id===request.user_id){notify("This is your own request","warning");return;}
-    // Seller → open PostAd pre-filled with request data
     onIHaveThis&&onIHaveThis(request,"post_ad");
   };
   const [requests,setRequests]=useState([]);
   const [total,setTotal]=useState(0);
   const [loading,setLoading]=useState(true);
   const [showModal,setShowModal]=useState(false);
+  const [searchInput,setSearchInput]=useState("");
   const [search,setSearch]=useState("");
   const [county,setCounty]=useState("");
-  const [expanded,setExpanded]=useState(null);
+  const [category,setCategory]=useState("");
+  const [subcat,setSubcat]=useState("");
+  const [minPrice,setMinPrice]=useState("");
+  const [maxPrice,setMaxPrice]=useState("");
+  const [sort,setSort]=useState("newest");
+  const filterCat=CATS.find(c=>c.name===category);
 
   const load=useCallback(()=>{
     setLoading(true);
-    const p=new URLSearchParams({limit:12});
+    const p=new URLSearchParams({limit:12,sort});
     if(search)p.set("search",search);
     if(county)p.set("county",county);
+    if(category)p.set("category",category);
+    if(subcat)p.set("subcat",subcat);
+    if(minPrice)p.set("min_price",minPrice);
+    if(maxPrice)p.set("max_price",maxPrice);
     api(`/api/requests?${p}`).then(d=>{
       setRequests(d.requests||[]);setTotal(d.total||0);
     }).catch(()=>{}).finally(()=>setLoading(false));
-  },[search,county]);
+  },[search,county,category,subcat,minPrice,maxPrice,sort]);
 
   useEffect(()=>{load();},[load]);
 
-  const deleteRequest=async(id)=>{
-    if(!window.confirm("Delete this request?"))return;
-    try{
-      await api(`/api/requests/${id}`,{method:"DELETE"},token);
-      setRequests(p=>p.filter(r=>r.id!==id));
-      notify("Request deleted","success");
-    }catch(err){notify(err.message,"error");}
-  };
+  const clearFilters=()=>{setSearchInput("");setSearch("");setCounty("");setCategory("");setSubcat("");setMinPrice("");setMaxPrice("");setSort("newest");};
+  const hasFilters=search||county||category||subcat||minPrice||maxPrice||sort!=="newest";
 
   if(compact) return <div style={{padding:"4px 0"}}>
     <div style={{display:"flex",flexDirection:"column",gap:0}}>
@@ -1685,6 +1789,9 @@ function WhatBuyersWant({user,token,notify,onSignIn,compact=false,onIHaveThis}){
         </div>
         :requests.slice(0,4).map(r=>(
           <div key={r.id} style={{padding:"12px 0",borderBottom:"1px solid #F0F0F0"}}>
+            <div style={{display:"flex",gap:4,flexWrap:"wrap",marginBottom:3}}>
+              {r.category&&<span style={{background:"#EEF2FF",color:"#1428A0",padding:"1px 6px",fontSize:10,fontWeight:600,borderRadius:3}}>{r.category}</span>}
+            </div>
             <div style={{fontWeight:700,fontSize:13,marginBottom:3,color:"#1A1A1A",lineHeight:1.3}}>{r.title}</div>
             <div style={{fontSize:12,color:"#777",lineHeight:1.5,marginBottom:6}}>{r.description?.slice(0,60)}{r.description?.length>60?"...":""}</div>
             <div style={{display:"flex",gap:6,alignItems:"center",justifyContent:"space-between"}}>
@@ -1694,8 +1801,12 @@ function WhatBuyersWant({user,token,notify,onSignIn,compact=false,onIHaveThis}){
           </div>
         ))
       }
-      <button style={{width:"100%",marginTop:12,padding:"10px",background:"#1428A0",color:"#fff",border:"none",borderRadius:8,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"var(--fn)"}}
-        onClick={()=>{if(!user){onSignIn();return;}setShowModal(true);}}>+ Post a Request</button>
+      <div style={{display:"flex",gap:8,marginTop:12}}>
+        {total>4&&<button style={{flex:1,padding:"9px",background:"transparent",color:"#1428A0",border:"1.5px solid #1428A0",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)"}}
+          onClick={onViewAll}>View All ({total})</button>}
+        <button style={{flex:1,padding:"9px",background:"#1428A0",color:"#fff",border:"none",borderRadius:8,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"var(--fn)"}}
+          onClick={()=>{if(!user){onSignIn();return;}setShowModal(true);}}>+ Post Request</button>
+      </div>
     </div>
     {showModal&&<PostRequestModal token={token} notify={notify} onClose={()=>setShowModal(false)} onSuccess={r=>{setRequests(p=>[r,...p]);setTotal(t=>t+1);}}/>}
   </div>;
@@ -1703,75 +1814,75 @@ function WhatBuyersWant({user,token,notify,onSignIn,compact=false,onIHaveThis}){
   return <div style={{background:"#FFFFFF",padding:"48px 40px",margin:"0 -48px",borderTop:"1px solid #EBEBEB",borderBottom:"1px solid #EBEBEB"}}>
     <div>
       {/* Header */}
-      <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-between",marginBottom:28,flexWrap:"wrap",gap:12}}>
+      <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-between",marginBottom:20,flexWrap:"wrap",gap:12}}>
         <div>
           <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"#767676",marginBottom:8}}>Community</div>
           <h2 style={{fontSize:"clamp(24px,3vw,36px)",fontWeight:500,letterSpacing:"-.01em",color:"#1D1D1D",fontFamily:"var(--fn)",lineHeight:1.1}}>What Buyers Want</h2>
-          <p style={{fontSize:13,color:"#767676",marginTop:6}}>{total} active request{total!==1?"s":" "} from buyers looking for items</p>
+          <p style={{fontSize:13,color:"#767676",marginTop:6}}>{total} active request{total!==1?"s":""} from buyers looking for items</p>
         </div>
-        <button style={{background:"#1D1D1D",color:"#fff",border:"none",padding:"12px 24px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:8,whiteSpace:"nowrap"}}
-          onClick={()=>{if(!user){onSignIn();return;}setShowModal(true);}}>
-          + Post a Request
-        </button>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          {onViewAll&&total>12&&<button style={{background:"transparent",color:"#1428A0",border:"1.5px solid #1428A0",padding:"10px 20px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:8}} onClick={onViewAll}>View All Requests →</button>}
+          <button style={{background:"#1D1D1D",color:"#fff",border:"none",padding:"12px 24px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:8,whiteSpace:"nowrap"}}
+            onClick={()=>{if(!user){onSignIn();return;}setShowModal(true);}}>+ Post a Request</button>
+        </div>
       </div>
 
-      {/* Search/filter */}
-      <div style={{display:"flex",gap:8,marginBottom:24,flexWrap:"wrap"}}>
-        <input style={{flex:1,minWidth:200,padding:"10px 14px",border:"1px solid #E0E0E0",outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",color:"#1D1D1D"}}
-          placeholder="Search requests..." value={search} onChange={e=>setSearch(e.target.value)}/>
-        <select style={{padding:"10px 14px",border:"1px solid #E0E0E0",outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",minWidth:140,color:"#1D1D1D"}}
+      {/* Filters */}
+      <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
+        <div style={{display:"flex",flex:"2 1 260px",gap:0,border:"1px solid #E0E0E0",borderRadius:8,overflow:"hidden",background:"#fff",minWidth:0}}>
+          <input style={{flex:1,padding:"10px 14px",border:"none",outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",color:"#1D1D1D",minWidth:0}}
+            placeholder="Search requests..." value={searchInput}
+            onChange={e=>setSearchInput(e.target.value)}
+            onKeyDown={e=>{if(e.key==="Enter")setSearch(searchInput);}}/>
+          <button onClick={()=>setSearch(searchInput)} style={{background:"#1428A0",color:"#fff",border:"none",padding:"0 16px",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"var(--fn)",flexShrink:0}}>Search</button>
+        </div>
+        <select style={{padding:"10px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",color:"#1D1D1D",flex:"1 1 140px"}}
+          value={category} onChange={e=>{setCategory(e.target.value);setSubcat("");}}>
+          <option value="">All Categories</option>
+          {CATS.map(c=><option key={c.name} value={c.name}>{c.name}</option>)}
+        </select>
+        {filterCat&&<select style={{padding:"10px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",color:"#1D1D1D",flex:"1 1 120px"}}
+          value={subcat} onChange={e=>setSubcat(e.target.value)}>
+          <option value="">All Subcategories</option>
+          {filterCat.sub.map(s=><option key={s} value={s}>{s}</option>)}
+        </select>}
+        <select style={{padding:"10px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",color:"#1D1D1D",flex:"1 1 130px"}}
           value={county} onChange={e=>setCounty(e.target.value)}>
           <option value="">All Counties</option>
-          {["Nairobi","Mombasa","Kisumu","Nakuru","Eldoret","Kiambu","Machakos","Kajiado","Meru","Nyeri","Kisii","Kakamega"].map(c=><option key={c} value={c}>{c}</option>)}
+          {KENYA_COUNTIES.map(c=><option key={c} value={c}>{c}</option>)}
         </select>
-        {(search||county)&&<button style={{padding:"10px 14px",border:"1px solid #E0E0E0",background:"#fff",cursor:"pointer",fontSize:12,fontFamily:"var(--fn)",color:"#636363"}} onClick={()=>{setSearch("");setCounty("");}}>Clear</button>}
+      </div>
+      <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap"}}>
+        <input style={{padding:"9px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",width:130}} type="number" placeholder="Min KSh" value={minPrice} onChange={e=>setMinPrice(e.target.value)}/>
+        <input style={{padding:"9px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",width:130}} type="number" placeholder="Max KSh" value={maxPrice} onChange={e=>setMaxPrice(e.target.value)}/>
+        <select style={{padding:"9px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",color:"#1D1D1D"}}
+          value={sort} onChange={e=>setSort(e.target.value)}>
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="budget_desc">Highest Budget</option>
+          <option value="budget_asc">Lowest Budget</option>
+        </select>
+        {hasFilters&&<button style={{padding:"9px 14px",border:"1px solid #E0E0E0",borderRadius:8,background:"#fff",cursor:"pointer",fontSize:12,fontFamily:"var(--fn)",color:"#636363"}} onClick={clearFilters}>Clear All</button>}
       </div>
 
       {/* Requests grid */}
       {loading?<div style={{textAlign:"center",padding:40}}><Spin s="32px"/></div>
         :requests.length===0?<div style={{textAlign:"center",padding:"40px 20px",color:"#767676"}}>
             <div style={{marginBottom:12,opacity:.3,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
-            <div style={{fontWeight:700,fontSize:16,marginBottom:6}}>No requests yet</div>
-            <div style={{fontSize:13}}>Be the first to post what you're looking for</div>
+            <div style={{fontWeight:700,fontSize:16,marginBottom:6}}>No requests found</div>
+            <div style={{fontSize:13}}>{hasFilters?"Try different filters":"Be the first to post what you're looking for"}</div>
+            {hasFilters&&<button className="btn bp" style={{marginTop:14}} onClick={clearFilters}>Clear Filters</button>}
           </div>
         :<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:12}}>
-          {requests.map(r=>(
-            <div key={r.id} style={{background:"#fff",border:"1px solid #E5E5E5",padding:"18px 20px",position:"relative",transition:"border-color .15s",borderLeft:"3px solid #E0E0E0",borderRadius:12}}>
-              {/* Header row */}
-              <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:8,gap:8}}>
-                <div style={{fontWeight:700,fontSize:15,lineHeight:1.3,letterSpacing:"-.01em",flex:1}}>{r.title}</div>
-                {user?.id===r.user_id&&<button onClick={()=>deleteRequest(r.id)} style={{background:"none",border:"none",cursor:"pointer",color:"#AEAEB2",fontSize:14,padding:"0 2px",flexShrink:0}}>Close</button>}
-              </div>
-              {/* Description — expandable */}
-              <div style={{fontSize:12,color:"#636363",lineHeight:1.65,marginBottom:10}}>
-                {expanded===r.id||r.description.length<=120
-                  ?r.description
-                  :<>{r.description.slice(0,120)}... <button onClick={()=>setExpanded(r.id)} style={{background:"none",border:"none",cursor:"pointer",color:"#111111",fontSize:12,fontWeight:600,padding:0}}>More</button></>
-                }
-                {expanded===r.id&&r.description.length>120&&<button onClick={()=>setExpanded(null)} style={{background:"none",border:"none",cursor:"pointer",color:"#111111",fontSize:12,fontWeight:600,padding:"0 4px"}}>Less</button>}
-              </div>
-              {/* Tags */}
-              <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
-                {r.budget&&<span style={{background:"rgba(0,0,0,.05)",color:"#111111",padding:"3px 10px",fontSize:11,fontWeight:700}}>Budget: {fmtKES(r.budget)}</span>}
-                {r.county&&<span style={{background:"#F0F0F0",color:"#1428A0",padding:"3px 10px",fontSize:11,fontWeight:600}}><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {r.county}</span>}
-              </div>
-              {/* Footer */}
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",fontSize:11,color:"#AEAEB2",borderTop:"1px solid #F0F0F0",paddingTop:10}}>
-                <span>{r.requester_anon||"Anonymous"}</span>
-                <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                  {parseInt(r.matching_listings)>0&&<span style={{color:"#1428A0",fontWeight:700}}>{r.matching_listings} listing{r.matching_listings!==1?"s":""} match</span>}
-                  <span>{ago(r.created_at)}</span>
-                  <button className="btn bp sm" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>handleIHaveThis(r)}>I Have This</button>
-                </div>
-              </div>
-            </div>
-          ))}
+          {requests.map(r=><RequestCard key={r.id} r={r} user={user} token={token} notify={notify}
+            onIHaveThis={handleIHaveThis}
+            onDelete={id=>{setRequests(p=>p.filter(x=>x.id!==id));setTotal(t=>t-1);}}/>)}
         </div>
       }
 
-      {total>12&&<div style={{textAlign:"center",marginTop:20}}>
-        <button style={{background:"transparent",border:"1.5px solid #1D1D1D",color:"#1D1D1D",padding:"10px 28px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)"}} onClick={()=>{}}>
-          View all {total} requests
+      {total>12&&<div style={{textAlign:"center",marginTop:24}}>
+        <button style={{background:"transparent",border:"1.5px solid #1D1D1D",color:"#1D1D1D",padding:"10px 28px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:8}} onClick={onViewAll}>
+          View all {total} requests →
         </button>
       </div>}
     </div>
@@ -3208,21 +3319,34 @@ function MobileRequestsTab({user, token, notify, setModal}){
   const [requests, setRequests] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [county, setCounty] = useState("");
+  const [category, setCategory] = useState("");
+  const [subcat, setSubcat] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [sort, setSort] = useState("newest");
   const [showPostModal, setShowPostModal] = useState(false);
   const [expanded, setExpanded] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const filterCat = CATS.find(c=>c.name===category);
+  const hasFilters = search||county||category||subcat||minPrice||maxPrice||sort!=="newest";
 
   useEffect(()=>{
     setLoading(true);
-    const p = new URLSearchParams({page:1, limit:50});
+    const p = new URLSearchParams({page:1, limit:50, sort});
     if(search) p.set("search", search);
     if(county) p.set("county", county);
+    if(category) p.set("category", category);
+    if(subcat) p.set("subcat", subcat);
+    if(minPrice) p.set("min_price", minPrice);
+    if(maxPrice) p.set("max_price", maxPrice);
     api(`/api/requests?${p}`).then(d=>{
       setRequests(d.requests||[]);
       setTotal(d.total||0);
     }).catch(()=>{}).finally(()=>setLoading(false));
-  }, [search, county]);
+  }, [search, county, category, subcat, minPrice, maxPrice, sort]);
 
   const deleteReq = async (id)=>{
     if(!window.confirm("Delete this request?")) return;
@@ -3257,29 +3381,67 @@ function MobileRequestsTab({user, token, notify, setModal}){
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
         <div>
           <div style={{fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:2}}>Community</div>
-          <div style={{fontSize:19,fontWeight:800,color:"#1A1A1A",letterSpacing:"-.01em"}}>What Buyers Want</div>
+          <div style={{fontSize:19,fontWeight:800,color:"#1A1A1A",letterSpacing:"-.01em"}}>What Buyers Want <span style={{fontSize:13,fontWeight:500,color:"#AAAAAA"}}>({total})</span></div>
         </div>
         <button
           style={{background:"#1428A0",color:"#fff",border:"none",padding:"10px 14px",borderRadius:10,fontSize:13,fontWeight:700,fontFamily:"var(--fn)",cursor:"pointer",whiteSpace:"nowrap"}}
           onClick={()=>{if(!user){setModal({type:"auth",mode:"login"});return;}setShowPostModal(true);}}>
-          + Post Request
+          + Post
         </button>
       </div>
-      {/* Search */}
-      <div style={{display:"flex",gap:8}}>
-        <input
-          style={{flex:1,padding:"9px 12px",border:"1.5px solid #E0E0E0",borderRadius:8,fontSize:13,fontFamily:"var(--fn)",outline:"none",background:"#FAFAFA"}}
-          placeholder="Search requests..." value={search} onChange={e=>setSearch(e.target.value)}/>
-        <select
-          style={{padding:"9px 10px",border:"1.5px solid #E0E0E0",borderRadius:8,fontSize:12,fontFamily:"var(--fn)",outline:"none",background:"#FAFAFA",color:"#555",cursor:"pointer"}}
-          value={county} onChange={e=>setCounty(e.target.value)}>
-          <option value="">All Counties</option>
-          {["Nairobi","Mombasa","Kisumu","Nakuru","Eldoret","Kiambu","Machakos","Meru","Nyeri","Kisii","Kakamega"].map(c=><option key={c}>{c}</option>)}
-        </select>
+      {/* Search row */}
+      <div style={{display:"flex",gap:8,marginBottom:8}}>
+        <div style={{flex:1,display:"flex",border:"1.5px solid #E0E0E0",borderRadius:8,overflow:"hidden",background:"#FAFAFA"}}>
+          <input
+            style={{flex:1,padding:"9px 12px",border:"none",fontSize:13,fontFamily:"var(--fn)",outline:"none",background:"transparent"}}
+            placeholder="Search requests..." value={searchInput}
+            onChange={e=>setSearchInput(e.target.value)}
+            onKeyDown={e=>{if(e.key==="Enter")setSearch(searchInput);}}/>
+          <button onClick={()=>setSearch(searchInput)} style={{background:"#1428A0",color:"#fff",border:"none",padding:"0 12px",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"var(--fn)"}}>
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" stroke="#fff" strokeWidth="2.5"/><path d="M20 20l-3-3" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/></svg>
+          </button>
+        </div>
+        <button onClick={()=>setShowFilters(f=>!f)} style={{background:hasFilters?"#1428A0":"#fff",color:hasFilters?"#fff":"#555",border:"1.5px solid",borderColor:hasFilters?"#1428A0":"#E0E0E0",borderRadius:8,padding:"9px 12px",cursor:"pointer",fontFamily:"var(--fn)",fontSize:13,fontWeight:600,whiteSpace:"nowrap"}}>
+          Filters{hasFilters?" ✓":""}
+        </button>
       </div>
-      {(search||county)&&<button
-        style={{marginTop:6,fontSize:12,color:"#1428A0",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--fn)",fontWeight:600,padding:0}}
-        onClick={()=>{setSearch("");setCounty("");}}>Clear filters</button>}
+      {/* Expanded filters */}
+      {showFilters&&<div style={{display:"flex",flexDirection:"column",gap:8,paddingBottom:8}}>
+        <div style={{display:"flex",gap:8}}>
+          <select style={{flex:1,padding:"9px 10px",border:"1.5px solid #E0E0E0",borderRadius:8,fontSize:12,fontFamily:"var(--fn)",outline:"none",background:"#FAFAFA",color:"#555",cursor:"pointer"}}
+            value={category} onChange={e=>{setCategory(e.target.value);setSubcat("");}}>
+            <option value="">All Categories</option>
+            {CATS.map(c=><option key={c.name} value={c.name}>{c.name}</option>)}
+          </select>
+          {filterCat&&<select style={{flex:1,padding:"9px 10px",border:"1.5px solid #E0E0E0",borderRadius:8,fontSize:12,fontFamily:"var(--fn)",outline:"none",background:"#FAFAFA",color:"#555",cursor:"pointer"}}
+            value={subcat} onChange={e=>setSubcat(e.target.value)}>
+            <option value="">All Subcategories</option>
+            {filterCat.sub.map(s=><option key={s} value={s}>{s}</option>)}
+          </select>}
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          <select style={{flex:1,padding:"9px 10px",border:"1.5px solid #E0E0E0",borderRadius:8,fontSize:12,fontFamily:"var(--fn)",outline:"none",background:"#FAFAFA",color:"#555",cursor:"pointer"}}
+            value={county} onChange={e=>setCounty(e.target.value)}>
+            <option value="">All Counties</option>
+            {KENYA_COUNTIES.map(c=><option key={c} value={c}>{c}</option>)}
+          </select>
+          <select style={{flex:1,padding:"9px 10px",border:"1.5px solid #E0E0E0",borderRadius:8,fontSize:12,fontFamily:"var(--fn)",outline:"none",background:"#FAFAFA",color:"#555",cursor:"pointer"}}
+            value={sort} onChange={e=>setSort(e.target.value)}>
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="budget_desc">High Budget</option>
+            <option value="budget_asc">Low Budget</option>
+          </select>
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          <input type="number" placeholder="Min KSh" value={minPrice} onChange={e=>setMinPrice(e.target.value)}
+            style={{flex:1,padding:"9px 10px",border:"1.5px solid #E0E0E0",borderRadius:8,fontSize:12,fontFamily:"var(--fn)",outline:"none",background:"#FAFAFA"}}/>
+          <input type="number" placeholder="Max KSh" value={maxPrice} onChange={e=>setMaxPrice(e.target.value)}
+            style={{flex:1,padding:"9px 10px",border:"1.5px solid #E0E0E0",borderRadius:8,fontSize:12,fontFamily:"var(--fn)",outline:"none",background:"#FAFAFA"}}/>
+          {hasFilters&&<button onClick={()=>{setSearchInput("");setSearch("");setCounty("");setCategory("");setSubcat("");setMinPrice("");setMaxPrice("");setSort("newest");}}
+            style={{padding:"9px 12px",background:"#fff",border:"1.5px solid #E0E0E0",borderRadius:8,cursor:"pointer",fontSize:12,fontFamily:"var(--fn)",color:"#636363",whiteSpace:"nowrap"}}>Clear</button>}
+        </div>
+      </div>}
     </div>
 
     {/* Body */}
@@ -3289,57 +3451,18 @@ function MobileRequestsTab({user, token, notify, setModal}){
         : requests.length===0
           ? <div style={{textAlign:"center",padding:"48px 20px"}}>
               <div style={{marginBottom:12,opacity:.2,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
-              <div style={{fontWeight:700,fontSize:16,marginBottom:6,color:"#1A1A1A"}}>No requests yet</div>
-              <div style={{fontSize:13,color:"#888",marginBottom:20}}>Be the first to post what you're looking for</div>
-              <button
+              <div style={{fontWeight:700,fontSize:16,marginBottom:6,color:"#1A1A1A"}}>{hasFilters?"No requests match":"No requests yet"}</div>
+              <div style={{fontSize:13,color:"#888",marginBottom:20}}>{hasFilters?"Try different filters":"Be the first to post what you're looking for"}</div>
+              {!hasFilters&&<button
                 style={{background:"#1428A0",color:"#fff",border:"none",padding:"12px 24px",borderRadius:10,fontSize:14,fontWeight:700,fontFamily:"var(--fn)",cursor:"pointer"}}
                 onClick={()=>{if(!user){setModal({type:"auth",mode:"login"});return;}setShowPostModal(true);}}>
                 + Post a Request
-              </button>
+              </button>}
             </div>
           : <div style={{display:"flex",flexDirection:"column",gap:10}}>
-              {requests.map(r=>(
-                <div key={r.id} style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:14,padding:"14px 14px 12px",borderLeft:"3px solid #1428A0"}}>
-                  {/* Title + delete */}
-                  <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:8,marginBottom:6}}>
-                    <div style={{fontWeight:700,fontSize:15,lineHeight:1.35,color:"#1A1A1A",flex:1}}>{r.title}</div>
-                    {user?.id===r.user_id&&
-                      <button onClick={()=>deleteReq(r.id)}
-                        style={{background:"none",border:"none",cursor:"pointer",color:"#CCC",fontSize:16,padding:"0 2px",flexShrink:0,lineHeight:1}}>Close</button>}
-                  </div>
-                  {/* Description */}
-                  <div style={{fontSize:13,color:"#636363",lineHeight:1.65,marginBottom:8}}>
-                    {expanded===r.id||r.description.length<=100
-                      ? r.description
-                      : <>{r.description.slice(0,100)}…{" "}
-                          <button onClick={()=>setExpanded(r.id)}
-                            style={{background:"none",border:"none",cursor:"pointer",color:"#1428A0",fontSize:12,fontWeight:700,padding:0}}>More</button>
-                        </>}
-                    {expanded===r.id&&r.description.length>100&&
-                      <button onClick={()=>setExpanded(null)}
-                        style={{background:"none",border:"none",cursor:"pointer",color:"#1428A0",fontSize:12,fontWeight:700,padding:"0 4px"}}>Less</button>}
-                  </div>
-                  {/* Tags */}
-                  <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
-                    {r.budget&&<span style={{background:"#EEF2FF",color:"#1428A0",padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700}}>Budget: {fmtKES(r.budget)}</span>}
-                    {r.county&&<span style={{background:"#F0F0F0",color:"#555",padding:"3px 10px",borderRadius:20,fontSize:11}}><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {r.county}</span>}
-                    {parseInt(r.matching_listings)>0&&
-                      <span style={{background:"#DCFCE7",color:"#16a34a",padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700}}>
-                        {r.matching_listings} listing{r.matching_listings!==1?"s":""} match
-                      </span>}
-                  </div>
-                  {/* Footer */}
-                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",borderTop:"1px solid #F5F5F5",paddingTop:10}}>
-                    <div style={{fontSize:11,color:"#AAAAAA"}}>{r.requester_anon||"Anonymous"} · {ago(r.created_at)}</div>
-                    {user?.id!==r.user_id&&
-                      <button className="btn bp sm"
-                        style={{fontSize:12,padding:"6px 14px",borderRadius:8}}
-                        onClick={()=>handleIHaveThis(r)}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg> I Have This
-                      </button>}
-                  </div>
-                </div>
-              ))}
+              {requests.map(r=><RequestCard key={r.id} r={r} user={user} token={token} notify={notify}
+                onIHaveThis={handleIHaveThis}
+                onDelete={id=>{setRequests(p=>p.filter(x=>x.id!==id));setTotal(t=>t-1);}}/>)}
             </div>}
     </div>
 
@@ -3568,6 +3691,138 @@ function MobileLayout({
 }
 
 
+// ── BUYERS WANT PAGE — Full standalone page ───────────────────────────────────
+function BuyersWantPage({user,token,notify,onBack,onIHaveThis,onSignIn}){
+  const [requests,setRequests]=useState([]);
+  const [total,setTotal]=useState(0);
+  const [loading,setLoading]=useState(true);
+  const [showModal,setShowModal]=useState(false);
+  const [searchInput,setSearchInput]=useState("");
+  const [search,setSearch]=useState("");
+  const [county,setCounty]=useState("");
+  const [category,setCategory]=useState("");
+  const [subcat,setSubcat]=useState("");
+  const [minPrice,setMinPrice]=useState("");
+  const [maxPrice,setMaxPrice]=useState("");
+  const [sort,setSort]=useState("newest");
+  const [pg,setPg]=useState(1);
+  const PER=20;
+  const filterCat=CATS.find(c=>c.name===category);
+  const hasFilters=search||county||category||subcat||minPrice||maxPrice||sort!=="newest";
+
+  const handleIHaveThis=(request)=>{
+    if(!user){onSignIn&&onSignIn();return;}
+    if(user.role!=="seller"){
+      if(window.confirm("To respond to this buyer request you need a Seller account.\n\nSwitch to Seller now?")){
+        onIHaveThis&&onIHaveThis(request,"switch_to_seller");
+      }
+      return;
+    }
+    if(user.id===request.user_id){notify("This is your own request","warning");return;}
+    onIHaveThis&&onIHaveThis(request,"post_ad");
+  };
+
+  useEffect(()=>{
+    setLoading(true);
+    const p=new URLSearchParams({page:pg,limit:PER,sort});
+    if(search)p.set("search",search);
+    if(county)p.set("county",county);
+    if(category)p.set("category",category);
+    if(subcat)p.set("subcat",subcat);
+    if(minPrice)p.set("min_price",minPrice);
+    if(maxPrice)p.set("max_price",maxPrice);
+    api(`/api/requests?${p}`).then(d=>{setRequests(d.requests||[]);setTotal(d.total||0);})
+      .catch(()=>{}).finally(()=>setLoading(false));
+  },[search,county,category,subcat,minPrice,maxPrice,sort,pg]);
+
+  const clearFilters=()=>{setSearchInput("");setSearch("");setCounty("");setCategory("");setSubcat("");setMinPrice("");setMaxPrice("");setSort("newest");setPg(1);};
+
+  return <div style={{minHeight:"100vh",background:"#F7F7F7",fontFamily:"var(--fn)"}}>
+    {/* Page header */}
+    <div style={{background:"linear-gradient(135deg,#1428A0 0%,#0F1F8A 100%)",padding:"clamp(20px,4vw,40px) clamp(16px,4vw,48px) 0"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20,gap:12,flexWrap:"wrap"}}>
+        <div>
+          <button onClick={onBack} style={{background:"rgba(255,255,255,.15)",border:"none",borderRadius:8,padding:"8px 14px",color:"#fff",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"var(--fn)",display:"flex",alignItems:"center",gap:6,marginBottom:14}}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/></svg>Back
+          </button>
+          <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"rgba(255,255,255,.6)",marginBottom:6}}>Community</div>
+          <h1 style={{fontSize:"clamp(24px,3vw,40px)",fontWeight:700,color:"#fff",letterSpacing:"-.02em",lineHeight:1.1}}>What Buyers Want</h1>
+          <p style={{fontSize:13,color:"rgba(255,255,255,.7)",marginTop:6}}>{total} active request{total!==1?"s":""}</p>
+        </div>
+        <button style={{background:"#fff",color:"#1428A0",border:"none",padding:"12px 24px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:8,whiteSpace:"nowrap"}}
+          onClick={()=>{if(!user){onSignIn&&onSignIn();return;}setShowModal(true);}}>+ Post a Request</button>
+      </div>
+      {/* Filter bar — inside header */}
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",paddingBottom:20}}>
+        <div style={{display:"flex",flex:"2 1 280px",gap:0,border:"1.5px solid rgba(255,255,255,.3)",borderRadius:8,overflow:"hidden",background:"rgba(255,255,255,.1)",minWidth:0}}>
+          <input style={{flex:1,padding:"10px 14px",border:"none",outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"transparent",color:"#fff",minWidth:0}}
+            placeholder="Search requests..." value={searchInput}
+            onChange={e=>setSearchInput(e.target.value)}
+            onKeyDown={e=>{if(e.key==="Enter"){setSearch(searchInput);setPg(1);}}}
+            style={{flex:1,padding:"10px 14px",border:"none",outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"transparent",color:"#fff",minWidth:0,"::placeholder":{color:"rgba(255,255,255,.5)"}}}/>
+          <button onClick={()=>{setSearch(searchInput);setPg(1);}} style={{background:"rgba(255,255,255,.2)",color:"#fff",border:"none",padding:"0 16px",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"var(--fn)",flexShrink:0}}>Search</button>
+        </div>
+        <select style={{padding:"10px 12px",border:"1.5px solid rgba(255,255,255,.3)",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"rgba(255,255,255,.1)",cursor:"pointer",color:"#fff",flex:"1 1 140px"}}
+          value={category} onChange={e=>{setCategory(e.target.value);setSubcat("");setPg(1);}}>
+          <option value="">All Categories</option>
+          {CATS.map(c=><option key={c.name} value={c.name} style={{color:"#000"}}>{c.name}</option>)}
+        </select>
+        {filterCat&&<select style={{padding:"10px 12px",border:"1.5px solid rgba(255,255,255,.3)",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"rgba(255,255,255,.1)",cursor:"pointer",color:"#fff",flex:"1 1 120px"}}
+          value={subcat} onChange={e=>{setSubcat(e.target.value);setPg(1);}}>
+          <option value="">All Subcategories</option>
+          {filterCat.sub.map(s=><option key={s} value={s} style={{color:"#000"}}>{s}</option>)}
+        </select>}
+      </div>
+    </div>
+
+    {/* Secondary filter row */}
+    <div style={{background:"#fff",borderBottom:"1px solid #EBEBEB",padding:"12px clamp(16px,4vw,48px)",display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+      <select style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",color:"#444"}}
+        value={county} onChange={e=>{setCounty(e.target.value);setPg(1);}}>
+        <option value="">All Counties</option>
+        {KENYA_COUNTIES.map(c=><option key={c} value={c}>{c}</option>)}
+      </select>
+      <input style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",width:120}} type="number" placeholder="Min KSh" value={minPrice} onChange={e=>{setMinPrice(e.target.value);setPg(1);}}/>
+      <input style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",width:120}} type="number" placeholder="Max KSh" value={maxPrice} onChange={e=>{setMaxPrice(e.target.value);setPg(1);}}/>
+      <select style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",color:"#444"}}
+        value={sort} onChange={e=>{setSort(e.target.value);setPg(1);}}>
+        <option value="newest">Newest First</option>
+        <option value="oldest">Oldest First</option>
+        <option value="budget_desc">Highest Budget</option>
+        <option value="budget_asc">Lowest Budget</option>
+      </select>
+      {hasFilters&&<button style={{padding:"8px 14px",border:"1px solid #E0E0E0",borderRadius:8,background:"#fff",cursor:"pointer",fontSize:12,fontFamily:"var(--fn)",color:"#636363"}} onClick={clearFilters}>Clear All</button>}
+    </div>
+
+    {/* Content */}
+    <div style={{padding:"clamp(20px,3vw,40px) clamp(16px,4vw,48px) 80px"}}>
+      {loading?<div style={{textAlign:"center",padding:60}}><Spin s="40px"/></div>
+        :requests.length===0?<div style={{textAlign:"center",padding:"80px 20px",color:"#767676"}}>
+          <div style={{marginBottom:16,opacity:.2,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
+          <div style={{fontWeight:700,fontSize:18,marginBottom:8}}>{hasFilters?"No requests match your filters":"No requests yet"}</div>
+          <div style={{fontSize:14,marginBottom:20}}>{hasFilters?"Try different filters":"Be the first to post what you're looking for"}</div>
+          {hasFilters?<button className="btn bp" style={{marginTop:8}} onClick={clearFilters}>Clear Filters</button>
+            :<button className="btn bp" style={{marginTop:8}} onClick={()=>{if(!user){onSignIn&&onSignIn();return;}setShowModal(true);}}>+ Post a Request</button>}
+        </div>
+        :<>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14,marginBottom:32}}>
+            {requests.map(r=><RequestCard key={r.id} r={r} user={user} token={token} notify={notify}
+              onIHaveThis={handleIHaveThis}
+              onDelete={id=>{setRequests(p=>p.filter(x=>x.id!==id));setTotal(t=>t-1);}}/>)}
+          </div>
+          {/* Pagination */}
+          {Math.ceil(total/PER)>1&&<div style={{display:"flex",justifyContent:"center",gap:8,alignItems:"center"}}>
+            <button className="btn bs sm" onClick={()=>{setPg(p=>Math.max(1,p-1));window.scrollTo(0,0);}} disabled={pg<=1} style={{opacity:pg<=1?.4:1}}>← Prev</button>
+            <span style={{fontSize:13,color:"#888",fontWeight:500}}>Page {pg} of {Math.ceil(total/PER)}</span>
+            <button className="btn bp sm" onClick={()=>{setPg(p=>Math.min(Math.ceil(total/PER),p+1));window.scrollTo(0,0);}} disabled={pg>=Math.ceil(total/PER)} style={{opacity:pg>=Math.ceil(total/PER)?.4:1}}>Next →</button>
+          </div>}
+        </>}
+    </div>
+
+    {showModal&&<PostRequestModal token={token} notify={notify} onClose={()=>setShowModal(false)} onSuccess={r=>{setRequests(p=>[r,...p]);setTotal(t=>t+1);}}/>}
+  </div>;
+}
+
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 
-export { WekaSokoLogo, Spin, Toast, Modal, FF, Counter, ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal, WatermarkedImage, Lightbox, AuthModal, ShareModal, PayModal, ChatModal, PostAdModal, ListingCard, LeaveReviewBtn, ReportListingBtn, VerificationBanner, DetailModal, MarkSoldModal, RoleSwitcher, PostRequestModal, WhatBuyersWant, SoldSection, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab, ProfileSection, PasswordSection, VerificationSection, MobileDashboard, Dashboard, PWABanner, Pager, MobileRequestsTab, MobileLayout };
+export { WekaSokoLogo, Spin, Toast, Modal, FF, Counter, ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal, WatermarkedImage, Lightbox, AuthModal, ShareModal, PayModal, ChatModal, PostAdModal, ListingCard, LeaveReviewBtn, ReportListingBtn, VerificationBanner, DetailModal, MarkSoldModal, RoleSwitcher, PostRequestModal, WhatBuyersWant, SoldSection, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab, ProfileSection, PasswordSection, VerificationSection, MobileDashboard, Dashboard, PWABanner, Pager, MobileRequestsTab, MobileLayout, BuyersWantPage };
