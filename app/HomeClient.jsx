@@ -48,6 +48,25 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     }
   },[]);
 
+  // ── Global ripple effect on all .btn clicks ────────────────────────────────
+  useEffect(()=>{
+    const handler=(e)=>{
+      const btn=e.target.closest(".btn");
+      if(!btn)return;
+      const rect=btn.getBoundingClientRect();
+      const size=Math.max(rect.width,rect.height)*2;
+      const x=e.clientX-rect.left-size/2;
+      const y=e.clientY-rect.top-size/2;
+      const rpl=document.createElement("span");
+      rpl.className="rpl";
+      rpl.style.cssText=`width:${size}px;height:${size}px;left:${x}px;top:${y}px;position:absolute;border-radius:50%;pointer-events:none;`;
+      btn.appendChild(rpl);
+      setTimeout(()=>rpl.remove(),600);
+    };
+    document.addEventListener("click",handler);
+    return()=>document.removeEventListener("click",handler);
+  },[]);
+
   // ── Handle Google OAuth callback + password reset token ───────────────────
   // IMPORTANT: This must run BEFORE the URL router effects so navTo('/')
   // doesn't strip ?reset_token / ?auth_token / ?verify_email from the URL first.
@@ -449,7 +468,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       {modal?.type==="chat"&&user&&<ChatModal listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}/>}
       {modal?.type==="share"&&<ShareModal listing={modal.listing} onClose={closeModal}/>}
       {modal?.type==="pay"&&user&&<PayModal type={modal.payType} listingId={modal.listing.id}
-        amount={modal.payType==="unlock"?250:modal.listing.price+Math.round(modal.listing.price*0.075)}
+        amount={modal.payType==="unlock"?250:Number(modal.listing.price)+Math.round(Number(modal.listing.price)*0.055)}
         purpose={modal.payType==="unlock"?`Unlock buyer contact: ${modal.listing.title}`:`Escrow for: ${modal.listing.title}`}
         token={token} user={user} allowVoucher={true}
         onSuccess={async(result)=>{
@@ -500,7 +519,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     {modal?.type==="chat"&&user&&<ChatModal listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}/>}
     {modal?.type==="share"&&<ShareModal listing={modal.listing} onClose={closeModal}/>}
     {modal?.type==="pay"&&user&&<PayModal type={modal.payType} listingId={modal.listing.id}
-      amount={modal.payType==="unlock"?250:modal.listing.price+Math.round(modal.listing.price*0.075)}
+      amount={modal.payType==="unlock"?250:Number(modal.listing.price)+Math.round(Number(modal.listing.price)*0.055)}
       purpose={modal.payType==="unlock"?`Unlock buyer contact: ${modal.listing.title}`:`Escrow for: ${modal.listing.title}`}
       token={token} user={user} allowVoucher={true}
       onSuccess={async(result)=>{
@@ -615,7 +634,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     </div>}
 
     {page!=="dashboard"&&page!=="sold"&&page!=="requests"&&page!=="listings"&&newSinceLastVisit>0&&<div style={{background:"#1428A0",color:"#fff",padding:"10px 20px",textAlign:"center",fontSize:14,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-      <span>✨</span><span>{newSinceLastVisit} new listing{newSinceLastVisit!==1?"s":""} added since your last visit</span>
+      <span>{newSinceLastVisit} new listing{newSinceLastVisit!==1?"s":""} added since your last visit</span>
     </div>}
     {page!=="dashboard"&&page!=="sold"&&page!=="requests"&&page!=="listings"&&<main style={{padding:"clamp(20px,4vw,40px) clamp(16px,4vw,48px) 80px"}}>
       <div style={{display:"flex",gap:24,alignItems:"flex-start",flexWrap:"wrap"}}>
@@ -757,7 +776,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
             ["chat","Chat Safely","Anonymous, moderated chat. Contact info hidden until unlock."],
             ["fire","Buyer Locks In","Serious buyers click 'I'm Interested'. You get notified instantly."],
             ["card","Pay KSh 250","Seller pays once to see buyer contact. Till 5673935. Non-refundable."],
-            ["lock","Safe Escrow","Optional 7.5% escrow. Funds held until you confirm delivery."],
+            ["lock","Safe Escrow","Optional 5.5% escrow. Funds held until you confirm delivery."],
             ["trophy","Deal Done","Leave a review. Build your seller reputation on the platform."]].map(([icon,title,desc])=>(
             <div key={title} style={{background:"#F4F4F4",padding:"28px 24px"}}>
               <div style={{marginBottom:14,display:"flex",alignItems:"center"}}>{icon==="doc"?<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>:icon==="chat"?<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>:icon==="fire"?<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M12 2c0 0-5 4-5 9a5 5 0 0 0 10 0c0-5-5-9-5-9z"/><path d="M12 12c0 0-2 1.5-2 3a2 2 0 0 0 4 0c0-1.5-2-3-2-3z"/></svg>:icon==="card"?<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>:icon==="lock"?<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>:icon==="trophy"?<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="8 21 12 17 16 21"/><line x1="12" y1="17" x2="12" y2="11"/><path d="M7 4H4a2 2 0 0 0-2 2v1a5 5 0 0 0 5 5"/><path d="M17 4h3a2 2 0 0 1 2 2v1a5 5 0 0 1-5 5"/><rect x="7" y="2" width="10" height="10" rx="1"/></svg>:null}</div>
@@ -786,7 +805,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     {modal?.type==="pay"&&user&&<PayModal
       type={modal.payType}
       listingId={modal.listing.id}
-      amount={modal.payType==="unlock"?250:modal.listing.price+Math.round(modal.listing.price*0.075)}
+      amount={modal.payType==="unlock"?250:Number(modal.listing.price)+Math.round(Number(modal.listing.price)*0.055)}
       purpose={modal.payType==="unlock"?`Unlock buyer contact: ${modal.listing.title}`:`Escrow for: ${modal.listing.title}`}
       token={token} user={user} allowVoucher={true}
       onSuccess={async(result)=>{

@@ -54,10 +54,10 @@ By using Weka Soko you agree to these Terms.
 Weka Soko is a classified advertising platform only. We are NOT party to any transaction. ALL transactions are solely between buyer and seller. Weka Soko shall NOT be liable for item quality, fraud, loss, or damage. Users transact at their own risk.
 
 3. ESCROW SERVICE
-Escrow is a convenience feature. Weka Soko is not a licensed financial institution. The 7.5% platform fee is non-refundable once payment is accepted. Dispute decisions by Weka Soko are final.
+Escrow is a convenience feature. Weka Soko is not a licensed financial institution. The 5.5% platform fee is non-refundable once payment is accepted. Dispute decisions by Weka Soko are final.
 
 4. FEES
-Contact unlock fee: KSh 250 (non-refundable). Escrow fee: 7.5% of item price. All payments to Till Number 5673935.
+Contact unlock fee: KSh 250 (non-refundable). Escrow fee: 5.5% of item price. All payments to Till Number 5673935.
 
 5. PROHIBITED CONTENT
 No stolen goods, counterfeit items, illegal drugs, weapons, or adult content. Violators will be permanently banned.
@@ -185,9 +185,106 @@ function urlBase64ToUint8Array(base64String) {
   return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
 }
 
-// ── CSS ───────────────────────────────────────────────────────────────────────
 // ── COMPONENTS ────────────────────────────────────────────────────────────────
 function Spin({s}){return <span className="spin" style={s?{width:s,height:s}:{}}/>;}
+
+// ── SKELETON ──────────────────────────────────────────────────────────────────
+function Skeleton({w,h,r,style={}}){
+  return <div className="skel" style={{width:w||"100%",height:h||14,borderRadius:r||8,...style}}/>;
+}
+function SkeletonCard(){
+  return <div className="skel-card">
+    <div className="skel" style={{width:"100%",aspectRatio:"4/3",borderRadius:"12px 12px 0 0"}}/>
+    <div style={{padding:"14px 16px"}}>
+      <Skeleton w="40%" h={11} style={{marginBottom:8}}/>
+      <Skeleton w="85%" h={18} style={{marginBottom:8}}/>
+      <Skeleton w="50%" h={24} style={{marginBottom:12}}/>
+      <div style={{display:"flex",gap:8}}>
+        <Skeleton w="30%" h={11}/>
+        <Skeleton w="20%" h={11}/>
+      </div>
+    </div>
+  </div>;
+}
+function SkeletonListRow(){
+  return <div style={{display:"flex",gap:14,padding:"16px 18px",borderBottom:"1px solid #F0F0F0",background:"#fff"}}>
+    <Skeleton w={92} h={84} r={12} style={{flexShrink:0}}/>
+    <div style={{flex:1,display:"flex",flexDirection:"column",gap:6,paddingTop:4}}>
+      <Skeleton w="30%" h={11}/>
+      <Skeleton w="80%" h={16}/>
+      <Skeleton w="45%" h={20}/>
+      <div style={{display:"flex",gap:8,marginTop:2}}>
+        <Skeleton w="25%" h={11}/>
+        <Skeleton w="15%" h={11}/>
+      </div>
+    </div>
+  </div>;
+}
+
+// ── RIPPLE — adds tactile ripple to any button ────────────────────────────────
+function useRipple(){
+  const trigger=useCallback((e)=>{
+    const btn=e.currentTarget;
+    const rect=btn.getBoundingClientRect();
+    const size=Math.max(rect.width,rect.height)*2;
+    const x=e.clientX-rect.left-size/2;
+    const y=e.clientY-rect.top-size/2;
+    const rpl=document.createElement("span");
+    rpl.className="rpl";
+    rpl.style.cssText=`width:${size}px;height:${size}px;left:${x}px;top:${y}px;`;
+    btn.appendChild(rpl);
+    setTimeout(()=>rpl.remove(),600);
+  },[]);
+  return trigger;
+}
+
+// ── HEART BUTTON (TikTok-style, optimistic) ───────────────────────────────────
+function HeartBtn({saved,onToggle,size=20,bg="rgba(255,255,255,.92)",style={}}){
+  const [optimistic,setOptimistic]=useState(saved);
+  const [popping,setPopping]=useState(false);
+  const [floats,setFloats]=useState([]);
+  const rpl=useRipple();
+
+  useEffect(()=>setOptimistic(saved),[saved]);
+
+  const tap=(e)=>{
+    e.stopPropagation();
+    rpl(e);
+    const next=!optimistic;
+    setOptimistic(next);
+    if(next){
+      setPopping(true);
+      const id=Date.now();
+      setFloats(f=>[...f,id]);
+      setTimeout(()=>setFloats(f=>f.filter(x=>x!==id)),700);
+      setTimeout(()=>setPopping(false),400);
+    }
+    onToggle&&onToggle();
+  };
+
+  return <button
+    className={`heart-btn btn${popping?" popping":""}`}
+    onClick={tap}
+    style={{
+      width:size+14,height:size+14,borderRadius:"50%",padding:0,
+      background:bg,
+      boxShadow:"0 1px 6px rgba(0,0,0,.16)",
+      ...style
+    }}
+    title={optimistic?"Remove from saved":"Save listing"}
+  >
+    <svg width={size} height={size} viewBox="0 0 24 24"
+      fill={optimistic?"#E8194B":"none"}
+      stroke={optimistic?"#E8194B":"#888888"}
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      style={{transition:"fill .2s,stroke .2s"}}>
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+    </svg>
+    {floats.map(id=>(
+      <span key={id} className="heart-float" style={{fontSize:size*.9,lineHeight:1}}>♥</span>
+    ))}
+  </button>;
+}
 
 function Toast({msg,type,onClose}){
   useEffect(()=>{const t=setTimeout(onClose,5000);return()=>clearTimeout(t);},[]);
@@ -196,10 +293,20 @@ function Toast({msg,type,onClose}){
 }
 
 function Modal({title,onClose,children,footer,large,xl}){
-  return <div className="ov" onClick={e=>e.target===e.currentTarget&&onClose()}>
-    <div className={`mod${large?" lg":""}${xl?" xl":""}`}>
-      <div className="mh"><h3 style={{fontSize:17,fontWeight:700}}>{title}</h3><button className="btn bgh sm" style={{borderRadius:"50%",width:32,height:32,padding:0,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}>{Ic.x(16)}</button></div>
-      <div className="mb">{children}</div>
+  const [closing,setClosing]=useState(false);
+  const close=()=>{setClosing(true);setTimeout(onClose,200);};
+  useEffect(()=>{
+    const h=e=>{if(e.key==="Escape")close();};
+    document.addEventListener("keydown",h);
+    return()=>document.removeEventListener("keydown",h);
+  },[]);
+  return <div className={`ov${closing?" closing":""}`} onClick={e=>e.target===e.currentTarget&&close()}>
+    <div className={`mod${large?" lg":""}${xl?" xl":""}${closing?" closing":""}`}>
+      <div className="mh">
+        <h3 style={{fontSize:17,fontWeight:700,lineHeight:1.3}}>{title}</h3>
+        <button className="icon-btn" onClick={close} title="Close">{Ic.x(18)}</button>
+      </div>
+      <div className="mb mod-stagger">{children}</div>
       {footer&&<div className="mf">{footer}</div>}
     </div>
   </div>;
@@ -755,21 +862,55 @@ function PayModal({type,listingId,amount,purpose,token,user,onSuccess,onClose,no
 
   return <Modal title={type==="unlock"?"Reveal Buyer Contact — KSh 250":"Escrow Payment"} onClose={onClose}>
     {step==="form"&&<>
-      {/* Seller safety tip — shown only on unlock */}
-      {type==="unlock"&&<div style={{background:"#F8F8F8",border:"1px solid #E8E8E8",borderRadius:12,padding:"11px 14px",marginBottom:16,fontSize:12,color:"#111111",lineHeight:1.7}}>
-        <strong style={{display:"flex",alignItems:"center",gap:6}}>{Ic.shield(14)} Seller tip:</strong> Once you unlock, you'll see the buyer's contact details. <strong>Do not hand over the item until payment is confirmed.</strong> Use Escrow for full protection — funds are held by Weka Soko until the buyer receives and confirms the item.
+      {/* Decoy: Show the 3 options with escrow as the clearly "best" choice */}
+      {type==="unlock"&&<div style={{marginBottom:20}}>
+        <div style={{fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:12}}>How do you want to proceed?</div>
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {/* Option A — decoy: direct contact, no protection (least appealing) */}
+          <div className="pay-option" style={{opacity:.7}}>
+            <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
+              <div style={{width:36,height:36,borderRadius:10,background:"#F5F5F5",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{Ic.phone(16,"#888888")}</div>
+              <div>
+                <div style={{fontWeight:700,fontSize:13,color:"#1A1A1A",marginBottom:3}}>Unlock Contact — KSh 250</div>
+                <div style={{fontSize:12,color:"#888888",lineHeight:1.6}}>Get the buyer's number directly. No transaction protection. Riskier for cash deals.</div>
+              </div>
+            </div>
+          </div>
+          {/* Option B — featured: escrow (the obvious best choice, decoy pushes buyer here) */}
+          <div className="pay-option featured" style={{position:"relative"}}>
+            <div className="pay-badge gold">MOST POPULAR — BEST VALUE</div>
+            <div style={{display:"flex",alignItems:"flex-start",gap:12,marginTop:8}}>
+              <div style={{width:36,height:36,borderRadius:10,background:"rgba(20,40,160,.1)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{Ic.shield(16,"#1428A0")}</div>
+              <div>
+                <div style={{fontWeight:700,fontSize:14,color:"#1428A0",marginBottom:3}}>Buy with Escrow — Full Protection</div>
+                <div style={{fontSize:12,color:"#444444",lineHeight:1.65}}>Your money is held safely until you receive and confirm the item. <strong style={{color:"#1428A0"}}>If anything goes wrong, you get a full refund.</strong> Fee: 5.5% of item price.</div>
+                <div style={{marginTop:8,display:"flex",gap:6,flexWrap:"wrap"}}>
+                  <span className="badge" style={{background:"rgba(20,40,160,.08)",color:"#1428A0"}}>Buyer protected</span>
+                  <span className="badge" style={{background:"rgba(16,185,129,.1)",color:"#059669"}}>Full refund if dispute</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style={{height:1,background:"#F0F0F0",margin:"20px 0"}}/>
+        <div style={{fontSize:11,color:"#AAAAAA",lineHeight:1.6,marginBottom:16}}>Or pay KSh 250 to just unlock the contact and negotiate directly:</div>
       </div>}
-      <div style={{background:"#F8F8F8",border:"1px solid #E8E8E8",borderRadius:12,padding:"18px 20px",marginBottom:18}}>
-        <div style={{fontSize:11,color:"#888888",marginBottom:4}}>Till Number <strong style={{color:"var(--txt)"}}>5673935</strong> · Weka Soko</div>
+
+      {/* Seller safety tip — shown only on unlock */}
+      {type==="unlock"&&<div style={{background:"#F8F9FF",border:"1px solid #C7D2FE",borderRadius:12,padding:"12px 14px",marginBottom:16,fontSize:12,color:"#1428A0",lineHeight:1.7}}>
+        <strong style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>{Ic.shield(14)} Seller tip:</strong> Once you unlock, you'll see the buyer's contact details. <strong>Do not hand over the item until payment is confirmed.</strong>
+      </div>}
+      <div style={{background:type==="escrow"?"linear-gradient(135deg,rgba(20,40,160,.04) 0%,rgba(20,40,160,.08) 100%)":"#F8F8F8",border:type==="escrow"?"1.5px solid #C7D2FE":"1px solid #E8E8E8",borderRadius:14,padding:"20px 22px",marginBottom:20}}>
+        <div style={{fontSize:11,color:"#888888",marginBottom:6,display:"flex",alignItems:"center",gap:6}}>Till Number <strong style={{color:"var(--txt)"}}>5673935</strong> · Weka Soko{type==="escrow"&&<span className="badge" style={{background:"rgba(16,185,129,.1)",color:"#059669",fontSize:9}}>FUNDS HELD SECURE</span>}</div>
         <div style={{display:"flex",alignItems:"baseline",gap:12,flexWrap:"wrap"}}>
-          <div style={{fontSize:36,fontWeight:700,color:"#111111"}}>{fmtKES(finalAmt)}</div>
+          <div style={{fontSize:38,fontWeight:800,color:"#111111",letterSpacing:"-.02em"}}>{fmtKES(finalAmt)}</div>
           {discount>0&&<div style={{fontSize:16,color:"#CCCCCC",textDecoration:"line-through"}}>{fmtKES(amount)}</div>}
         </div>
-        {discount>0&&<div style={{display:"flex",gap:8,marginTop:8,flexWrap:"wrap"}}>
+        {discount>0&&<div style={{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"}}>
           <span className="badge bg-g">{discount}% off</span>
           <span className="badge bg-g">You save {fmtKES(saving)}</span>
         </div>}
-        <div style={{fontSize:13,color:"#888888",marginTop:6}}>{purpose}</div>
+        <div style={{fontSize:13,color:"#888888",marginTop:7,lineHeight:1.6}}>{purpose}</div>
       </div>
       {allowVoucher&&<FF label="Voucher Code (optional)">
         <div style={{display:"flex",gap:8}}>
@@ -787,9 +928,17 @@ function PayModal({type,listingId,amount,purpose,token,user,onSuccess,onClose,no
               <input className="inp" style={{borderRadius:6}} value={phone} onChange={e=>setPhone(e.target.value.replace(/[^0-9]/g,""))} placeholder="0712345678" maxLength={10}/>
             </div>
           </FF>
+          {/* Escrow breakdown */}
+          {type==="escrow"&&(()=>{const itemPrice=Math.round(amount/1.055);const fee=amount-itemPrice;return<div style={{background:"#F0F4FF",border:"1px solid #C7D2FE",borderRadius:12,padding:"12px 14px",marginBottom:12,fontSize:13}}>
+            <div style={{fontWeight:700,color:"#1428A0",marginBottom:8,fontSize:12,letterSpacing:".06em",textTransform:"uppercase"}}>Escrow Breakdown</div>
+            <div style={{display:"flex",justifyContent:"space-between",color:"#444",marginBottom:4}}><span>Item price</span><span style={{fontWeight:600}}>{fmtKES(itemPrice)}</span></div>
+            <div style={{display:"flex",justifyContent:"space-between",color:"#444",marginBottom:8}}><span>Escrow fee (5.5%)</span><span style={{fontWeight:600}}>{fmtKES(fee)}</span></div>
+            <div style={{display:"flex",justifyContent:"space-between",borderTop:"1px solid #C7D2FE",paddingTop:8,fontWeight:700,color:"#1428A0"}}><span>Total you pay</span><span>{fmtKES(amount)}</span></div>
+            <div style={{fontSize:11,color:"#6366F1",marginTop:8}}>Funds held securely until you confirm receipt. The seller is paid once you confirm.</div>
+          </div>;})}
           {/* Safety tip before payment */}
           <div style={{background:"#F8F8F8",border:"1px solid #E8E8E8",borderRadius:12,padding:"10px 13px",marginBottom:12,fontSize:12,color:"#333333",lineHeight:1.65}}>
-            <strong style={{display:"flex",alignItems:"center",gap:6}}>{Ic.warning(14)} Security reminder:</strong> This KSh 250 is paid to <strong>Weka Soko Till 5673935</strong> only. We will <strong>never</strong> ask you to send money to a seller's personal number before meeting. If anyone does, report it immediately.
+            <strong style={{display:"flex",alignItems:"center",gap:6}}>{Ic.warning(14)} Security reminder:</strong> {type==="escrow"?<>This payment of <strong>{fmtKES(finalAmt)}</strong> goes to <strong>Weka Soko Till 5673935</strong> only. Funds are held in escrow — not paid directly to the seller.</>:<>This KSh 250 is paid to <strong>Weka Soko Till 5673935</strong> only. We will <strong>never</strong> ask you to send money to a seller's personal number before meeting.</>}
           </div>
           <button className="btn bp lg" style={{width:"100%"}} onClick={startPayment} disabled={phone.length<10}>
             Send M-Pesa Request — {fmtKES(finalAmt)}
@@ -1226,33 +1375,47 @@ function ListingCard({listing:l,onClick,listView,isSaved,onSave}){
   const photoCount=photos.length;
   const isNew=Date.now()-new Date(l.created_at)<12*3600000&&l.status!=="sold";
   const isExpiring=l.expires_at&&new Date(l.expires_at)-Date.now()<3*86400000&&new Date(l.expires_at)-Date.now()>0;
+  const ripple=useRipple();
 
-  return <div className={`lcard${listView?" lcard-list":""}`} onClick={onClick}>
+  return <div className={`lcard${listView?" lcard-list":""}`} onClick={e=>{ripple(e);onClick&&onClick();}}>
     <div className="lthumb">
       {photo
         ?<WatermarkedImage src={photo} alt={l.title} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
-        :<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",background:"var(--sh)"}}><span style={{opacity:.15}}><svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span></div>
+        :CAT_PHOTOS[l.category]
+          ?<div style={{width:"100%",height:"100%",position:"relative",overflow:"hidden",background:"#F0F0F0"}}>
+              <img src={CAT_PHOTOS[l.category]} alt={l.category} style={{width:"100%",height:"100%",objectFit:"cover",opacity:.22,filter:"grayscale(30%)"}}/>
+              <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <span style={{fontSize:11,fontWeight:700,letterSpacing:".06em",textTransform:"uppercase",color:"#888888",background:"rgba(255,255,255,.85)",padding:"5px 12px",borderRadius:20,boxShadow:"0 1px 4px rgba(0,0,0,.08)"}}>{l.category}</span>
+              </div>
+            </div>
+          :<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",background:"#F5F5F5"}}>
+              <span style={{fontSize:11,fontWeight:700,letterSpacing:".06em",textTransform:"uppercase",color:"#AAAAAA"}}>{l.category||"No Photo"}</span>
+            </div>
       }
       {l.status==="sold"&&<div className="sold-badge">SOLD</div>}
-      {isNew&&<div style={{position:"absolute",top:8,left:8,background:"#10b981",color:"#fff",fontSize:9,fontWeight:800,padding:"3px 8px",borderRadius:4,letterSpacing:".06em",textTransform:"uppercase"}}>NEW</div>}
-      {isExpiring&&<div style={{position:"absolute",top:8,left:8,background:"#f59e0b",color:"#fff",fontSize:9,fontWeight:800,padding:"3px 8px",borderRadius:4,letterSpacing:".04em",textTransform:"uppercase",marginTop:isNew?24:0}}>EXPIRING</div>}
-      {photoCount>1&&<div style={{position:"absolute",bottom:6,right:8,background:"rgba(0,0,0,.55)",color:"#fff",fontSize:10,fontWeight:600,padding:"2px 7px",borderRadius:10,pointerEvents:"none",backdropFilter:"blur(4px)"}}>+{photoCount-1}</div>}
-      {l.locked_buyer_id&&!l.is_unlocked&&<div style={{position:"absolute",bottom:0,left:0,right:0,background:"#1D1D1D",color:"#fff",fontSize:10,fontWeight:700,padding:"5px 10px",letterSpacing:".04em",textTransform:"uppercase"}}>Buyer Interested</div>}
-      {onSave&&<button onClick={e=>{e.stopPropagation();onSave();}} style={{position:"absolute",top:8,right:8,background:"rgba(255,255,255,.92)",border:"none",borderRadius:"50%",width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,.2)",padding:0}} title={isSaved?"Remove from saved":"Save listing"}>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill={isSaved?"#1428A0":"none"} stroke="#1428A0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-      </button>}
+      {isNew&&<div style={{position:"absolute",top:10,left:10,background:"#10b981",color:"#fff",fontSize:9,fontWeight:800,padding:"3px 9px",borderRadius:5,letterSpacing:".06em",textTransform:"uppercase",boxShadow:"0 2px 6px rgba(16,185,129,.35)"}}>NEW</div>}
+      {isExpiring&&<div style={{position:"absolute",top:10,left:10,background:"#f59e0b",color:"#fff",fontSize:9,fontWeight:800,padding:"3px 9px",borderRadius:5,letterSpacing:".04em",textTransform:"uppercase",marginTop:isNew?26:0,boxShadow:"0 2px 6px rgba(245,158,11,.35)"}}>EXPIRING</div>}
+      {photoCount>1&&<div style={{position:"absolute",bottom:8,right:8,background:"rgba(0,0,0,.55)",color:"#fff",fontSize:10,fontWeight:600,padding:"3px 8px",borderRadius:10,pointerEvents:"none",backdropFilter:"blur(4px)"}}>+{photoCount-1}</div>}
+      {l.locked_buyer_id&&!l.is_unlocked&&<div style={{position:"absolute",bottom:0,left:0,right:0,background:"#1D1D1D",color:"#fff",fontSize:10,fontWeight:700,padding:"6px 10px",letterSpacing:".04em",textTransform:"uppercase"}}>Buyer Interested</div>}
+      {onSave&&<HeartBtn saved={isSaved} onToggle={onSave} size={16} style={{position:"absolute",top:10,right:10}}/>}
     </div>
-    <div style={{padding:"14px 16px",flex:1}}>
-      <div style={{fontSize:11,fontWeight:700,letterSpacing:".06em",textTransform:"uppercase",color:"#888888",marginBottom:5}}>{l.category}</div>
-      <h4 style={{fontSize:15,fontWeight:700,lineHeight:1.3,marginBottom:6,letterSpacing:"-.01em"}}>{l.title}</h4>
-      <div style={{fontSize:20,fontWeight:700,color:"var(--a)",marginBottom:8,letterSpacing:"-.01em"}}>{fmtKES(l.price)}</div>
-      {listView&&l.description&&<p style={{fontSize:13,color:"#888888",marginBottom:8,lineHeight:1.65}}>{l.description.slice(0,130)}...</p>}
-      <div style={{display:"flex",gap:12,color:"#888888",fontSize:11,flexWrap:"wrap",borderTop:"1px solid #E8E8E8",paddingTop:8,marginTop:4}}>
-        {l.location&&<span><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {l.location}</span>}
-        <span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> {l.view_count||0}</span>
-        {l.interest_count>0&&<span style={{color:"#dc2626",fontWeight:700}}>🔥 {l.interest_count} interested</span>}
-        {l.seller_avg_rating>0&&<span style={{color:"#8B6400",fontWeight:700}}><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle",marginRight:2}}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> {Number(l.seller_avg_rating).toFixed(1)}</span>}
-        <span style={{marginLeft:"auto"}}>{ago(l.created_at)}</span>
+    <div style={{padding:"16px 18px",flex:1}}>
+      <div style={{fontSize:11,fontWeight:700,letterSpacing:".07em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:6}}>{l.category}</div>
+      <h4 style={{fontSize:15,fontWeight:700,lineHeight:1.4,marginBottom:7,letterSpacing:"-.01em",color:"#1A1A1A"}}>{l.title}</h4>
+      <div style={{fontSize:21,fontWeight:800,color:"var(--a)",marginBottom:10,letterSpacing:"-.02em"}}>{fmtKES(l.price)}</div>
+      {listView&&l.description&&<p style={{fontSize:13,color:"#636363",marginBottom:10,lineHeight:1.75}}>{l.description.slice(0,130)}…</p>}
+      <div style={{display:"flex",gap:12,color:"#AAAAAA",fontSize:11,flexWrap:"wrap",borderTop:"1px solid #F0F0F0",paddingTop:10,marginTop:4,lineHeight:1.4}}>
+        {l.location&&<span style={{display:"flex",alignItems:"center",gap:3}}>{Ic.mapPin(11,"currentColor")} {l.location}</span>}
+        <span style={{display:"flex",alignItems:"center",gap:3}}>{Ic.eye(11,"currentColor")} {l.view_count||0}</span>
+        {l.interest_count>0&&<span style={{color:"#E8194B",fontWeight:700,display:"flex",alignItems:"center",gap:3}}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="#E8194B" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          {l.interest_count}
+        </span>}
+        {l.seller_avg_rating>0&&<span style={{color:"#8B6400",fontWeight:700,display:"flex",alignItems:"center",gap:2}}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          {Number(l.seller_avg_rating).toFixed(1)}
+        </span>}
+        <span style={{marginLeft:"auto",color:"#CCCCCC"}}>{ago(l.created_at)}</span>
       </div>
     </div>
   </div>;
@@ -1398,15 +1561,12 @@ function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnl
   const photos=Array.isArray(l.photos)?l.photos.map(p=>typeof p==="string"?p:p?.url).filter(Boolean):[];
   const [mainPhoto,setMainPhoto]=useState(photos[0]||null);
   const [lightbox,setLightbox]=useState(null); // {photos, idx}
-  const escrowFee=Math.round(l.price*0.075);
+  const escrowFee=Math.round(Number(l.price)*0.055);
 
   return <Modal title={l.title} onClose={onClose} large footer={
     <div style={{width:"100%",display:"flex",gap:8,flexWrap:"wrap"}}>
       <button className="btn bgh sm" onClick={onShare}>↗ Share</button>
-      {user&&onSave&&<button className="btn bgh sm" onClick={onSave} style={{display:"flex",alignItems:"center",gap:5}}>
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill={isSaved?"currentColor":"none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-        {isSaved?"Saved":"Save"}
-      </button>}
+      {user&&onSave&&<HeartBtn saved={isSaved} onToggle={onSave} size={15} bg="transparent" style={{boxShadow:"none",border:"1.5px solid #E0E0E0",borderRadius:8,width:"auto",height:"auto",padding:"6px 12px",gap:5,display:"flex",fontSize:13,fontWeight:700,color:"#636363"}}/>}
       {user&&!isSeller&&<button className="btn bs sm" onClick={onChat}>Chat with Seller</button>}
       {isSeller&&<button className="btn bs sm" onClick={onChat}>View Messages</button>}
       {!isSeller&&l.status==="active"&&!l.locked_buyer_id&&user&&<button className="btn bg2 sm" onClick={onLockIn}>I'm Interested — Lock In</button>}
@@ -1421,7 +1581,9 @@ function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnl
         ?<WatermarkedImage src={mainPhoto} alt={l.title}
             style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}
             onClick={()=>setLightbox({photos,idx:photos.indexOf(mainPhoto)<0?0:photos.indexOf(mainPhoto)})}/>
-        :<span style={{opacity:.15}}><svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span>}
+        :CAT_PHOTOS[l.category]
+          ?<><img src={CAT_PHOTOS[l.category]} alt={l.category} style={{width:"100%",height:"100%",objectFit:"cover",opacity:.2,filter:"grayscale(30%)",position:"absolute",inset:0}}/><span style={{position:"relative",fontSize:12,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#888888",background:"rgba(255,255,255,.85)",padding:"6px 16px",borderRadius:20}}>No photos uploaded</span></>
+          :<span style={{fontSize:12,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA"}}>No photos uploaded</span>}
       {/* Zoom hint */}
       {mainPhoto&&<div style={{position:"absolute",bottom:10,right:10,background:"rgba(0,0,0,.45)",color:"#fff",fontSize:11,padding:"4px 10px",borderRadius:80,pointerEvents:"none"}}>Click to enlarge</div>}
       {l.status==="sold"&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.4)",display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none"}}><div style={{background:"#111111",color:"#fff",padding:"8px 28px",borderRadius:6,fontWeight:600,fontSize:18,letterSpacing:".08em"}}>SOLD</div></div>}
@@ -1442,7 +1604,7 @@ function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnl
       <span className={`badge ${l.status==="active"||l.status==="locked"?"bg-g":l.status==="sold"?"bg-y":l.status==="pending_review"?"bg-b":l.status==="needs_changes"?"by2":l.status==="rejected"?"br2":"bg-m"}`}>{l.status==="pending_review"?"Under Review":l.status==="needs_changes"?"Needs Changes":l.status==="rejected"?"Rejected":l.status}</span>
     </div>
 
-    {l.description&&<div style={{marginBottom:16}}><div className="lbl">Description</div><p style={{color:"#888888",fontSize:14,lineHeight:1.8}}>{l.description}</p></div>}
+    {l.description&&<div style={{marginBottom:16}}><div className="lbl">Description</div><p style={{color:"#1D1D1D",fontSize:14,lineHeight:1.8,whiteSpace:"pre-wrap"}}>{l.description}</p></div>}
 
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
       {l.reason_for_sale&&<div style={{background:"#F5F5F5",borderRadius:6,padding:"12px 14px"}}><div className="lbl">Reason for Sale</div><div style={{fontSize:13}}>{l.reason_for_sale}</div></div>}
@@ -1532,7 +1694,7 @@ function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnl
 
     {/* Escrow info */}
     {!isSeller&&l.status==="active"&&<div className="alert ay" style={{fontSize:12}}>
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle",marginRight:4}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> <strong>Safe Escrow:</strong> Pay {fmtKES(l.price+escrowFee)} (item {fmtKES(l.price)} + 7.5% fee). Funds held until you confirm you received the item.
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle",marginRight:4}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> <strong>Safe Escrow:</strong> Pay {fmtKES(Number(l.price)+escrowFee)} (item {fmtKES(Number(l.price))} + 5.5% fee). Funds held until you confirm you received the item.
     </div>}
 
     <div style={{display:"flex",gap:16,fontSize:12,color:"#888888",marginTop:10,flexWrap:"wrap",alignItems:"center",justifyContent:"space-between"}}>
@@ -1625,12 +1787,21 @@ function PostRequestModal({onClose,token,notify,onSuccess}){
   const [f,setF]=useState({title:"",description:"",budget:"",min_price:"",county:"",category:"",subcat:""});
   const [loading,setLoading]=useState(false);
   const [fieldErrors,setFieldErrors]=useState({});
+  const [photos,setPhotos]=useState([]); // array of {file, preview}
+  const photoInputRef=useRef(null);
   const sf=(k,v)=>setF(p=>({...p,[k]:v}));
   const cat=CATS.find(c=>c.name===f.category);
 
+  const addPhotos=e=>{
+    const files=Array.from(e.target.files||[]);
+    const valid=files.filter(f=>f.type.startsWith("image/")).slice(0,4-photos.length);
+    setPhotos(p=>[...p,...valid.map(file=>({file,preview:URL.createObjectURL(file)}))].slice(0,4));
+    e.target.value="";
+  };
+  const removePhoto=i=>setPhotos(p=>p.filter((_,pi)=>pi!==i));
+
   const submit=async()=>{
     if(!f.title.trim()||!f.description.trim()){notify("Title and description are required","warning");return;}
-    // Contact info check
     const errs={};
     [["title",f.title],["description",f.description]].forEach(([k,v])=>{
       if(v&&checkContactInfo(v))errs[k]="Cannot contain phone numbers, emails, or social handles";
@@ -1646,6 +1817,12 @@ function PostRequestModal({onClose,token,notify,onSuccess}){
       if(f.category)body.category=f.category;
       if(f.subcat)body.subcat=f.subcat;
       const result=await api("/api/requests",{method:"POST",body:JSON.stringify(body)},token);
+      // Upload photos if any (non-blocking)
+      if(photos.length>0){
+        const fd=new FormData();
+        photos.forEach(p=>fd.append("photos",p.file));
+        await api(`/api/requests/${result.id}/photos`,{method:"POST",body:fd},token).catch(()=>{});
+      }
       notify("Request posted! Sellers will be notified.","success");
       onSuccess(result);onClose();
     }catch(err){notify(err.message,"error");}
@@ -1695,48 +1872,139 @@ function PostRequestModal({onClose,token,notify,onSuccess}){
         </select>
       </FF>
     </div>
+    {/* Photo upload */}
+    <div style={{marginTop:4}}>
+      <div className="lbl">Photos <span style={{fontWeight:400,textTransform:"none",letterSpacing:0,color:"#AAAAAA"}}>Optional — up to 4 images</span></div>
+      <input ref={photoInputRef} type="file" accept="image/*" multiple style={{display:"none"}} onChange={addPhotos}/>
+      {photos.length<4&&<div onClick={()=>photoInputRef.current?.click()} className="img-upload" style={{cursor:"pointer",textAlign:"center",padding:"18px 12px"}}>
+        <div style={{marginBottom:6,display:"flex",alignItems:"center",justifyContent:"center"}}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1428A0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
+        <div style={{fontSize:13,color:"#1428A0",fontWeight:600}}>Add Photos</div>
+        <div style={{fontSize:11,color:"#AAAAAA",marginTop:2}}>Help sellers see exactly what you want</div>
+      </div>}
+      {photos.length>0&&<div className="img-grid" style={{marginTop:8}}>
+        {photos.map((p,i)=><div key={i} className="img-thumb">
+          <img src={p.preview} alt=""/>
+          <button className="img-del" onClick={()=>removePhoto(i)}>×</button>
+        </div>)}
+      </div>}
+    </div>
+  </Modal>;
+}
+
+// ── REQUEST DETAIL MODAL ───────────────────────────────────────────────────
+function RequestDetailModal({r,user,token,notify,onClose,onIHaveThis}){
+  const [lightboxIdx,setLightboxIdx]=useState(null);
+  const photos=Array.isArray(r.photos)?r.photos.filter(Boolean):[];
+  const [mainPhoto,setMainPhoto]=useState(photos[0]||null);
+  const catPhoto=CAT_PHOTOS[r.category];
+
+  const handleIHaveThis=()=>{onClose();onIHaveThis&&onIHaveThis(r);};
+
+  return <Modal title={r.title} onClose={onClose} large footer={
+    <div style={{width:"100%",display:"flex",gap:8,flexWrap:"wrap"}}>
+      {user&&user.id!==r.user_id&&<button className="btn bp" style={{flex:1}} onClick={handleIHaveThis}>I Have This — Pitch to Buyer</button>}
+      {!user&&<button className="btn bp" style={{flex:1}} onClick={onClose}>Sign In to Respond</button>}
+    </div>
+  }>
+    {/* Photo / placeholder area */}
+    <div style={{background:"#F5F5F5",borderRadius:8,aspectRatio:"16/9",overflow:"hidden",marginBottom:10,position:"relative",display:"flex",alignItems:"center",justifyContent:"center"}}>
+      {mainPhoto
+        ?<img src={mainPhoto} alt={r.title} style={{width:"100%",height:"100%",objectFit:"cover",cursor:"zoom-in"}} onClick={()=>setLightboxIdx(photos.indexOf(mainPhoto))}/>
+        :catPhoto
+          ?<><img src={catPhoto} alt={r.category} style={{width:"100%",height:"100%",objectFit:"cover",opacity:.18,filter:"grayscale(30%)",position:"absolute",inset:0}}/><span style={{position:"relative",fontSize:12,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#888888",background:"rgba(255,255,255,.85)",padding:"6px 16px",borderRadius:20}}>No photos attached</span></>
+          :<span style={{fontSize:12,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA"}}>No photos attached</span>}
+    </div>
+    {photos.length>1&&<div style={{display:"flex",gap:6,marginBottom:16,overflowX:"auto"}}>
+      {photos.map((p,i)=><img key={i} src={p} alt="" onClick={()=>setMainPhoto(p)} style={{width:70,height:55,objectFit:"cover",borderRadius:6,cursor:"pointer",opacity:mainPhoto===p?1:.5,border:mainPhoto===p?"2px solid #1428A0":"2px solid transparent",flexShrink:0}}/>)}
+    </div>}
+    {lightboxIdx!==null&&<Lightbox photos={photos} startIdx={lightboxIdx} onClose={()=>setLightboxIdx(null)}/>}
+
+    {/* Category badges */}
+    <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
+      {r.category&&<span className="badge bg-g">{r.category}</span>}
+      {r.subcat&&<span className="badge bg-m">{r.subcat}</span>}
+      {r.county&&<span className="badge bg-m"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle",marginRight:3}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>{r.county}</span>}
+    </div>
+
+    {/* Budget */}
+    {(r.min_price||r.budget)&&<div style={{background:"#F8F8F8",border:"1px solid #E8E8E8",borderRadius:10,padding:"14px 16px",marginBottom:16,display:"flex",gap:16,flexWrap:"wrap"}}>
+      {r.min_price&&<div><div className="lbl">Min Budget</div><div style={{fontSize:20,fontWeight:800,color:"#1428A0"}}>{fmtKES(r.min_price)}</div></div>}
+      {r.budget&&<div><div className="lbl">{r.min_price?"Max Budget":"Budget"}</div><div style={{fontSize:20,fontWeight:800,color:"#1428A0"}}>{fmtKES(r.budget)}</div></div>}
+    </div>}
+
+    {/* Description */}
+    <div style={{marginBottom:16}}>
+      <div className="lbl">What They're Looking For</div>
+      <p style={{color:"#1D1D1D",fontSize:14,lineHeight:1.8,whiteSpace:"pre-wrap"}}>{r.description}</p>
+    </div>
+
+    {/* Meta */}
+    <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",fontSize:12,color:"#888888",borderTop:"1px solid #F0F0F0",paddingTop:12}}>
+      <span>{r.requester_anon||"Anonymous Buyer"}</span>
+      <span>·</span>
+      <span>{ago(r.created_at)}</span>
+      {parseInt(r.matching_listings)>0&&<><span>·</span><span style={{color:"#1428A0",fontWeight:700}}>{r.matching_listings} matching listing{r.matching_listings!==1?"s":""}</span></>}
+    </div>
   </Modal>;
 }
 
 // ── SHARED BUYER REQUEST CARD ──────────────────────────────────────────────
-function RequestCard({r,user,token,notify,onIHaveThis,onDelete}){
-  const [expanded,setExpanded]=useState(false);
-  const deleteRequest=async()=>{
+function RequestCard({r,user,token,notify,onIHaveThis,onDelete,onView}){
+  const [detail,setDetail]=useState(false);
+  const photos=Array.isArray(r.photos)?r.photos.filter(Boolean):[];
+  const thumb=photos[0]||null;
+  const catPhoto=CAT_PHOTOS[r.category];
+  const deleteRequest=async e=>{
+    e.stopPropagation();
     if(!window.confirm("Delete this request?"))return;
     try{await api(`/api/requests/${r.id}`,{method:"DELETE"},token);onDelete&&onDelete(r.id);}
     catch(err){notify(err.message,"error");}
   };
-  return <div style={{background:"#fff",border:"1px solid #E5E5E5",padding:"18px 20px",transition:"border-color .15s",borderLeft:"3px solid #1428A0",borderRadius:12}}>
-    <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:6,gap:8}}>
-      <div>
-        <div style={{fontWeight:700,fontSize:15,lineHeight:1.3,letterSpacing:"-.01em",color:"#1A1A1A"}}>{r.title}</div>
-        {(r.category||r.subcat)&&<div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:4}}>
-          {r.category&&<span style={{background:"#EEF2FF",color:"#1428A0",padding:"2px 8px",fontSize:11,fontWeight:600,borderRadius:4}}>{r.category}</span>}
-          {r.subcat&&<span style={{background:"#F0F0F0",color:"#555",padding:"2px 8px",fontSize:11,fontWeight:600,borderRadius:4}}>{r.subcat}</span>}
-        </div>}
+  const openDetail=()=>{if(onView){onView(r);}else{setDetail(true);}};
+  return <>
+    <div onClick={openDetail} style={{background:"#fff",border:"1px solid #E5E5E5",borderRadius:12,overflow:"hidden",cursor:"pointer",transition:"border-color .2s,box-shadow .2s",boxShadow:"none"}}
+      onMouseEnter={e=>{e.currentTarget.style.borderColor="#1428A0";e.currentTarget.style.boxShadow="0 4px 16px rgba(20,40,160,.08)";}}
+      onMouseLeave={e=>{e.currentTarget.style.borderColor="#E5E5E5";e.currentTarget.style.boxShadow="none";}}>
+      {/* Thumbnail row */}
+      <div style={{width:"100%",height:thumb||catPhoto?120:0,background:"#F5F5F5",position:"relative",overflow:"hidden",display:thumb||catPhoto?"block":"none"}}>
+        {thumb
+          ?<img src={thumb} alt={r.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+          :catPhoto
+            ?<img src={catPhoto} alt={r.category} style={{width:"100%",height:"100%",objectFit:"cover",opacity:.22,filter:"grayscale(30%)"}}/>
+            :null}
+        {photos.length>1&&<div style={{position:"absolute",bottom:6,right:8,background:"rgba(0,0,0,.55)",color:"#fff",fontSize:10,fontWeight:600,padding:"2px 7px",borderRadius:10}}>+{photos.length-1}</div>}
+        <div style={{position:"absolute",top:8,left:8}}><span style={{background:"#1428A0",color:"#fff",fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:4,letterSpacing:".04em"}}>WANTED</span></div>
       </div>
-      {user?.id===r.user_id&&<button onClick={deleteRequest} style={{background:"none",border:"none",cursor:"pointer",color:"#AEAEB2",fontSize:13,padding:"0 2px",flexShrink:0,fontFamily:"var(--fn)"}}>Close</button>}
-    </div>
-    <div style={{fontSize:12,color:"#636363",lineHeight:1.65,marginBottom:10}}>
-      {expanded||r.description.length<=120
-        ?r.description
-        :<>{r.description.slice(0,120)}... <button onClick={()=>setExpanded(true)} style={{background:"none",border:"none",cursor:"pointer",color:"#1428A0",fontSize:12,fontWeight:600,padding:0}}>More</button></>
-      }
-      {expanded&&r.description.length>120&&<button onClick={()=>setExpanded(false)} style={{background:"none",border:"none",cursor:"pointer",color:"#1428A0",fontSize:12,fontWeight:600,padding:"0 4px"}}>Less</button>}
-    </div>
-    <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
-      {r.min_price&&<span style={{background:"rgba(0,0,0,.05)",color:"#111",padding:"3px 10px",fontSize:11,fontWeight:700}}>From {fmtKES(r.min_price)}</span>}
-      {r.budget&&<span style={{background:"rgba(0,0,0,.05)",color:"#111",padding:"3px 10px",fontSize:11,fontWeight:700}}>{r.min_price?"Up to ":"Budget: "}{fmtKES(r.budget)}</span>}
-      {r.county&&<span style={{background:"#F0F0F0",color:"#1428A0",padding:"3px 10px",fontSize:11,fontWeight:600}}><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {r.county}</span>}
-    </div>
-    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",fontSize:11,color:"#AEAEB2",borderTop:"1px solid #F0F0F0",paddingTop:10}}>
-      <span>{r.requester_anon||"Anonymous"} · {ago(r.created_at)}</span>
-      <div style={{display:"flex",gap:8,alignItems:"center"}}>
-        {parseInt(r.matching_listings)>0&&<span style={{color:"#1428A0",fontWeight:700}}>{r.matching_listings} match</span>}
-        <button className="btn bp sm" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onIHaveThis&&onIHaveThis(r)}>I Have This</button>
+      <div style={{padding:"14px 16px"}}>
+        <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:6,gap:8}}>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontWeight:700,fontSize:15,lineHeight:1.3,letterSpacing:"-.01em",color:"#1A1A1A",marginBottom:4}}>{r.title}</div>
+            {(r.category||r.subcat)&&<div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+              {r.category&&<span style={{background:"#EEF2FF",color:"#1428A0",padding:"2px 8px",fontSize:11,fontWeight:600,borderRadius:4}}>{r.category}</span>}
+              {r.subcat&&<span style={{background:"#F0F0F0",color:"#555",padding:"2px 8px",fontSize:11,fontWeight:600,borderRadius:4}}>{r.subcat}</span>}
+            </div>}
+          </div>
+          {user?.id===r.user_id&&<button onClick={deleteRequest} style={{background:"none",border:"none",cursor:"pointer",color:"#AEAEB2",fontSize:12,padding:"0 2px",flexShrink:0,fontFamily:"var(--fn)"}}>Remove</button>}
+        </div>
+        <div style={{fontSize:13,color:"#555",lineHeight:1.65,marginBottom:10}}>
+          {r.description.length<=120?r.description:<>{r.description.slice(0,120)}... <span style={{color:"#1428A0",fontWeight:600,fontSize:12}}>Read more</span></>}
+        </div>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
+          {r.min_price&&<span style={{background:"rgba(0,0,0,.05)",color:"#111",padding:"3px 10px",fontSize:11,fontWeight:700,borderRadius:4}}>From {fmtKES(r.min_price)}</span>}
+          {r.budget&&<span style={{background:"rgba(0,0,0,.05)",color:"#111",padding:"3px 10px",fontSize:11,fontWeight:700,borderRadius:4}}>{r.min_price?"Up to ":"Budget: "}{fmtKES(r.budget)}</span>}
+          {r.county&&<span style={{background:"#F0F0F0",color:"#1428A0",padding:"3px 10px",fontSize:11,fontWeight:600,borderRadius:4}}><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {r.county}</span>}
+        </div>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",fontSize:11,color:"#AEAEB2",borderTop:"1px solid #F0F0F0",paddingTop:10}}>
+          <span>{r.requester_anon||"Anonymous"} · {ago(r.created_at)}</span>
+          <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            {parseInt(r.matching_listings)>0&&<span style={{color:"#1428A0",fontWeight:700}}>{r.matching_listings} match</span>}
+            <button className="btn bp sm" style={{fontSize:11,padding:"4px 10px"}} onClick={e=>{e.stopPropagation();onIHaveThis&&onIHaveThis(r);}}>I Have This</button>
+          </div>
+        </div>
       </div>
     </div>
-  </div>;
+    {detail&&<RequestDetailModal r={r} user={user} token={token} notify={notify} onClose={()=>setDetail(false)} onIHaveThis={r=>{setDetail(false);onIHaveThis&&onIHaveThis(r);}}/>}
+  </>;
 }
 
 // ── WHAT BUYERS WANT SECTION ───────────────────────────────────────────────
@@ -3322,10 +3590,9 @@ function PWABanner({onDismiss}){
       <button onClick={onDismiss} style={{background:"none",border:"none",cursor:"pointer",color:"#AAAAAA",padding:"4px",flexShrink:0,fontSize:16,lineHeight:1}}>✕</button>
     </div>}
     {canInstall&&isIOS&&showIOSGuide&&<div style={{padding:"10px 14px",background:"#F8F9FF",borderBottom:needsNotif?"1px solid #E8E8E8":"none",fontSize:12,color:"#444",display:"flex",gap:8,alignItems:"flex-start"}}>
-      <span style={{fontSize:20}}>📱</span>
       <div>
         <div style={{fontWeight:700,marginBottom:4,color:"#1428A0"}}>Add to Home Screen (iOS Safari)</div>
-        <div>1. Tap the <strong>Share</strong> button <span style={{fontSize:14}}>⎘</span> at the bottom of Safari</div>
+        <div>1. Tap the <strong>Share</strong> button at the bottom of Safari</div>
         <div>2. Scroll down and tap <strong>"Add to Home Screen"</strong></div>
         <div>3. Tap <strong>Add</strong> — done! Open the app like any other app</div>
       </div>
@@ -3544,6 +3811,30 @@ function MobileLayout({
   };
 
   const [swipeFeedIdx,setSwipeFeedIdx]=useState(null);
+  const [ptrState,setPtrState]=useState("idle"); // idle | pulling | refreshing
+  const [ptrY,setPtrY]=useState(0);
+  const ptrStartY=useRef(0);
+  const ptrActive=useRef(false);
+
+  // Pull-to-refresh handlers
+  const onTouchStart=useCallback(e=>{
+    if(window.scrollY===0&&e.touches[0]){ptrStartY.current=e.touches[0].clientY;ptrActive.current=true;}
+  },[]);
+  const onTouchMove=useCallback(e=>{
+    if(!ptrActive.current)return;
+    const dy=e.touches[0].clientY-ptrStartY.current;
+    if(dy>0&&window.scrollY===0){setPtrY(Math.min(dy,80));setPtrState(dy>56?"pulling":"idle");}
+    else{ptrActive.current=false;setPtrY(0);setPtrState("idle");}
+  },[]);
+  const onTouchEnd=useCallback(()=>{
+    if(!ptrActive.current)return;
+    ptrActive.current=false;
+    if(ptrY>56){
+      setPtrState("refreshing");setPtrY(56);
+      setPg&&setPg(1);
+      setTimeout(()=>{setPtrY(0);setPtrState("idle");},1200);
+    }else{setPtrY(0);setPtrState("idle");}
+  },[ptrY]);
 
   const postAd=()=>{
     if(!user){setModal({type:"auth",mode:"signup"});return;}
@@ -3556,7 +3847,16 @@ function MobileLayout({
     setModal({type:"post"});
   };
 
-  return <div className="mob-root">
+  return <div className="mob-root" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+
+    {/* ── PULL TO REFRESH INDICATOR ── */}
+    <div className="ptr-wrap" style={{height:ptrY,overflow:"hidden"}}>
+      <div className="ptr-inner">
+        {ptrState==="refreshing"
+          ?<><div className="ptr-spinner"/><span>Refreshing...</span></>
+          :<><svg className="ptr-arrow" style={{transform:`rotate(${Math.min(ptrY/56*180,180)}deg)`}} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg><span>{ptrY>56?"Release to refresh":"Pull to refresh"}</span></>}
+      </div>
+    </div>
 
     {/* ── TOP BAR ── */}
     <div className="mob-topbar">
@@ -3578,7 +3878,7 @@ function MobileLayout({
 
       {/* Hero banner — only on home tab, hidden in search mode */}
       {newSinceLastVisit>0&&mobileTab==="home"&&<div style={{background:"#1428A0",color:"#fff",padding:"9px 16px",textAlign:"center",fontSize:13,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-        <span>✨</span><span>{newSinceLastVisit} new listing{newSinceLastVisit!==1?"s":""} since your last visit</span>
+        <span>{newSinceLastVisit} new listing{newSinceLastVisit!==1?"s":""} since your last visit</span>
       </div>}
       {mobileTab==="home"&&!filter.q&&!filter.cat&&pg===1&&<div className="mob-hero-banner">
         <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"rgba(255,255,255,.6)",marginBottom:8}}>Kenya's Resell Platform</div>
@@ -3620,36 +3920,53 @@ function MobileLayout({
 
       {/* Listings */}
       <div className="mob-section" style={{marginTop:4}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px 8px"}}>
-          <div style={{fontSize:14,fontWeight:700,color:"#1A1A1A"}}>{filter.cat||"All Listings"} <span style={{color:"#AAAAAA",fontWeight:400,fontSize:13}}>({total})</span></div>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 18px 10px"}}>
+          <div style={{fontSize:14,fontWeight:700,color:"#1A1A1A",lineHeight:1.3}}>{filter.cat||"All Listings"} <span style={{color:"#AAAAAA",fontWeight:400,fontSize:13}}>({total})</span></div>
+          {total>0&&listings.length>0&&<div style={{display:"flex",alignItems:"center",gap:6}}>
+            <div className="live-dot"/>
+            <span style={{fontSize:11,color:"#22c55e",fontWeight:600}}>Live</span>
+          </div>}
         </div>
+        {/* Zeigarnik progress — how many listings seen out of total */}
+        {total>PER_PAGE&&listings.length>0&&<div style={{padding:"0 18px 10px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"#AAAAAA",marginBottom:5}}>
+            <span>Showing {listings.length} of {total}</span>
+            <span style={{fontWeight:600,color:"#1428A0"}}>{Math.round(listings.length/total*100)}%</span>
+          </div>
+          <div className="zeigarnik-track"><div className="zeigarnik-fill" style={{width:`${Math.round(listings.length/total*100)}%`}}/></div>
+        </div>}
         {loading
-          ?<div style={{textAlign:"center",padding:"40px 0"}}><span className="spin"/></div>
+          ?<div>{[1,2,3,4,5].map(i=><SkeletonListRow key={i}/>)}</div>
           :listings.length===0
-            ?<div style={{textAlign:"center",padding:"40px 20px",color:"#AAAAAA"}}>
-                <div style={{fontSize:40,marginBottom:12,opacity:.3}}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
-                <div style={{fontWeight:700,marginBottom:6}}>No listings found</div>
-                <div style={{fontSize:13}}>Try different filters</div>
+            ?<div style={{textAlign:"center",padding:"48px 20px",color:"#AAAAAA"}}>
+                <div style={{marginBottom:14,opacity:.25,display:"flex",justifyContent:"center"}}>{Ic.search(44,"currentColor")}</div>
+                <div style={{fontWeight:700,fontSize:15,marginBottom:6,color:"#1A1A1A"}}>No listings found</div>
+                <div style={{fontSize:13,lineHeight:1.65}}>Try different filters or check back later</div>
               </div>
             :<div className="mob-cards">
               {listings.map(l=>{
                 const photo=Array.isArray(l.photos)?l.photos.find(p=>typeof p==="string")||l.photos[0]?.url||null:null;
+                const isNew=Date.now()-new Date(l.created_at)<12*3600000;
                 return <div key={l.id} className="mob-lcard" onClick={()=>setSwipeFeedIdx(listings.findIndex(x=>x.id===l.id))} style={{position:"relative"}}>
-                  <div className="mob-lcard-img">
-                    {photo?<img src={photo} alt={l.title}/>:<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",opacity:.15}}><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>}
+                  <div className="mob-lcard-img" style={{position:"relative"}}>
+                    {photo?<img src={photo} alt={l.title}/>:<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",background:"#F2F2F7",opacity:.6}}>{Ic.image(24,"#CCCCCC")}</div>}
+                    {isNew&&<div style={{position:"absolute",bottom:4,left:4,background:"#10b981",color:"#fff",fontSize:8,fontWeight:800,padding:"2px 6px",borderRadius:4,letterSpacing:".04em"}}>NEW</div>}
                   </div>
                   <div className="mob-lcard-body">
                     <div className="mob-lcard-cat">{l.category}</div>
                     <div className="mob-lcard-title">{l.title}</div>
                     <div className="mob-lcard-price">{fmtKES(l.price)}</div>
                     <div className="mob-lcard-meta">
-                      {l.location&&<span><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {l.location}</span>}
-                      {l.interest_count>0&&<span style={{color:"#dc2626",fontWeight:700}}>🔥 {l.interest_count}</span>}
-                      <span>{ago(l.created_at)}</span>
+                      {l.location&&<span style={{display:"flex",alignItems:"center",gap:3}}>{Ic.mapPin(10,"currentColor")} {l.location}</span>}
+                      {l.interest_count>0&&<span style={{color:"#E8194B",fontWeight:700,display:"flex",alignItems:"center",gap:3}}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="#E8194B" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        {l.interest_count}
+                      </span>}
+                      <span style={{marginLeft:"auto"}}>{ago(l.created_at)}</span>
                     </div>
-                    {Date.now()-new Date(l.created_at)<12*3600000&&<div style={{position:"absolute",top:6,left:6,background:"#10b981",color:"#fff",fontSize:9,fontWeight:800,padding:"2px 7px",borderRadius:4}}>NEW</div>}
                   </div>
-                  {l.locked_buyer_id&&!l.is_unlocked&&<div style={{width:8,height:8,background:"#1428A0",borderRadius:"50%",flexShrink:0,marginTop:4}}/>}
+                  {onToggleSave&&<HeartBtn saved={savedIds?.has(l.id)} onToggle={e=>{if(e&&e.stopPropagation)e.stopPropagation();onToggleSave&&onToggleSave(l);}} size={14} style={{position:"absolute",top:12,right:12,width:32,height:32,boxShadow:"0 1px 4px rgba(0,0,0,.15)"}}/>}
+                  {l.locked_buyer_id&&!l.is_unlocked&&<div style={{position:"absolute",top:12,right:12,width:8,height:8,background:"#1428A0",borderRadius:"50%"}}/>}
                 </div>;
               })}
             </div>}
@@ -3778,19 +4095,54 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
   const [total,setTotal]=useState(0);
   const [loading,setLoading]=useState(!(initialListings&&initialListings.length));
   const [idx,setIdx]=useState(typeof startIndex==="number"?startIndex:0);
-  const [photoIdx,setPhotoIdx]=useState(0); // photo index within current ad
+  const [panelIdx,setPanelIdx]=useState(0); // horizontal panel index (photos + info panel)
   const [dragY,setDragY]=useState(0);
+  const [dragX,setDragX]=useState(0);
   const [animating,setAnimating]=useState(false);
+  const [animatingH,setAnimatingH]=useState(false);
+  const [autoScroll,setAutoScroll]=useState(false);
+  const animatingH_=useRef(false);
   const containerRef=useRef(null);
   const fetching=useRef(false);
   const animating_=useRef(false);
   const startYRef=useRef(null);
   const startXRef=useRef(null);
-  const swipeDir=useRef(null); // 'vertical' | 'horizontal' | null — locked on first movement
+  const swipeDir=useRef(null);
+  const autoScrollRef=useRef(null);
+  const panelIdxRef=useRef(0);
   const PER=20;
 
-  // Reset photo index whenever the active ad changes
-  useEffect(()=>{setPhotoIdx(0);},[idx]);
+  // Keep panelIdxRef in sync so autoscroll interval always reads fresh value
+  useEffect(()=>{panelIdxRef.current=panelIdx;},[panelIdx]);
+
+  // Autoscroll: cycle through each photo of current ad, then move to next ad
+  useEffect(()=>{
+    if(autoScroll){
+      autoScrollRef.current=setInterval(()=>{
+        if(animating_.current||animatingH_.current)return;
+        const l=listings[idx];
+        const photos=Array.isArray(l?.photos)?l.photos.map(p=>typeof p==="string"?p:p?.url).filter(Boolean):[];
+        const photoSrcs=photos.length>0?photos:[null];
+        const totalPanels=photoSrcs.length+1;
+        if(panelIdxRef.current<totalPanels-1){
+          // advance to next photo panel
+          animatingH_.current=true;setAnimatingH(true);
+          setPanelIdx(p=>p+1);
+          setTimeout(()=>{setAnimatingH(false);animatingH_.current=false;},320);
+        } else {
+          // all photos shown — go to next listing
+          snapTo(idx+1);
+        }
+      },3000);
+    } else {
+      clearInterval(autoScrollRef.current);
+    }
+    return()=>clearInterval(autoScrollRef.current);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[autoScroll,idx]);
+
+  // Reset panel index whenever the active ad changes
+  useEffect(()=>{setPanelIdx(0);setDragX(0);},[idx]);
 
   // Build filter query params (respects active category/search/county)
   const filterQuery=useMemo(()=>{
@@ -3833,7 +4185,12 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
         }
         return; // wait until direction is decided
       }
-      if(swipeDir.current!=='vertical')return; // horizontal — ignore, let photo taps handle it
+      if(swipeDir.current==='horizontal'){
+        e.preventDefault();
+        setDragX(dx); // positive = swiping right (towards prev panel)
+        return;
+      }
+      if(swipeDir.current!=='vertical')return;
       e.preventDefault();
       // Elastic resistance beyond ±120px
       const clamped=dy>0?Math.min(dy,120+Math.max(0,dy-120)*0.2):Math.max(dy,-120+Math.min(0,dy+120)*0.2);
@@ -3871,17 +4228,38 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
 
   const onTouchStart=e=>{
     if(animating_.current)return;
+    // Pause autoscroll while user is manually swiping
+    clearInterval(autoScrollRef.current);
     startYRef.current=e.touches[0].clientY;
     startXRef.current=e.touches[0].clientX;
-    swipeDir.current=null; // reset direction lock for each new gesture
+    swipeDir.current=null;
   };
   const onTouchEnd=e=>{
     if(startYRef.current===null||animating_.current)return;
     const dy=startYRef.current-e.changedTouches[0].clientY;
+    const dx=e.changedTouches[0].clientX-startXRef.current; // positive = swiped right (prev panel)
     const wasVertical=swipeDir.current==='vertical';
+    const wasHorizontal=swipeDir.current==='horizontal';
     startYRef.current=null;
     swipeDir.current=null;
-    if(!wasVertical){setDragY(0);return;} // horizontal gesture — don't navigate
+    if(wasHorizontal){
+      setDragX(0);
+      const l=listings[idx];
+      const photos=Array.isArray(l?.photos)?l.photos.map(p=>typeof p==="string"?p:p?.url).filter(Boolean):[];
+      const photoSrcs=photos.length>0?photos:[null];
+      const totalPanels=photoSrcs.length+1; // photos + info panel
+      if(!animatingH_.current){
+        if(dx<-55&&panelIdx<totalPanels-1){ // swiped left → advance to next panel
+          animatingH_.current=true;setAnimatingH(true);setPanelIdx(p=>p+1);
+          setTimeout(()=>{setAnimatingH(false);animatingH_.current=false;},320);
+        } else if(dx>55&&panelIdx>0){ // swiped right → go back to prev panel
+          animatingH_.current=true;setAnimatingH(true);setPanelIdx(p=>p-1);
+          setTimeout(()=>{setAnimatingH(false);animatingH_.current=false;},320);
+        }
+      }
+      return;
+    }
+    if(!wasVertical){setDragY(0);return;}
     if(dy>55&&idx<listings.length-1){snapTo(idx+1);}
     else if(dy<-55&&idx>0){snapTo(idx-1);}
     else{setAnimating(true);setDragY(0);setTimeout(()=>setAnimating(false),280);}
@@ -3896,86 +4274,212 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
     const photos=Array.isArray(l.photos)
       ?l.photos.map(p=>typeof p==="string"?p:p?.url).filter(Boolean)
       :[];
-    // For the current card use photoIdx, for adjacent cards always show first photo
-    const activePhoto=offset===0?photos[photoIdx]||null:photos[0]||null;
+    const photoSrcs=photos.length>0?photos:[null]; // at least one panel (placeholder)
+    const totalPanels=photoSrcs.length+1; // photo panels + 1 info panel
     const isNew=Date.now()-new Date(l.created_at)<12*3600000;
     const isExpiring=l.expires_at&&new Date(l.expires_at)-Date.now()<3*86400000&&new Date(l.expires_at)>Date.now();
     const isSaved=savedIds?.has(l.id);
-    const baseY=offset*100; // in vh units
+    const baseY=offset*100;
     const ty=`calc(${baseY}vh + ${dragY}px)`;
+    // Horizontal drag — only applied to the current slide
+    const hDrag=offset===0?dragX:0;
+    const activePanelIdx=offset===0?panelIdx:0;
     return(
       <div key={l.id} style={{position:"absolute",inset:0,transform:`translateY(${ty})`,transition:animating?"transform .3s cubic-bezier(.25,.46,.45,.94)":"none",willChange:"transform",background:"#000",overflow:"hidden"}}>
-        {activePhoto
-          ?<img src={activePhoto} alt={l.title} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",opacity:.88}}/>
-          :<div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,#1428A0 0%,#0a1060 100%)"}}/>}
-        <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,rgba(0,0,0,.35) 0%,transparent 30%,transparent 45%,rgba(0,0,0,.9) 100%)",pointerEvents:"none"}}/>
-        {/* Interactive content — only on the current card */}
-        {offset===0&&<>
-          {/* Photo dots — shown inside the card when there are multiple photos */}
-          {photos.length>1&&<div style={{position:"absolute",top:onClose?58:12,left:"50%",transform:"translateX(-50%)",display:"flex",gap:4,zIndex:15,pointerEvents:"none"}}>
-            {photos.map((_,i)=>(
-              <div key={i} style={{width:i===photoIdx?16:5,height:5,borderRadius:3,background:i===photoIdx?"#fff":"rgba(255,255,255,.4)",transition:"all .2s"}}/>
-            ))}
-          </div>}
-          {/* Right actions */}
-          <div style={{position:"absolute",right:14,bottom:190,display:"flex",flexDirection:"column",gap:16,alignItems:"center",zIndex:10}}>
-            {[
-              {icon:<svg width="20" height="20" viewBox="0 0 24 24" fill={isSaved?"#fff":"none"} stroke="#fff" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>,label:isSaved?"Saved":"Save",bg:isSaved?"#1428A0":"rgba(0,0,0,.6)",action:()=>{if(!user){onSignIn&&onSignIn();return;}onToggleSave&&onToggleSave(l);}},
-              {icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>,label:"Message",bg:"rgba(0,0,0,.6)",action:()=>{if(!user){onSignIn&&onSignIn();return;}onMessage&&onMessage(l);}},
-            ].map((btn,i)=>(
-              <button key={i} onClick={e=>{e.stopPropagation();btn.action();}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",padding:0}}>
-                <div style={{width:46,height:46,borderRadius:"50%",background:btn.bg,display:"flex",alignItems:"center",justifyContent:"center",border:"2px solid rgba(255,255,255,.35)",backdropFilter:"blur(6px)"}}>{btn.icon}</div>
-                <span style={{color:"#fff",fontSize:10,fontWeight:700,textShadow:"0 1px 4px rgba(0,0,0,.8)"}}>{btn.label}</span>
-              </button>
-            ))}
-            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-              <div style={{width:46,height:46,borderRadius:"50%",background:"rgba(0,0,0,.6)",display:"flex",alignItems:"center",justifyContent:"center",border:"2px solid rgba(255,255,255,.2)",backdropFilter:"blur(6px)"}}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        {/* Horizontal panel strip */}
+        {photoSrcs.map((src,panelI)=>{
+          const isCurrentPanel=panelI===activePanelIdx;
+          const tx=`calc(${(panelI-activePanelIdx)*100}% + ${hDrag}px)`;
+          const isLastPhoto=panelI===photoSrcs.length-1;
+          const hasNoPhoto=!src;
+          // Progressive info content per panel
+          const infoLayer=panelI===0
+            ?{// Panel 0: title + price
+              top:<><div style={{fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"rgba(255,255,255,.7)",marginBottom:4}}>{l.category}{l.subcat?` · ${l.subcat}`:""}</div><div style={{fontSize:20,fontWeight:800,color:"#fff",lineHeight:1.2,marginBottom:6,textShadow:"0 1px 8px rgba(0,0,0,.8)"}}>{l.title}</div><div style={{fontSize:28,fontWeight:800,color:"#fff",letterSpacing:"-.01em",textShadow:"0 1px 8px rgba(0,0,0,.8)"}}>KSh {Number(l.price).toLocaleString("en-KE")}</div></>,
+              btns:<><button onClick={e=>{e.stopPropagation();onOpen&&onOpen(l);}} style={{flex:1,background:"rgba(255,255,255,.15)",color:"#fff",border:"1.5px solid rgba(255,255,255,.5)",padding:"13px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",backdropFilter:"blur(8px)"}}>View Details</button><button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onLockIn&&onLockIn(l);}} style={{background:"#1428A0",color:"#fff",border:"none",padding:"13px 16px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",boxShadow:"0 4px 14px rgba(20,40,160,.5)",whiteSpace:"nowrap"}}>I'm Interested</button></>}
+            :panelI===1&&l.description
+            ?{// Panel 1: full description in scrollable frosted card
+              top:null,
+              card:<div style={{position:"absolute",bottom:0,left:0,right:0,maxHeight:"62vh",overflowY:"auto",WebkitOverflowScrolling:"touch",background:"rgba(10,10,10,.82)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",borderRadius:"20px 20px 0 0",padding:"18px 18px 0"}}>
+                <div style={{width:36,height:4,borderRadius:2,background:"rgba(255,255,255,.3)",margin:"0 auto 16px"}}/>
+                <div style={{fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"rgba(255,255,255,.45)",marginBottom:10}}>About this item</div>
+                <p style={{fontSize:15,color:"rgba(255,255,255,.95)",lineHeight:1.75,margin:"0 0 14px",whiteSpace:"pre-wrap"}}>{l.description}</p>
+                {l.county&&<div style={{fontSize:12,color:"rgba(255,255,255,.5)",marginBottom:10,display:"flex",alignItems:"center",gap:5}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>{l.county}</div>}
+                <div style={{display:"flex",gap:8,padding:"12px 0 20px"}}>
+                  <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onMessage&&onMessage(l);}} style={{flex:1,background:"rgba(255,255,255,.15)",color:"#fff",border:"1.5px solid rgba(255,255,255,.4)",padding:"13px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",backdropFilter:"blur(8px)"}}>Message Seller</button>
+                  <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onLockIn&&onLockIn(l);}} style={{background:"#1428A0",color:"#fff",border:"none",padding:"13px 16px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",boxShadow:"0 4px 14px rgba(20,40,160,.5)",whiteSpace:"nowrap"}}>I'm Interested</button>
+                </div>
+              </div>,
+              btns:null}
+            :{// Panel 2+ / last: seller & why selling
+              top:<>{l.reason_for_sale&&<><div style={{fontSize:11,fontWeight:700,letterSpacing:".06em",textTransform:"uppercase",color:"rgba(255,255,255,.55)",marginBottom:4}}>Why selling</div><div style={{fontSize:14,color:"rgba(255,255,255,.9)",lineHeight:1.55,textShadow:"0 1px 4px rgba(0,0,0,.7)",marginBottom:8}}>{l.reason_for_sale.length>100?l.reason_for_sale.slice(0,100)+"…":l.reason_for_sale}</div></>}<div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>{l.county&&<span style={{background:"rgba(255,255,255,.15)",color:"rgba(255,255,255,.9)",fontSize:12,fontWeight:600,padding:"4px 10px",borderRadius:20,backdropFilter:"blur(4px)"}}>{l.county}</span>}{l.seller_avg_rating>0&&<span style={{background:"rgba(255,255,255,.15)",color:"rgba(255,255,255,.9)",fontSize:12,fontWeight:600,padding:"4px 10px",borderRadius:20,backdropFilter:"blur(4px)",display:"flex",alignItems:"center",gap:4}}><svg width="11" height="11" viewBox="0 0 24 24" fill="#FFD700" stroke="#FFD700" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>{Number(l.seller_avg_rating).toFixed(1)}</span>}<span style={{background:"rgba(255,255,255,.1)",color:"rgba(255,255,255,.7)",fontSize:12,padding:"4px 10px",borderRadius:20}}>{ago(l.created_at)}</span></div></>,
+              btns:<><button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onMessage&&onMessage(l);}} style={{flex:1,background:"rgba(255,255,255,.15)",color:"#fff",border:"1.5px solid rgba(255,255,255,.5)",padding:"13px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",backdropFilter:"blur(8px)"}}>Message Seller</button><button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onLockIn&&onLockIn(l);}} style={{background:"#1428A0",color:"#fff",border:"none",padding:"13px 16px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",boxShadow:"0 4px 14px rgba(20,40,160,.5)",whiteSpace:"nowrap"}}>I'm Interested</button></>};
+          return(
+            <div key={panelI} style={{position:"absolute",inset:0,transform:`translateX(${tx})`,transition:animatingH?"transform .3s cubic-bezier(.25,.46,.45,.94)":"none",willChange:"transform",background:hasNoPhoto?"#F2F2F2":"#000",overflow:"hidden"}}>
+              {/* Image or placeholder */}
+              {src
+                ?<img src={src} alt={l.title} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}}/>
+                :<div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10,background:"#F2F2F2"}}>
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#CCCCCC" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    <span style={{fontSize:13,fontWeight:600,color:"#AAAAAA",letterSpacing:".04em"}}>No photos uploaded</span>
+                  </div>}
+              {/* Dark gradient only when there's a real image */}
+              {src&&<div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,rgba(0,0,0,.3) 0%,transparent 28%,transparent 40%,rgba(0,0,0,.88) 100%)",pointerEvents:"none"}}/>}
+              {/* Overlays — only on the active panel of the current slide */}
+              {offset===0&&isCurrentPanel&&(
+                <>
+                  {/* Panel dots */}
+                  {totalPanels>1&&<div style={{position:"absolute",top:onClose?58:12,left:"50%",transform:"translateX(-50%)",display:"flex",gap:4,zIndex:15,pointerEvents:"none"}}>
+                    {Array.from({length:totalPanels},(_,di)=>{
+                      const isInfo=di===totalPanels-1;
+                      const isAct=di===activePanelIdx;
+                      return<div key={di} style={{width:isAct?20:5,height:5,borderRadius:3,background:isAct?(isInfo?"#1428A0":"#fff"):isInfo?"rgba(20,40,160,.45)":"rgba(255,255,255,.45)",transition:"all .2s"}}/>;
+                    })}
+                  </div>}
+                  {/* Badges */}
+                  <div style={{position:"absolute",top:onClose?60:14,left:14,display:"flex",flexDirection:"column",gap:5,zIndex:10}}>
+                    {isNew&&<div style={{background:"#10b981",color:"#fff",fontSize:10,fontWeight:800,padding:"4px 10px",borderRadius:6,letterSpacing:".06em"}}>NEW</div>}
+                    {isExpiring&&<div style={{background:"#f59e0b",color:"#fff",fontSize:10,fontWeight:800,padding:"4px 10px",borderRadius:6}}>EXPIRING</div>}
+                    {l.status==="sold"&&<div style={{background:"#111",color:"#fff",fontSize:10,fontWeight:800,padding:"4px 10px",borderRadius:6}}>SOLD</div>}
+                  </div>
+                  {/* Right side actions */}
+                  <div style={{position:"absolute",right:12,bottom:190,display:"flex",flexDirection:"column",gap:14,alignItems:"center",zIndex:10}}>
+                    {/* Heart / Save */}
+                    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+                      <HeartBtn
+                        saved={isSaved}
+                        onToggle={e=>{if(e&&e.stopPropagation)e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onToggleSave&&onToggleSave(l);}}
+                        size={20}
+                        bg="rgba(0,0,0,.55)"
+                        style={{width:44,height:44,border:"1.5px solid rgba(255,255,255,.3)",backdropFilter:"blur(6px)"}}
+                      />
+                      <span style={{color:src?"#fff":"#555",fontSize:10,fontWeight:700,textShadow:src?"0 1px 4px rgba(0,0,0,.8)":"none"}}>{isSaved?"Saved":"Save"}</span>
+                    </div>
+                    {/* View count */}
+                    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+                      <div style={{width:44,height:44,borderRadius:"50%",background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid rgba(255,255,255,.2)",backdropFilter:"blur(6px)"}}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                      </div>
+                      <span style={{color:src?"rgba(255,255,255,.8)":"#888",fontSize:10,fontWeight:700}}>{l.view_count||0}</span>
+                    </div>
+                    {/* Interest count */}
+                    {l.interest_count>0&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+                      <div style={{width:44,height:44,borderRadius:"50%",background:"rgba(232,25,75,.8)",display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid rgba(255,255,255,.2)",backdropFilter:"blur(6px)",flexDirection:"column"}}>
+                        <span style={{color:"#fff",fontSize:12,fontWeight:800,lineHeight:1}}>{l.interest_count}</span>
+                        <span style={{color:"rgba(255,255,255,.7)",fontSize:8,fontWeight:700}}>INT</span>
+                      </div>
+                    </div>}
+                  </div>
+                  {/* Progressive bottom info overlay */}
+                  {infoLayer.card
+                    /* Description panel: full scrollable frosted card replaces the overlay */
+                    ?<div style={{position:"absolute",inset:0,zIndex:10,pointerEvents:"none"}}>
+                        <div style={{position:"absolute",inset:0,pointerEvents:"auto"}}>{infoLayer.card}</div>
+                      </div>
+                    :<div style={{position:"absolute",bottom:0,left:0,right:0,padding:"0 16px 88px",zIndex:10}}>
+                        {infoLayer.top}
+                        {isLastPhoto&&totalPanels>1&&<div style={{fontSize:11,fontWeight:700,color:src?"rgba(255,255,255,.55)":"#AAAAAA",marginTop:8,marginBottom:10,textAlign:"center",letterSpacing:".04em"}}>← Swipe left for full details →</div>}
+                        {infoLayer.btns&&<div style={{display:"flex",gap:8,marginTop:isLastPhoto&&totalPanels>1?0:12}}>{infoLayer.btns}</div>}
+                      </div>}
+                  {/* Swipe-up hint */}
+                  {idx===0&&listings.length>1&&activePanelIdx===0&&<div style={{position:"absolute",bottom:80,left:"50%",transform:"translateX(-50%)",color:src?"rgba(255,255,255,.3)":"#CCCCCC",fontSize:11,textAlign:"center",pointerEvents:"none",zIndex:5,whiteSpace:"nowrap"}}>↑ swipe up for next ad</div>}
+                </>
+              )}
+            </div>
+          );
+        })}
+        {/* Info panel — the last horizontal panel */}
+        {offset===0&&(()=>{
+          const panelI=photoSrcs.length;
+          const isCurrentPanel=panelI===activePanelIdx;
+          const tx=`calc(${(panelI-activePanelIdx)*100}% + ${hDrag}px)`;
+          return(
+            <div style={{position:"absolute",inset:0,transform:`translateX(${tx})`,transition:animatingH?"transform .3s cubic-bezier(.25,.46,.45,.94)":"none",willChange:"transform",background:"#FFFFFF",overflowY:"auto",overflowX:"hidden",WebkitOverflowScrolling:"touch"}}>
+              {/* Dot strip — pinned at top */}
+              {totalPanels>1&&<div style={{position:"sticky",top:0,zIndex:20,background:"#fff",paddingTop:onClose?14:12,paddingBottom:10,display:"flex",justifyContent:"center",gap:4,borderBottom:"1px solid #F0F0F0"}}>
+                {Array.from({length:totalPanels},(_,di)=>{
+                  const isInf=di===totalPanels-1;
+                  const isAct=di===activePanelIdx;
+                  return<div key={di} style={{width:isAct?20:5,height:5,borderRadius:3,background:isAct?"#1428A0":isInf?"rgba(20,40,160,.3)":"rgba(0,0,0,.15)",transition:"all .2s"}}/>;
+                })}
+              </div>}
+
+              {/* Header: title + price */}
+              <div style={{padding:"18px 18px 0"}}>
+                <div style={{fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#1428A0",marginBottom:4}}>{l.category}{l.subcat?` · ${l.subcat}`:""}</div>
+                <div style={{fontSize:21,fontWeight:800,color:"#1A1A1A",lineHeight:1.25,marginBottom:6}}>{l.title}</div>
+                <div style={{fontSize:30,fontWeight:800,color:"#1428A0",letterSpacing:"-.02em",marginBottom:12}}>KSh {Number(l.price).toLocaleString("en-KE")}</div>
+
+                {/* Meta pills */}
+                <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:16}}>
+                  {l.county&&<span style={{background:"#F0F0F0",color:"#444",fontSize:12,fontWeight:600,padding:"5px 12px",borderRadius:20,display:"flex",alignItems:"center",gap:4}}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>{l.county}</span>}
+                  <span style={{background:"#F0F0F0",color:"#888",fontSize:12,fontWeight:600,padding:"5px 12px",borderRadius:20}}>{ago(l.created_at)}</span>
+                  {l.location&&l.location!==l.county&&<span style={{background:"#F0F0F0",color:"#888",fontSize:12,fontWeight:600,padding:"5px 12px",borderRadius:20}}>{l.location}</span>}
+                  {isNew&&<span style={{background:"#10b981",color:"#fff",fontSize:12,fontWeight:700,padding:"5px 12px",borderRadius:20}}>New</span>}
+                  {isExpiring&&<span style={{background:"#f59e0b",color:"#fff",fontSize:12,fontWeight:700,padding:"5px 12px",borderRadius:20}}>Expiring soon</span>}
+                </div>
+
+                {/* CTA buttons — always visible at top of detail panel */}
+                <div style={{display:"flex",gap:8,marginBottom:8}}>
+                  <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onLockIn&&onLockIn(l);}} style={{flex:1,background:"#1428A0",color:"#fff",border:"none",padding:"14px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",boxShadow:"0 4px 14px rgba(20,40,160,.35)"}}>I'm Interested</button>
+                  <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onMessage&&onMessage(l);}} style={{flex:1,background:"#F5F5F5",color:"#1A1A1A",border:"none",padding:"14px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)"}}>Message Seller</button>
+                </div>
+                <button onClick={e=>{e.stopPropagation();onOpen&&onOpen(l);}} style={{width:"100%",background:"none",color:"#1428A0",border:"1.5px solid #1428A0",padding:"12px",fontSize:13,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",marginBottom:18}}>Open Full Listing →</button>
               </div>
-              <span style={{color:"rgba(255,255,255,.8)",fontSize:10,fontWeight:700,textShadow:"0 1px 4px rgba(0,0,0,.8)"}}>{l.view_count||0}</span>
+
+              {/* Divider */}
+              <div style={{height:8,background:"#F5F5F5",margin:"0"}}/>
+
+              {/* Description — full, no clamp */}
+              {l.description&&<div style={{padding:"16px 18px"}}>
+                <div style={{fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:8}}>Description</div>
+                <p style={{fontSize:14,color:"#1D1D1D",lineHeight:1.8,margin:0,whiteSpace:"pre-wrap"}}>{l.description}</p>
+              </div>}
+
+              {/* Reason for sale */}
+              {l.reason_for_sale&&<>
+                <div style={{height:1,background:"#F0F0F0",margin:"0 18px"}}/>
+                <div style={{padding:"14px 18px"}}>
+                  <div style={{fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:8}}>Why Selling</div>
+                  <p style={{fontSize:14,color:"#1D1D1D",lineHeight:1.7,margin:0}}>{l.reason_for_sale}</p>
+                </div>
+              </>}
+
+              {/* Divider */}
+              <div style={{height:8,background:"#F5F5F5"}}/>
+
+              {/* Seller info */}
+              <div style={{padding:"16px 18px"}}>
+                <div style={{fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:10}}>Seller</div>
+                <div style={{display:"flex",alignItems:"center",gap:12,background:"#F8F8F8",borderRadius:12,padding:"14px"}}>
+                  <div style={{width:44,height:44,borderRadius:"50%",background:"linear-gradient(135deg,#1428A0,#6c63ff)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    <span style={{color:"#fff",fontWeight:800,fontSize:17}}>{(l.seller_anon||l.anon_tag||l.seller_name||"?")[0].toUpperCase()}</span>
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontWeight:700,fontSize:14,color:"#1A1A1A"}}>{l.seller_anon||l.anon_tag||"Anonymous Seller"}</div>
+                    <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:4}}>
+                      {l.seller_avg_rating>0&&<span style={{fontSize:12,color:"#8B6400",fontWeight:600,display:"flex",alignItems:"center",gap:3}}><svg width="11" height="11" viewBox="0 0 24 24" fill="#8B6400" stroke="#8B6400" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>{Number(l.seller_avg_rating).toFixed(1)} ({l.seller_review_count||0} reviews)</span>}
+                      {l.response_rate!=null&&<span style={{fontSize:12,color:"#555",fontWeight:500}}>{Math.round(l.response_rate)}% response rate</span>}
+                    </div>
+                  </div>
+                </div>
+                <div style={{marginTop:10,padding:"10px 12px",background:"#FFF8E1",borderRadius:10,border:"1px solid #FFE082"}}>
+                  <div style={{fontSize:12,color:"#92400E",lineHeight:1.6}}>Pay <strong>KSh 250</strong> to unlock seller contact. Funds are only charged when a serious buyer locks in.</div>
+                </div>
+              </div>
+
+              {/* Bottom spacer so content clears the fold */}
+              <div style={{height:32}}/>
             </div>
-            {l.interest_count>0&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-              <div style={{width:46,height:46,borderRadius:"50%",background:"rgba(0,0,0,.6)",display:"flex",alignItems:"center",justifyContent:"center",border:"2px solid rgba(255,255,255,.2)",backdropFilter:"blur(6px)"}}><span style={{fontSize:20}}>🔥</span></div>
-              <span style={{color:"#ff6b6b",fontSize:10,fontWeight:700,textShadow:"0 1px 4px rgba(0,0,0,.8)"}}>{l.interest_count}</span>
-            </div>}
-          </div>
-          {/* Bottom info */}
-          <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"0 16px 96px",zIndex:10}}>
-            <div style={{fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"rgba(255,255,255,.6)",marginBottom:3}}>{l.category}{l.subcat?` · ${l.subcat}`:""}</div>
-            <div style={{fontSize:19,fontWeight:700,color:"#fff",lineHeight:1.25,marginBottom:4,textShadow:"0 1px 6px rgba(0,0,0,.7)"}}>{l.title}</div>
-            <div style={{fontSize:26,fontWeight:800,color:"#fff",marginBottom:5,letterSpacing:"-.01em",textShadow:"0 1px 6px rgba(0,0,0,.7)"}}>KSh {Number(l.price).toLocaleString("en-KE")}</div>
-            <div style={{fontSize:12,color:"rgba(255,255,255,.6)",marginBottom:12,display:"flex",gap:12,flexWrap:"wrap"}}>
-              {l.county&&<span>📍 {l.county}</span>}
-              <span>🕐 {ago(l.created_at)}</span>
-              {l.seller_avg_rating>0&&<span>⭐ {Number(l.seller_avg_rating).toFixed(1)}</span>}
-            </div>
-            <div style={{display:"flex",gap:8}}>
-              <button onClick={e=>{e.stopPropagation();onOpen&&onOpen(l);}} style={{flex:1,background:"rgba(255,255,255,.15)",color:"#fff",border:"1.5px solid rgba(255,255,255,.45)",padding:"13px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",backdropFilter:"blur(8px)"}}>View Details</button>
-              <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onLockIn&&onLockIn(l);}} style={{background:"#1428A0",color:"#fff",border:"none",padding:"13px 14px",fontSize:13,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",whiteSpace:"nowrap",boxShadow:"0 4px 14px rgba(20,40,160,.5)"}}>I'm Interested</button>
-            </div>
-          </div>
-          {/* Badges */}
-          <div style={{position:"absolute",top:onClose?60:14,left:14,display:"flex",flexDirection:"column",gap:5,zIndex:10}}>
-            {isNew&&<div style={{background:"#10b981",color:"#fff",fontSize:10,fontWeight:800,padding:"4px 10px",borderRadius:6,letterSpacing:".06em"}}>NEW</div>}
-            {isExpiring&&<div style={{background:"#f59e0b",color:"#fff",fontSize:10,fontWeight:800,padding:"4px 10px",borderRadius:6}}>EXPIRING SOON</div>}
-          </div>
-          {/* Swipe hint */}
-          {idx===0&&listings.length>1&&<div style={{position:"absolute",bottom:86,left:"50%",transform:"translateX(-50%)",color:"rgba(255,255,255,.35)",fontSize:11,textAlign:"center",pointerEvents:"none",zIndex:5,whiteSpace:"nowrap"}}>↑ swipe up for next ad</div>}
-          {/* Invisible edge tap zones — cycle through this ad's photos */}
-          {photos.length>1&&<>
-            <div style={{position:"absolute",top:0,left:0,width:"18%",bottom:"32%",zIndex:9,cursor:"pointer"}}
-              onClick={e=>{e.stopPropagation();setPhotoIdx(p=>Math.max(0,p-1));}}/>
-            <div style={{position:"absolute",top:0,right:0,width:"18%",bottom:"32%",zIndex:9,cursor:"pointer"}}
-              onClick={e=>{e.stopPropagation();setPhotoIdx(p=>Math.min(photos.length-1,p+1));}}/>
-          </>}
-        </>}
+          );
+        })()}
       </div>
     );
   };
 
   if(loading&&!listings.length)return<div style={{height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#000"}}><Spin s="48px"/></div>;
   if(!listings.length)return<div style={{height:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#111",gap:16,padding:24,textAlign:"center"}}>
-    <div style={{fontSize:48,opacity:.3}}>📦</div>
+    <div style={{opacity:.3,marginBottom:4}}><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
     <div style={{fontWeight:700,fontSize:18,color:"#fff"}}>No listings yet</div>
     <div style={{fontSize:14,color:"rgba(255,255,255,.5)"}}>Be the first to post something</div>
     <button onClick={()=>onPostAd&&onPostAd()} style={{background:"#1428A0",color:"#fff",border:"none",padding:"14px 28px",fontSize:14,fontWeight:700,borderRadius:10,cursor:"pointer",fontFamily:"var(--fn)",marginTop:8}}>+ Post an Ad</button>
@@ -4005,41 +4509,110 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
       {onClose&&<button onClick={onClose} style={{position:"absolute",top:14,left:14,width:38,height:38,borderRadius:"50%",background:"rgba(0,0,0,.6)",border:"2px solid rgba(255,255,255,.3)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:20,backdropFilter:"blur(4px)"}}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
       </button>}
-      {/* Counter pill */}
-      <div style={{position:"absolute",top:14,right:14,background:"rgba(0,0,0,.55)",color:"#fff",fontSize:12,fontWeight:700,padding:"5px 12px",borderRadius:20,zIndex:20,backdropFilter:"blur(4px)"}}>
-        {idx+1} / {total}
+      {/* Counter pill + autoscroll toggle */}
+      <div style={{position:"absolute",top:14,right:14,display:"flex",gap:8,alignItems:"center",zIndex:20}}>
+        {/* Autoscroll toggle switch */}
+        <div
+          onClick={()=>setAutoScroll(s=>!s)}
+          title={autoScroll?"Pause autoscroll":"Start autoscroll"}
+          style={{
+            display:"flex",alignItems:"center",gap:7,
+            background:"rgba(0,0,0,.58)",
+            borderRadius:20,padding:"5px 10px 5px 12px",
+            cursor:"pointer",backdropFilter:"blur(6px)",
+            border:"1.5px solid rgba(255,255,255,.18)",
+            userSelect:"none",WebkitUserSelect:"none",
+          }}
+        >
+          <span style={{color:"rgba(255,255,255,.85)",fontSize:10,fontWeight:700,letterSpacing:".05em",fontFamily:"var(--fn)"}}>AUTOPLAY</span>
+          {/* Toggle track */}
+          <div style={{
+            width:34,height:18,borderRadius:9,flexShrink:0,position:"relative",
+            background:autoScroll?"#1428A0":"rgba(255,255,255,.22)",
+            border:"1.5px solid rgba(255,255,255,.2)",
+            transition:"background .2s ease",
+          }}>
+            {/* Toggle thumb */}
+            <div style={{
+              position:"absolute",top:1,
+              left:autoScroll?14:1,
+              width:12,height:12,borderRadius:"50%",
+              background:"#fff",
+              transition:"left .2s ease",
+              boxShadow:"0 1px 4px rgba(0,0,0,.5)",
+            }}/>
+          </div>
+        </div>
+        <div style={{background:"rgba(0,0,0,.55)",color:"#fff",fontSize:12,fontWeight:700,padding:"5px 12px",borderRadius:20,backdropFilter:"blur(4px)"}}>
+          {idx+1} / {total}
+        </div>
       </div>
     </div>
   );
 }
 
 // ── HOT RIGHT NOW — horizontal scroll of popular listings ─────────────────────
-function HotRightNow({onOpen,savedIds,onToggleSave,user}){
+function HotRightNow({onOpen,savedIds,onToggleSave,user,onOpenInFeed}){
   const [items,setItems]=useState([]);
-  useEffect(()=>{api("/api/listings?sort=popular&limit=10").then(d=>setItems(d.listings||[])).catch(()=>{});},[]);
-  if(!items.length)return null;
-  return<div style={{marginBottom:8}}>
-    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px 6px"}}>
-      <div style={{fontWeight:700,fontSize:15,color:"#1A1A1A"}}>🔥 Hot Right Now</div>
-      <div style={{fontSize:11,color:"#AAAAAA",fontWeight:500}}>Most viewed today</div>
-    </div>
-    <div style={{display:"flex",gap:10,overflowX:"auto",padding:"4px 16px 12px",WebkitOverflowScrolling:"touch",msOverflowStyle:"none",scrollbarWidth:"none"}}>
-      {items.map(l=>{
-        const photo=Array.isArray(l.photos)?l.photos.find(p=>typeof p==="string")||l.photos[0]?.url||null:null;
-        const isNew=Date.now()-new Date(l.created_at)<12*3600000;
-        return<div key={l.id} onClick={()=>onOpen&&onOpen(l)} style={{flexShrink:0,width:150,cursor:"pointer"}}>
-          <div style={{width:150,height:150,borderRadius:12,overflow:"hidden",background:"#F0F0F0",position:"relative",marginBottom:7}}>
-            {photo?<img src={photo} alt={l.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{width:"100%",height:"100%",background:"linear-gradient(135deg,#E8E8E8,#D0D0D0)"}}/>}
-            {isNew&&<div style={{position:"absolute",top:6,left:6,background:"#10b981",color:"#fff",fontSize:9,fontWeight:800,padding:"2px 7px",borderRadius:4}}>NEW</div>}
-            {l.interest_count>0&&<div style={{position:"absolute",bottom:6,left:6,background:"rgba(220,38,38,.85)",color:"#fff",fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:10}}>🔥 {l.interest_count}</div>}
-            {l.view_count>100&&<div style={{position:"absolute",top:6,right:6,background:"rgba(0,0,0,.6)",color:"#fff",fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:10}}>👁 {l.view_count}</div>}
-          </div>
-          <div style={{fontSize:12,fontWeight:700,color:"#1A1A1A",lineHeight:1.3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{l.title}</div>
-          <div style={{fontSize:13,fontWeight:800,color:"#1428A0",marginTop:2}}>KSh {Number(l.price).toLocaleString("en-KE")}</div>
-        </div>;
-      })}
+  const [loading,setLoading]=useState(true);
+  const [feedIdx,setFeedIdx]=useState(null);
+  useEffect(()=>{api("/api/listings?sort=popular&limit=10").then(d=>setItems(d.listings||[])).catch(()=>{}).finally(()=>setLoading(false));},[]);
+  if(!loading&&!items.length)return null;
+  if(loading)return <div style={{marginBottom:8}}>
+    <div style={{fontWeight:700,fontSize:15,color:"#1A1A1A",padding:"14px 16px 10px"}}>Hot Right Now</div>
+    <div style={{display:"flex",gap:10,padding:"4px 16px 14px",overflowX:"hidden"}}>
+      {[1,2,3,4].map(i=><div key={i} style={{flexShrink:0,width:150}}>
+        <Skeleton w={150} h={150} r={12} style={{marginBottom:8}}/>
+        <Skeleton w="80%" h={13} style={{marginBottom:5}}/>
+        <Skeleton w="50%" h={16}/>
+      </div>)}
     </div>
   </div>;
+  const openItem=(l,i)=>{
+    if(onOpenInFeed){onOpenInFeed(items,i);}
+    else if(typeof window!=="undefined"&&window.innerWidth>=768&&onOpen){onOpen(l);}
+    else{setFeedIdx(i);}
+  };
+  return<>
+    <div style={{marginBottom:8}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px 6px"}}>
+        <div style={{fontWeight:700,fontSize:15,color:"#1A1A1A"}}>Hot Right Now</div>
+        <div style={{fontSize:11,color:"#AAAAAA",fontWeight:500}}>Most viewed today</div>
+      </div>
+      <div style={{display:"flex",gap:10,overflowX:"auto",padding:"4px 16px 12px",WebkitOverflowScrolling:"touch",msOverflowStyle:"none",scrollbarWidth:"none"}}>
+        {items.map((l,i)=>{
+          const photo=Array.isArray(l.photos)?l.photos.find(p=>typeof p==="string")||l.photos[0]?.url||null:null;
+          const isNew=Date.now()-new Date(l.created_at)<12*3600000;
+          const catPhoto=CAT_PHOTOS[l.category];
+          return<div key={l.id} onClick={()=>openItem(l,i)} style={{flexShrink:0,width:152,cursor:"pointer"}}>
+            <div style={{width:152,height:152,borderRadius:14,overflow:"hidden",background:"#F0F0F0",position:"relative",marginBottom:9,boxShadow:"0 2px 8px rgba(0,0,0,.10),0 6px 20px rgba(20,40,160,.07)",transition:"transform .2s,box-shadow .2s"}}
+              onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow="0 4px 16px rgba(0,0,0,.12),0 12px 32px rgba(20,40,160,.12)";}}
+              onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.boxShadow="0 2px 8px rgba(0,0,0,.10),0 6px 20px rgba(20,40,160,.07)";}}>
+              {photo
+                ?<img src={photo} alt={l.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                :catPhoto
+                  ?<img src={catPhoto} alt={l.category} style={{width:"100%",height:"100%",objectFit:"cover",opacity:.22,filter:"grayscale(20%)"}}/>
+                  :<div style={{width:"100%",height:"100%",background:"#F0F0F0",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:10,color:"#AAAAAA",fontWeight:600}}>No photo</span></div>}
+              {isNew&&<div style={{position:"absolute",top:7,left:7,background:"#10b981",color:"#fff",fontSize:9,fontWeight:800,padding:"2px 8px",borderRadius:5,boxShadow:"0 1px 4px rgba(16,185,129,.4)"}}>NEW</div>}
+              {l.interest_count>0&&<div style={{position:"absolute",bottom:7,left:7,background:"rgba(232,25,75,.88)",color:"#fff",fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:10,display:"flex",alignItems:"center",gap:4,backdropFilter:"blur(4px)"}}>
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>{l.interest_count}
+              </div>}
+              <HeartBtn saved={savedIds?.has(l.id)} onToggle={e=>{e&&e.stopPropagation&&e.stopPropagation();onToggleSave&&onToggleSave(l);}} size={14} style={{position:"absolute",top:7,right:7,width:30,height:30}}/>
+            </div>
+            <div style={{fontSize:12,fontWeight:700,color:"#1A1A1A",lineHeight:1.4,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{l.title}</div>
+            <div style={{fontSize:14,fontWeight:800,color:"#1428A0",marginTop:3,letterSpacing:"-.01em"}}>{fmtKES(l.price)}</div>
+          </div>;
+        })}
+      </div>
+    </div>
+    {/* SwipeFeed overlay for hot listings */}
+    {feedIdx!==null&&<div style={{position:"fixed",inset:0,zIndex:600}}>
+      <SwipeFeed user={user} token={null} initialListings={items} startIndex={feedIdx}
+        onOpen={l=>{setFeedIdx(null);onOpen&&onOpen(l);}}
+        onLockIn={()=>{}} onMessage={()=>{}} savedIds={savedIds} onToggleSave={onToggleSave}
+        onSignIn={()=>{}} onPostAd={()=>{}} onClose={()=>setFeedIdx(null)}/>
+    </div>}
+  </>;
 }
 
 // ── ALL LISTINGS PAGE — Full standalone /listings page ────────────────────────
@@ -4155,20 +4728,20 @@ function AllListingsPage({user,token,notify,onBack,onOpenListing,onToggleSave,sa
     </div>
     {/* Content */}
     <div style={{padding:"clamp(20px,3vw,40px) clamp(16px,4vw,48px) 80px"}}>
-      {loading?<div style={{textAlign:"center",padding:60}}><Spin s="40px"/></div>
+      {loading?<div className={vm==="grid"?"g3":"lvc"}>{[1,2,3,4,5,6,7,8].map(i=><SkeletonCard key={i}/>)}</div>
         :listings.length===0?<div style={{textAlign:"center",padding:"80px 20px",color:"#767676"}}>
-          <div style={{marginBottom:16,opacity:.2,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
-          <div style={{fontWeight:700,fontSize:18,marginBottom:8}}>No listings found</div>
-          <div style={{fontSize:14,marginBottom:20}}>Try different filters</div>
+          <div style={{marginBottom:16,opacity:.2,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.search(56,"currentColor")}</div>
+          <div style={{fontWeight:700,fontSize:18,marginBottom:10,letterSpacing:"-.01em"}}>No listings found</div>
+          <div style={{fontSize:14,marginBottom:22,color:"#AAAAAA",lineHeight:1.65}}>Try adjusting your filters or search terms</div>
           {hasFilters&&<button className="btn bp" onClick={clearFilters}>Clear Filters</button>}
         </div>
         :<>
           <div className={vm==="grid"?"g3":"lvc"}>
             {listings.map(l=><ListingCard key={l.id} listing={l} onClick={()=>onOpenListing&&onOpenListing(l)} listView={vm==="list"} isSaved={savedIds?.has(l.id)} onSave={user?()=>onToggleSave&&onToggleSave(l):null}/>)}
           </div>
-          <div ref={loaderRef} style={{height:60,display:"flex",alignItems:"center",justifyContent:"center",marginTop:16}}>
-            {loadingMore&&<Spin s="32px"/>}
-            {!loadingMore&&listings.length>=total&&total>0&&<div style={{fontSize:12,color:"#AAAAAA",fontWeight:500}}>All {total} listings loaded</div>}
+          <div ref={loaderRef} style={{height:72,display:"flex",alignItems:"center",justifyContent:"center",marginTop:16}}>
+            {loadingMore&&<div className={vm==="grid"?"g3":"lvc"} style={{width:"100%"}}>{[1,2,3].map(i=><SkeletonCard key={i}/>)}</div>}
+            {!loadingMore&&listings.length>=total&&total>0&&<div className="inf-end">You've seen all {total} listings — check back soon for new ones</div>}
           </div>
         </>}
     </div>
