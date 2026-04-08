@@ -3582,7 +3582,7 @@ function PWABanner({onDismiss}){
   };
 
   const canInstall=deferredPrompt||(isIOS&&!isStandalone);
-  const needsNotif="Notification" in window&&notifPerm==="default";
+  const needsNotif=typeof window!=="undefined"&&"Notification" in window&&notifPerm==="default";
   if(!canInstall&&!needsNotif)return null;
 
   return <div className="pwa-banner" style={{flexDirection:"column",gap:0,padding:0,overflow:"hidden"}}>
