@@ -565,187 +565,188 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       </div>
     </nav>
 
-    {/* ── HERO + CATEGORIES side by side ── */}
-    {page!=="dashboard"&&page!=="sold"&&page!=="requests"&&page!=="listings"&&<div style={{background:"#FFFFFF",borderBottom:"1px solid #EBEBEB"}}>
-      <div style={{display:"flex",alignItems:"stretch",minHeight:460,flexWrap:"wrap"}}>
-
-        {/* LEFT — hero text */}
-        <div style={{flex:"1 1 380px",minWidth:0,padding:"clamp(28px,5vw,60px) clamp(20px,5vw,56px)",display:"flex",flexDirection:"column",justifyContent:"center",borderRight:"1px solid #EBEBEB",background:"#fff"}}>
-          <div style={{fontSize:13,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",marginBottom:18,color:"#1428A0"}}>
-            Kenya's Resell Platform
-          </div>
-          <h1 style={{fontSize:"clamp(32px,3.5vw,50px)",fontWeight:800,letterSpacing:"-.02em",lineHeight:1.12,marginBottom:20,color:"#1A1A1A",fontFamily:"var(--fn)"}}>
-            Post Free.<br/>
-            <span style={{color:"#1428A0"}}>Pay Only When</span><br/>
-            You Get a Buyer.
-          </h1>
-          <p style={{fontSize:17,color:"#636363",lineHeight:1.8,marginBottom:34,fontWeight:400}}>
-            List items in minutes with photos. Pay KSh 250 only when a serious buyer locks in to buy.
-          </p>
-          <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:24}}>
-            <button style={{background:"#1428A0",color:"#fff",border:"none",padding:"16px 34px",fontSize:16,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:10,transition:"background .15s",boxShadow:"0 4px 14px rgba(20,40,160,.25)"}}
-              onMouseOver={e=>e.currentTarget.style.background="#0F1F8A"} onMouseOut={e=>e.currentTarget.style.background="#1428A0"}
-              onClick={()=>{
-                if(!user){setModal({type:"auth",mode:"signup"});return;}
-                if(user.role==="buyer"){
-                  if(typeof window !== 'undefined' && window.confirm("You're currently a Buyer. To post an ad, switch to a Seller account.\n\nSwitch to Seller now?")){
-                    apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token).then(d=>{
-                      const upd={...user,...d.user};setUser(upd);localStorage.setItem("ws_user",JSON.stringify(upd));
-                      notify("Switched to Seller! Now post your ad.","success");setModal({type:"post"});
-                    }).catch(e=>notify(e.message,"error"));
-                  }
-                  return;
-                }
-                setModal({type:"post"});
-              }}>+ Post an Ad for Free</button>
-            <button style={{background:"#fff",color:"#1A1A1A",border:"1.5px solid #D0D0D0",padding:"16px 30px",fontSize:16,fontWeight:600,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:10,transition:"all .15s"}}
-              onMouseOver={e=>{e.currentTarget.style.borderColor="#1428A0";e.currentTarget.style.color="#1428A0";}} onMouseOut={e=>{e.currentTarget.style.borderColor="#D0D0D0";e.currentTarget.style.color="#1A1A1A";}}
-              onClick={()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"})}>Browse Listings</button>
-          </div>
-          <div style={{display:"flex",gap:22,fontSize:14,color:"#888",fontWeight:500,flexWrap:"wrap"}}>
-            <span style={{display:"flex",alignItems:"center",gap:7}}><span style={{color:"#1428A0",fontWeight:800,fontSize:16}}><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="20 6 9 17 4 12"/></svg></span>Free to post</span>
-            <span style={{display:"flex",alignItems:"center",gap:7}}><span style={{color:"#1428A0",fontWeight:800,fontSize:16}}><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="20 6 9 17 4 12"/></svg></span>Anonymous chat</span>
-            <span style={{display:"flex",alignItems:"center",gap:7}}><span style={{color:"#1428A0",fontWeight:800,fontSize:16}}><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="20 6 9 17 4 12"/></svg></span>M-Pesa escrow</span>
-          </div>
-        </div>
-
-        {/* RIGHT — categories with circular images */}
-        <div style={{flex:"1 1 320px",minWidth:0,padding:"clamp(24px,4vw,40px) clamp(16px,4vw,48px) 32px",background:"#FAFAFA"}}>
-          <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:6}}>Browse by Category</div>
-          <h2 style={{fontSize:22,fontWeight:700,color:"#1A1A1A",marginBottom:24,letterSpacing:"-.01em",fontFamily:"var(--fn)"}}>What are you looking for?</h2>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(72px,1fr))",gap:8}}>
-            {CATS.map(c=>{
-              const active=filter.cat===c.name;
-              return <div key={c.name}
-                onClick={()=>{setFilter(p=>({...p,cat:p.cat===c.name?"":c.name}));setPg(1);setTimeout(()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"}),100);}}
-                style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8,padding:"12px 4px",cursor:"pointer",borderRadius:14,background:active?"#EEF2FF":"#fff",border:`1.5px solid ${active?"#1428A0":"#EBEBEB"}`,transition:"all .15s",boxShadow:active?"0 0 0 2px rgba(20,40,160,.1)":"none"}}>
-                <div style={{width:62,height:62,borderRadius:"50%",overflow:"hidden",flexShrink:0,border:`2.5px solid ${active?"#1428A0":"#E5E5E5"}`,boxShadow:"0 2px 8px rgba(0,0,0,.1)"}}>
-                  <img src={CAT_PHOTOS[c.name]||CAT_PHOTOS.Other} alt={c.name} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
-                </div>
-                <div style={{fontSize:11,fontWeight:600,color:active?"#1428A0":"#333",textAlign:"center",lineHeight:1.3,wordBreak:"break-word"}}>{c.name}</div>
-              </div>;
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Trust bar */}
-      <div style={{background:"#1428A0",padding:"12px 20px",display:"flex",gap:20,alignItems:"center",justifyContent:"center",flexWrap:"wrap"}}>
-        {["Free to list","Safe anonymous chat","M-Pesa escrow","Kenyan platform"].map(t=>(
-          <span key={t} style={{fontSize:14,fontWeight:600,color:"rgba(255,255,255,.92)",display:"flex",alignItems:"center",gap:8}}>
-            <span style={{color:"#fff",display:"inline-flex",alignItems:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="20 6 9 17 4 12"/></svg></span>{t}
-          </span>
-        ))}
-      </div>
+    {/* Trust bar */}
+    {page!=="dashboard"&&page!=="sold"&&page!=="requests"&&page!=="listings"&&<div style={{background:"#1428A0",padding:"11px 20px",display:"flex",gap:20,alignItems:"center",justifyContent:"center",flexWrap:"wrap"}}>
+      {["Free to list","Safe anonymous chat","M-Pesa escrow","Kenyan platform"].map(t=>(
+        <span key={t} style={{fontSize:13,fontWeight:600,color:"rgba(255,255,255,.92)",display:"flex",alignItems:"center",gap:7}}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>{t}
+        </span>
+      ))}
     </div>}
 
-    {page!=="dashboard"&&page!=="sold"&&page!=="requests"&&page!=="listings"&&newSinceLastVisit>0&&<div style={{background:"#1428A0",color:"#fff",padding:"10px 20px",textAlign:"center",fontSize:14,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+    {page!=="dashboard"&&page!=="sold"&&page!=="requests"&&page!=="listings"&&newSinceLastVisit>0&&<div style={{background:"#10b981",color:"#fff",padding:"9px 20px",textAlign:"center",fontSize:13,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
       <span>{newSinceLastVisit} new listing{newSinceLastVisit!==1?"s":""} added since your last visit</span>
     </div>}
-    {page!=="dashboard"&&page!=="sold"&&page!=="requests"&&page!=="listings"&&<main style={{padding:"clamp(20px,4vw,40px) clamp(16px,4vw,48px) 80px"}}>
-      <div style={{display:"flex",gap:24,alignItems:"flex-start",flexWrap:"wrap"}}>
 
-        {/* LEFT SIDEBAR */}
-        <div style={{width:"min(240px,100%)",flexShrink:0,display:"flex",flexDirection:"column",gap:14}}>
-          <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:14,padding:"20px 18px"}}>
-            <div style={{fontSize:12,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:12}}>Search</div>
-            <div style={{display:"flex",gap:0,border:"1.5px solid #E0E0E0",borderRadius:10,overflow:"hidden",background:"#FAFAFA"}}>
-              <input style={{flex:1,padding:"10px 12px",border:"none",outline:"none",fontSize:14,fontFamily:"var(--fn)",color:"#1A1A1A",background:"transparent",minWidth:0}}
+    {page!=="dashboard"&&page!=="sold"&&page!=="requests"&&page!=="listings"&&<main style={{padding:"clamp(20px,4vw,40px) clamp(16px,4vw,48px) 80px"}}>
+
+      {/* ── TOP PANEL: Left = Hero+Cats+Filters | Right = What Buyers Want ── */}
+      <div style={{display:"flex",gap:28,alignItems:"flex-start",marginBottom:48,flexWrap:"wrap"}}>
+
+        {/* LEFT: hero + categories + filters */}
+        <div style={{flex:"1 1 380px",minWidth:0,display:"flex",flexDirection:"column",gap:20}}>
+
+          {/* Hero */}
+          <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:20,padding:"clamp(28px,4vw,44px) clamp(24px,4vw,40px)",boxShadow:"0 1px 3px rgba(0,0,0,.06),0 6px 24px rgba(0,0,0,.07)"}}>
+            <div style={{fontSize:12,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",marginBottom:14,color:"#1428A0"}}>Kenya's Resell Platform</div>
+            <h1 style={{fontSize:"clamp(28px,3vw,46px)",fontWeight:800,letterSpacing:"-.02em",lineHeight:1.12,marginBottom:16,color:"#1A1A1A",fontFamily:"var(--fn)"}}>
+              Post Free.<br/>
+              <span style={{color:"#1428A0"}}>Pay Only When</span><br/>
+              You Get a Buyer.
+            </h1>
+            <p style={{fontSize:15,color:"#636363",lineHeight:1.8,marginBottom:28,fontWeight:400}}>
+              List items in minutes with photos. Pay KSh 250 only when a serious buyer locks in.
+            </p>
+            <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
+              <button className="btn bp" style={{padding:"13px 28px",fontSize:15,borderRadius:10,boxShadow:"0 4px 14px rgba(20,40,160,.28)"}}
+                onClick={()=>{
+                  if(!user){setModal({type:"auth",mode:"signup"});return;}
+                  if(user.role==="buyer"){
+                    if(typeof window!=="undefined"&&window.confirm("You're currently a Buyer. Switch to Seller to post ads?"))
+                      apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token).then(d=>{const upd={...user,...d.user};setUser(upd);localStorage.setItem("ws_user",JSON.stringify(upd));notify("Switched to Seller!","success");setModal({type:"post"});}).catch(e=>notify(e.message,"error"));
+                    return;
+                  }
+                  setModal({type:"post"});
+                }}>+ Post an Ad for Free</button>
+              <button className="btn bs" style={{padding:"13px 24px",fontSize:15,borderRadius:10}}
+                onClick={()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"})}>Browse Listings</button>
+            </div>
+            <div style={{display:"flex",gap:18,fontSize:13,color:"#888",fontWeight:500,flexWrap:"wrap"}}>
+              {["Free to post","Anonymous chat","M-Pesa escrow"].map(t=>(
+                <span key={t} style={{display:"flex",alignItems:"center",gap:6}}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1428A0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>{t}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Browse by Category */}
+          <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:20,padding:"24px 22px",boxShadow:"0 1px 3px rgba(0,0,0,.06),0 6px 24px rgba(0,0,0,.07)"}}>
+            <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:4}}>Browse by Category</div>
+            <h2 style={{fontSize:18,fontWeight:700,color:"#1A1A1A",marginBottom:18,letterSpacing:"-.01em"}}>What are you looking for?</h2>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(72px,1fr))",gap:8}}>
+              {CATS.map(c=>{
+                const active=filter.cat===c.name;
+                return <div key={c.name}
+                  onClick={()=>{setFilter(p=>({...p,cat:p.cat===c.name?"":c.name}));setPg(1);setTimeout(()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"}),100);}}
+                  style={{display:"flex",flexDirection:"column",alignItems:"center",gap:7,padding:"10px 4px",cursor:"pointer",borderRadius:14,background:active?"#EEF2FF":"transparent",border:`1.5px solid ${active?"#1428A0":"transparent"}`,transition:"all .16s cubic-bezier(.34,1.56,.64,1)",boxShadow:active?"0 0 0 2px rgba(20,40,160,.1)":"none"}}
+                  onMouseEnter={e=>{if(!active){e.currentTarget.style.background="#F5F7FF";e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow="0 4px 12px rgba(0,0,0,.1)";}}}
+                  onMouseLeave={e=>{if(!active){e.currentTarget.style.background="transparent";e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";}}}>
+                  <div style={{width:58,height:58,borderRadius:"50%",overflow:"hidden",flexShrink:0,border:`2.5px solid ${active?"#1428A0":"#E5E5E5"}`,boxShadow:"0 2px 8px rgba(0,0,0,.1)",transition:"border-color .15s,box-shadow .15s"}}>
+                    <img src={CAT_PHOTOS[c.name]||CAT_PHOTOS.Other} alt={c.name} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+                  </div>
+                  <div style={{fontSize:10,fontWeight:600,color:active?"#1428A0":"#444",textAlign:"center",lineHeight:1.3,wordBreak:"break-word"}}>{c.name}</div>
+                </div>;
+              })}
+            </div>
+          </div>
+
+          {/* Search & Filters */}
+          <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:20,padding:"24px 22px",boxShadow:"0 1px 3px rgba(0,0,0,.06),0 6px 24px rgba(0,0,0,.07)",display:"flex",flexDirection:"column",gap:14}}>
+            <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"#AAAAAA"}}>Search & Filter</div>
+            <div style={{display:"flex",gap:0,border:"1.5px solid #E0E0E0",borderRadius:10,overflow:"hidden",background:"#FAFAFA",transition:"border-color .15s,box-shadow .15s"}}
+              onFocusCapture={e=>e.currentTarget.style.borderColor="#1428A0"} onBlurCapture={e=>e.currentTarget.style.borderColor="#E0E0E0"}>
+              <input style={{flex:1,padding:"10px 14px",border:"none",outline:"none",fontSize:14,fontFamily:"var(--fn)",color:"#1A1A1A",background:"transparent",minWidth:0}}
                 placeholder="Search listings..." value={searchInput}
                 onChange={e=>setSearchInput(e.target.value)}
                 onKeyDown={e=>{if(e.key==="Enter"){setFilter(p=>({...p,q:searchInput}));setPg(1);}}}/>
-              <button style={{background:"#1428A0",color:"#fff",border:"none",padding:"0 14px",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"var(--fn)",flexShrink:0}}
-                onClick={()=>{setFilter(p=>({...p,q:searchInput}));setPg(1);}}>Go</button>
+              <button className="btn bp" style={{borderRadius:0,padding:"0 16px",fontSize:13}}
+                onClick={()=>{setFilter(p=>({...p,q:searchInput}));setPg(1);}}>Search</button>
             </div>
-          </div>
-          <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:14,padding:"20px 18px"}}>
-            <div style={{fontSize:12,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:12}}>Category</div>
-            <select className="inp" style={{borderRadius:8,fontSize:14,marginBottom:filter.cat?10:0}} value={filter.cat} onChange={e=>{setFilter(p=>({...p,cat:e.target.value,subcat:""}));setPg(1);}}>
-              <option value="">All Categories</option>
-              {CATS.map(c=><option key={c.name} value={c.name}>{c.name}</option>)}
-            </select>
-            {filter.cat&&<select className="inp" style={{borderRadius:8,fontSize:14}} value={filter.subcat} onChange={e=>{setFilter(p=>({...p,subcat:e.target.value}));setPg(1);}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+              <div>
+                <div style={{fontSize:11,fontWeight:600,color:"#AAAAAA",letterSpacing:".07em",textTransform:"uppercase",marginBottom:6}}>Category</div>
+                <select className="inp" style={{fontSize:13}} value={filter.cat} onChange={e=>{setFilter(p=>({...p,cat:e.target.value,subcat:""}));setPg(1);}}>
+                  <option value="">All Categories</option>
+                  {CATS.map(c=><option key={c.name} value={c.name}>{c.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <div style={{fontSize:11,fontWeight:600,color:"#AAAAAA",letterSpacing:".07em",textTransform:"uppercase",marginBottom:6}}>County</div>
+                <select className="inp" style={{fontSize:13}} value={filter.county} onChange={e=>{setFilter(p=>({...p,county:e.target.value}));setPg(1);}}>
+                  <option value="">All Counties</option>
+                  {counties.map(c=><option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
+                <div style={{fontSize:11,fontWeight:600,color:"#AAAAAA",letterSpacing:".07em",textTransform:"uppercase",marginBottom:6}}>Min Price (KSh)</div>
+                <input className="inp" style={{fontSize:13}} placeholder="e.g. 500" type="number" value={filter.minPrice} onChange={e=>{setFilter(p=>({...p,minPrice:e.target.value}));setPg(1);}}/>
+              </div>
+              <div>
+                <div style={{fontSize:11,fontWeight:600,color:"#AAAAAA",letterSpacing:".07em",textTransform:"uppercase",marginBottom:6}}>Max Price (KSh)</div>
+                <input className="inp" style={{fontSize:13}} placeholder="e.g. 50000" type="number" value={filter.maxPrice} onChange={e=>{setFilter(p=>({...p,maxPrice:e.target.value}));setPg(1);}}/>
+              </div>
+            </div>
+            {filter.cat&&<select className="inp" style={{fontSize:13}} value={filter.subcat} onChange={e=>{setFilter(p=>({...p,subcat:e.target.value}));setPg(1);}}>
               <option value="">All Subcategories</option>
               {(CATS.find(c=>c.name===filter.cat)?.sub||[]).map(s=><option key={s} value={s}>{s}</option>)}
             </select>}
+            {(filter.cat||filter.subcat||filter.county||filter.minPrice||filter.maxPrice||filter.q)&&
+              <button className="btn bs" style={{width:"100%",borderRadius:10,fontSize:13}} onClick={()=>{setFilter({cat:"",subcat:"",q:"",county:"",minPrice:"",maxPrice:"",sort:"newest"});setSearchInput("");setPg(1);}}>Clear All Filters</button>}
           </div>
-          <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:14,padding:"20px 18px"}}>
-            <div style={{fontSize:12,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:12}}>Price Range (KSh)</div>
-            <div style={{display:"flex",flexDirection:"column",gap:10}}>
-              <input className="inp" style={{borderRadius:8,fontSize:14}} placeholder="Min price" type="number" value={filter.minPrice} onChange={e=>{setFilter(p=>({...p,minPrice:e.target.value}));setPg(1);}}/>
-              <input className="inp" style={{borderRadius:8,fontSize:14}} placeholder="Max price" type="number" value={filter.maxPrice} onChange={e=>{setFilter(p=>({...p,maxPrice:e.target.value}));setPg(1);}}/>
-            </div>
-          </div>
-          <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:14,padding:"20px 18px"}}>
-            <div style={{fontSize:12,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:12}}>Location</div>
-            <select className="inp" style={{borderRadius:8,fontSize:14}} value={filter.county} onChange={e=>{setFilter(p=>({...p,county:e.target.value}));setPg(1);}}>
-              <option value="">All Counties</option>
-              {counties.map(c=><option key={c} value={c}>{c}</option>)}
+        </div>
+
+        {/* RIGHT: What Buyers Want — full panel */}
+        <div style={{flex:"1 1 340px",minWidth:0,maxWidth:480,background:"#fff",border:"1px solid #EBEBEB",borderRadius:20,padding:"24px 22px",boxShadow:"0 1px 3px rgba(0,0,0,.06),0 6px 24px rgba(0,0,0,.07)",position:"sticky",top:"calc(var(--nav-h) + 16px)"}}>
+          <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:4}}>Community</div>
+          <div style={{fontSize:20,fontWeight:800,color:"#1A1A1A",marginBottom:4,letterSpacing:"-.02em"}}>Buyers Want</div>
+          <p style={{fontSize:13,color:"#888",marginBottom:18,lineHeight:1.6}}>Sellers — see what buyers are actively looking for and respond with a listing.</p>
+          <WhatBuyersWant user={user} token={token} notify={notify} onSignIn={()=>setModal({type:"auth",mode:"login"})} compact={true}
+            onViewAll={()=>{setPage("requests");if(typeof window!=='undefined')window.history.pushState({},"","/requests");}}
+            onIHaveThis={(request,action)=>{
+              if(action==="switch_to_seller"){
+                apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token)
+                  .then(d=>{const u={...user,...d.user};setUser(u);localStorage.setItem("ws_user",JSON.stringify(u));notify("Switched to Seller! Now post your ad.","success");setModal({type:"post",linkedRequest:request});})
+                  .catch(e=>notify(e.message,"error"));
+                return;
+              }
+              setModal({type:"post",linkedRequest:request});
+            }}/>
+        </div>
+      </div>
+
+      {/* ── LISTINGS SECTION — full width below ── */}
+      <div id="listings-section">
+        <HotRightNow onOpen={openListing} savedIds={savedIds} onToggleSave={handleToggleSave} user={user}/>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,marginBottom:20,flexWrap:"wrap"}}>
+          <h2 style={{fontSize:22,fontWeight:700,letterSpacing:"-.02em",color:"#1A1A1A"}}>
+            {filter.cat||"All Listings"} <span style={{fontWeight:400,fontSize:15,color:"#AAAAAA"}}>{total} items</span>
+          </h2>
+          <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
+            <select style={{padding:"9px 14px",border:"1.5px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:14,fontFamily:"var(--fn)",background:"#fff",color:"#444",cursor:"pointer",transition:"border-color .15s"}}
+              value={filter.sort} onChange={e=>{setFilter(p=>({...p,sort:e.target.value}));setPg(1);}}>
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="price_asc">Price: Low → High</option>
+              <option value="price_desc">Price: High → Low</option>
+              <option value="popular">Most Viewed</option>
+              <option value="expiring">Expiring Soon</option>
             </select>
-          </div>
-          {(filter.cat||filter.subcat||filter.county||filter.minPrice||filter.maxPrice||filter.q)&&
-            <button className="btn bs" style={{width:"100%",borderRadius:10,fontSize:14}} onClick={()=>{setFilter({cat:"",subcat:"",q:"",county:"",minPrice:"",maxPrice:"",sort:"newest"});setSearchInput("");setPg(1);}}>Clear All Filters</button>}
-          <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:14,padding:"20px 18px"}}>
-            <div style={{fontSize:12,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:4}}>Community</div>
-            <div style={{fontSize:16,fontWeight:700,color:"#1A1A1A",marginBottom:12}}>Buyers Want</div>
-            <WhatBuyersWant user={user} token={token} notify={notify} onSignIn={()=>setModal({type:"auth",mode:"login"})} compact={true}
-              onViewAll={()=>{setPage("requests");if(typeof window!=='undefined')window.history.pushState({},"","/requests");}}
-              onIHaveThis={(request,action)=>{
-                if(action==="switch_to_seller"){
-                  apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token)
-                    .then(d=>{const u={...user,...d.user};setUser(u);localStorage.setItem("ws_user",JSON.stringify(u));
-                      notify("Switched to Seller! Now post your ad.","success");
-                      setModal({type:"post",linkedRequest:request});
-                    }).catch(e=>notify(e.message,"error"));
-                  return;
-                }
-                setModal({type:"post",linkedRequest:request});
-              }}/>
-          </div>
-        </div>
-
-        {/* RIGHT: main content */}
-        <div style={{flex:1,minWidth:0}} id="listings-section">
-          <HotRightNow onOpen={openListing} savedIds={savedIds} onToggleSave={handleToggleSave} user={user}/>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,marginBottom:20,flexWrap:"wrap"}}>
-            <h2 style={{fontSize:22,fontWeight:700,letterSpacing:"-.02em",color:"#1A1A1A"}}>
-              {filter.cat||"All Listings"} <span style={{fontWeight:400,fontSize:15,color:"#AAAAAA"}}>{total} items</span>
-            </h2>
-            <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
-              <select style={{padding:"9px 14px",border:"1.5px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:14,fontFamily:"var(--fn)",background:"#fff",color:"#444",cursor:"pointer"}} value={filter.sort} onChange={e=>{setFilter(p=>({...p,sort:e.target.value}));setPg(1);}}>
-                <option value="newest">Newest first</option>
-                <option value="oldest">Oldest first</option>
-                <option value="price_asc">Price: Low → High</option>
-                <option value="price_desc">Price: High → Low</option>
-                <option value="popular">Most Viewed</option>
-                <option value="expiring">Expiring Soon</option>
-              </select>
-              <div style={{display:"flex",gap:2}}>
-                <button onClick={()=>setVm("grid")} style={{background:vm==="grid"?"#1428A0":"#fff",color:vm==="grid"?"#fff":"#767676",border:"1.5px solid #E0E0E0",padding:"8px 14px",cursor:"pointer",fontSize:15,fontFamily:"var(--fn)",borderRadius:"8px 0 0 8px",transition:"all .15s"}}>Grid</button>
-                <button onClick={()=>setVm("list")} style={{background:vm==="list"?"#1428A0":"#fff",color:vm==="list"?"#fff":"#767676",border:"1.5px solid #E0E0E0",borderLeft:"none",padding:"8px 14px",cursor:"pointer",fontSize:15,fontFamily:"var(--fn)",borderRadius:"0 8px 8px 0",transition:"all .15s"}}>List</button>
-              </div>
-              {user&&<button className="btn bp" style={{borderRadius:9,fontSize:14,padding:"9px 20px"}} onClick={()=>{
-                if(user.role==="buyer"){
-                  if(typeof window !== 'undefined' && window.confirm("You're currently a Buyer. Switch to Seller to post ads?"))
-                    apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token).then(d=>{const upd={...user,...d.user};setUser(upd);localStorage.setItem("ws_user",JSON.stringify(upd));notify("Switched to Seller!","success");setModal({type:"post"});}).catch(e=>notify(e.message,"error"));
-                  return;
-                }
-                setModal({type:"post"});
-              }}>+ Post Ad</button>}
+            <div style={{display:"flex",gap:0,borderRadius:8,overflow:"hidden",border:"1.5px solid #E0E0E0"}}>
+              <button onClick={()=>setVm("grid")} style={{background:vm==="grid"?"#1428A0":"#fff",color:vm==="grid"?"#fff":"#767676",border:"none",padding:"8px 16px",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"var(--fn)",transition:"all .15s"}}>Grid</button>
+              <button onClick={()=>setVm("list")} style={{background:vm==="list"?"#1428A0":"#fff",color:vm==="list"?"#fff":"#767676",border:"none",borderLeft:"1.5px solid #E0E0E0",padding:"8px 16px",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"var(--fn)",transition:"all .15s"}}>List</button>
             </div>
+            {user&&<button className="btn bp" style={{borderRadius:9,fontSize:13,padding:"9px 20px"}} onClick={()=>{
+              if(user.role==="buyer"){
+                if(typeof window!=="undefined"&&window.confirm("You're currently a Buyer. Switch to Seller to post ads?"))
+                  apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token).then(d=>{const upd={...user,...d.user};setUser(upd);localStorage.setItem("ws_user",JSON.stringify(upd));notify("Switched to Seller!","success");setModal({type:"post"});}).catch(e=>notify(e.message,"error"));
+                return;
+              }
+              setModal({type:"post"});
+            }}>+ Post Ad</button>}
           </div>
-
-          {loading?<div style={{textAlign:"center",padding:"80px 0"}}><Spin s="40px"/></div>
-            :listings.length===0?<div className="empty"><div style={{fontSize:56,marginBottom:16,opacity:.15}}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><h3 style={{fontWeight:700,fontSize:20,marginBottom:8}}>No listings found</h3><p style={{color:"#767676"}}>Try a different search or filter</p></div>
-            :<div className={vm==="grid"?"g3":"lvc"}>{listings.map(l=><ListingCard key={l.id} listing={l} onClick={()=>openListing(l)} listView={vm==="list"} isSaved={savedIds.has(l.id)} onSave={user?()=>handleToggleSave(l):null}/>)}</div>}
-
-          {!loading&&total>0&&<div style={{textAlign:"center",marginTop:24}}>
-            <button style={{background:"#1428A0",color:"#fff",border:"none",padding:"13px 32px",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:9,boxShadow:"0 2px 8px rgba(20,40,160,.2)"}}
-              onClick={()=>{setPage("listings");if(typeof window!=='undefined')window.history.pushState({},"","/listings");}}>
-              View All Listings ({total}) →
-            </button>
-          </div>}
         </div>
+
+        {loading?<div style={{textAlign:"center",padding:"80px 0"}}><Spin s="40px"/></div>
+          :listings.length===0?<div className="empty"><h3 style={{fontWeight:700,fontSize:20,marginBottom:8}}>No listings found</h3><p style={{color:"#767676"}}>Try a different search or filter</p></div>
+          :<div className={vm==="grid"?"g3":"lvc"}>{listings.map(l=><ListingCard key={l.id} listing={l} onClick={()=>openListing(l)} listView={vm==="list"} isSaved={savedIds.has(l.id)} onSave={user?()=>handleToggleSave(l):null}/>)}</div>}
+
+        {!loading&&total>0&&<div style={{textAlign:"center",marginTop:24}}>
+          <button className="btn bp" style={{padding:"13px 32px",fontSize:14,borderRadius:9}}
+            onClick={()=>{setPage("listings");if(typeof window!=='undefined')window.history.pushState({},"","/listings");}}>
+            View All Listings ({total}) →
+          </button>
+        </div>}
       </div>
 
       {/* PLATFORM STATS */}
