@@ -3560,7 +3560,7 @@ function PWABanner({onDismiss}){
     const perm=await Notification.requestPermission();
     setNotifPerm(perm);
     if(perm==="granted"){
-      new Notification("Weka Soko",{body:"Notifications enabled! You'll be alerted for new messages and offers.",icon:"/icon-192.png"});
+      new Notification("Weka Soko",{body:"Notifications enabled! You'll be alerted for new messages and offers.",icon:"/icon.svg"});
     }
   };
 

@@ -1,0 +1,44 @@
+{
+  "name": "Weka Soko",
+  "short_name": "Weka Soko",
+  "description": "Kenya's trusted marketplace. Post free. Pay KSh 250 only when a serious buyer locks in.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1428A0",
+  "orientation": "portrait-primary",
+  "lang": "en-KE",
+  "categories": ["shopping", "lifestyle"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Post an Ad",
+      "short_name": "Post Ad",
+      "description": "Post a new listing on Weka Soko",
+      "url": "/?action=post",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Browse Listings",
+      "short_name": "Browse",
+      "description": "Browse all listings",
+      "url": "/",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    }
+  ]
+}

@@ -48,6 +48,12 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     }
   },[]);
 
+  // ── Register service worker (enables PWA install + push notifications) ──────
+  useEffect(()=>{
+    if(typeof window==="undefined"||!("serviceWorker" in navigator))return;
+    navigator.serviceWorker.register("/sw.js").catch(err=>console.warn("[SW] registration failed:",err));
+  },[]);
+
   // ── Global ripple effect on all .btn clicks ────────────────────────────────
   useEffect(()=>{
     const handler=(e)=>{
