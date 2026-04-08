@@ -760,12 +760,10 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         </div>
 
         {/* Section heading */}
-        <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-between",marginBottom:28,flexWrap:"wrap",gap:12}}>
-          <div>
-            <div style={{fontSize:11,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"#1428A0",marginBottom:8}}>How It Works</div>
-            <h2 style={{fontSize:"clamp(22px,3vw,34px)",fontWeight:800,letterSpacing:"-.03em",color:"#111111",lineHeight:1.15,margin:0}}>Simple. Safe. Built for Kenya.</h2>
-          </div>
-          <p style={{fontSize:14,color:"#636363",lineHeight:1.7,margin:0,maxWidth:340}}>No middlemen. No hidden fees. Just buyers and sellers who get things done.</p>
+        <div style={{marginBottom:28}}>
+          <div style={{fontSize:11,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"#1428A0",marginBottom:8}}>How It Works</div>
+          <h2 style={{fontSize:"clamp(22px,3vw,34px)",fontWeight:800,letterSpacing:"-.03em",color:"#111111",lineHeight:1.15,margin:"0 0 10px"}}>Simple. Safe. Built for Kenya.</h2>
+          <p style={{fontSize:14,color:"#636363",lineHeight:1.7,margin:0}}>No middlemen. No hidden fees. Just buyers and sellers who get things done.</p>
         </div>
 
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:20}}>
@@ -789,7 +787,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
                   {icon==="lock"&&<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>}
                   {icon==="trophy"&&<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="8 21 12 17 16 21"/><line x1="12" y1="17" x2="12" y2="11"/><path d="M7 4H4a2 2 0 0 0-2 2v1a5 5 0 0 0 5 5"/><path d="M17 4h3a2 2 0 0 1 2 2v1a5 5 0 0 1-5 5"/><rect x="7" y="2" width="10" height="10" rx="1"/></svg>}
                 </div>
-                <span style={{fontWeight:700,fontSize:11,letterSpacing:".1em",textTransform:"uppercase",color:color}}>Step {i+1}</span>
+                <span style={{fontWeight:700,fontSize:11,letterSpacing:".1em",textTransform:"uppercase",color:color}}>Step {i+1}{i===4&&<span style={{marginLeft:6,fontWeight:700,fontSize:9,letterSpacing:".08em",background:"#7c3aed18",color:"#7c3aed",borderRadius:4,padding:"2px 6px",verticalAlign:"middle"}}>OPTIONAL</span>}</span>
               </div>
               <div style={{fontWeight:700,fontSize:15,marginBottom:8,color:"#1A1A1A",lineHeight:1.3}}>{title}</div>
               <div style={{fontSize:13,color:"#636363",lineHeight:1.75}}>{desc}</div>
