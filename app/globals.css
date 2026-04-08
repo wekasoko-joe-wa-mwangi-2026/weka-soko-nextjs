@@ -52,7 +52,8 @@ body{background:var(--bg);color:var(--txt);font-family:'Plus Jakarta Sans',sans-
   -webkit-tap-highlight-color:transparent;
 }
 .btn:disabled{opacity:.4;cursor:not-allowed;}
-.btn:active:not(:disabled){transform:scale(.95) !important;}
+.btn:hover:not(:disabled){transform:translateY(-2px);}
+.btn:active:not(:disabled){transform:scale(.95) translateY(0) !important;}
 
 /* Ripple effect on all buttons */
 .btn .rpl{
@@ -68,21 +69,21 @@ body{background:var(--bg);color:var(--txt);font-family:'Plus Jakarta Sans',sans-
 }
 
 .bp{background:#1428A0;color:#fff;border:2px solid #1428A0;}
-.bp:hover:not(:disabled){background:#0F1F8A;border-color:#0F1F8A;box-shadow:0 0 0 4px rgba(20,40,160,.15),0 4px 16px rgba(20,40,160,.3);}
+.bp:hover:not(:disabled){background:#0F1F8A;border-color:#0F1F8A;box-shadow:0 4px 18px rgba(20,40,160,.38),0 1px 4px rgba(20,40,160,.2);}
 .bp .rpl{background:rgba(255,255,255,.3);}
 
 .bs{background:transparent;color:var(--txt);border:1.5px solid var(--txt);}
-.bs:hover:not(:disabled){background:var(--txt);color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.12);}
+.bs:hover:not(:disabled){background:var(--txt);color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.18),0 1px 3px rgba(0,0,0,.1);}
 .bs .rpl{background:rgba(0,0,0,.08);}
 
 .bg2{background:var(--a);color:#fff;}
-.bg2:hover:not(:disabled){background:var(--a2);}
+.bg2:hover:not(:disabled){background:var(--a2);box-shadow:0 4px 14px rgba(20,40,160,.28),0 1px 3px rgba(20,40,160,.15);}
 
 .bgh{background:transparent;color:var(--mut);border:none;padding:8px 14px;font-size:13px;letter-spacing:.02em;}
-.bgh:hover:not(:disabled){color:var(--txt);background:rgba(0,0,0,.04);border-radius:8px;}
+.bgh:hover:not(:disabled){color:var(--txt);background:rgba(0,0,0,.06);transform:translateY(-1px);}
 
 .br2{background:transparent;color:var(--red);border:1px solid var(--red);}
-.br2:hover:not(:disabled){background:var(--red);color:#fff;}
+.br2:hover:not(:disabled){background:var(--red);color:#fff;box-shadow:0 4px 14px rgba(192,48,48,.3);}
 
 .sm{padding:8px 18px;font-size:12px;letter-spacing:.04em;}
 .lg{padding:14px 36px;font-size:15px;letter-spacing:.04em;}
