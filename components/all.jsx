@@ -1562,6 +1562,15 @@ function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnl
   const [mainPhoto,setMainPhoto]=useState(photos[0]||null);
   const [lightbox,setLightbox]=useState(null); // {photos, idx}
   const escrowFee=Math.round(Number(l.price)*0.055);
+  const photoIdxRef=useRef(0);
+  useEffect(()=>{
+    if(photos.length<=1) return;
+    const id=setInterval(()=>{
+      photoIdxRef.current=(photoIdxRef.current+1)%photos.length;
+      setMainPhoto(photos[photoIdxRef.current]);
+    },3000);
+    return()=>clearInterval(id);
+  },[]);
 
   return <Modal title={l.title} onClose={onClose} large footer={
     <div style={{width:"100%",display:"flex",gap:8,flexWrap:"wrap"}}>
@@ -3838,12 +3847,6 @@ function MobileLayout({
 
   const postAd=()=>{
     if(!user){setModal({type:"auth",mode:"signup"});return;}
-    if(user.role==="buyer"){
-      if(window.confirm("Switch to Seller to post ads?"))
-        fetch(`${(process.env.NEXT_PUBLIC_API_URL||"https://wekasokobackend.up.railway.app").replace(/\/$/,"")}/api/auth/role`,{method:"PATCH",headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`},body:JSON.stringify({role:"seller"})})
-          .then(r=>r.json()).then(d=>{localStorage.setItem("ws_user",JSON.stringify(d.user));window.location.reload();});
-      return;
-    }
     setModal({type:"post"});
   };
 

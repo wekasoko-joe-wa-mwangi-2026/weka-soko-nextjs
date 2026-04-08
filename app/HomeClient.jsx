@@ -501,14 +501,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       onBack={()=>{setPage("home");setMobileTab("home");if(typeof window!=='undefined')window.history.pushState({},"","/");}}
       onOpenListing={openListing}
       onToggleSave={handleToggleSave}
-      onPostAd={()=>{
-        if(user?.role==="buyer"){
-          if(typeof window!=='undefined'&&window.confirm("Switch to Seller to post ads?"))
-            apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token).then(d=>{const u={...user,...d.user};setUser(u);localStorage.setItem("ws_user",JSON.stringify(u));notify("Switched to Seller!","success");setModal({type:"post"});}).catch(e=>notify(e.message,"error"));
-          return;
-        }
-        setModal({type:"post"});
-      }}
+      onPostAd={()=>{ if(!user){setModal({type:"auth",mode:"signup"});return;} setModal({type:"post"}); }}
       onSignIn={()=>setModal({type:"auth",mode:"login"})}
       initialFilter={filter}
     />
@@ -618,7 +611,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
             <div style={{flex:"1 1 0",minWidth:0,padding:"clamp(20px,3vw,32px) clamp(16px,3vw,28px)",background:"#FAFAFA",overflowY:"auto"}}>
               <div style={{fontSize:10,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:3}}>Browse by Category</div>
               <div style={{fontSize:15,fontWeight:700,color:"#1A1A1A",marginBottom:14,letterSpacing:"-.01em"}}>What are you looking for?</div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(64px,1fr))",gap:6}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:6}}>
                 {CATS.map(c=>{
                   const active=filter.cat===c.name;
                   return <div key={c.name}
@@ -876,14 +869,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       onBack={()=>{setPage("home");if(typeof window!=='undefined')window.history.pushState({},"","/");}}
       onOpenListing={openListing}
       onToggleSave={handleToggleSave}
-      onPostAd={()=>{
-        if(user?.role==="buyer"){
-          if(typeof window!=='undefined'&&window.confirm("You're currently a Buyer. Switch to Seller to post ads?"))
-            apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token).then(d=>{const u={...user,...d.user};setUser(u);localStorage.setItem("ws_user",JSON.stringify(u));notify("Switched to Seller!","success");setModal({type:"post"});}).catch(e=>notify(e.message,"error"));
-          return;
-        }
-        setModal({type:"post"});
-      }}
+      onPostAd={()=>{ if(!user){setModal({type:"auth",mode:"signup"});return;} setModal({type:"post"}); }}
       onSignIn={()=>setModal({type:"auth",mode:"login"})}
       initialFilter={filter}
     />}

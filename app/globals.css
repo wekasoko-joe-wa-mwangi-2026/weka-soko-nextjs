@@ -556,7 +556,8 @@ select.inp{appearance:none;cursor:pointer;}
 
 /* ── MOBILE UX ────────────────────────────────────────────────────────────── */
 *{-webkit-tap-highlight-color:transparent;}
-input,select,textarea{font-size:16px!important;}
+input,select,textarea,button{font-family:inherit;font-size:16px!important;}
+input,select,textarea{color:inherit;}
 .nav{-webkit-overflow-scrolling:touch;}
 .tab-row{-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .tab-row::-webkit-scrollbar{display:none;}
