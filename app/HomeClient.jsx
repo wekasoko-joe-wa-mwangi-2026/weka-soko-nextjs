@@ -565,15 +565,6 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       </div>
     </nav>
 
-    {/* Trust bar */}
-    {page!=="dashboard"&&page!=="sold"&&page!=="requests"&&page!=="listings"&&<div style={{background:"#1428A0",padding:"11px 20px",display:"flex",gap:20,alignItems:"center",justifyContent:"center",flexWrap:"wrap"}}>
-      {["Free to list","Safe anonymous chat","M-Pesa escrow","Kenyan platform"].map(t=>(
-        <span key={t} style={{fontSize:13,fontWeight:600,color:"rgba(255,255,255,.92)",display:"flex",alignItems:"center",gap:7}}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>{t}
-        </span>
-      ))}
-    </div>}
-
     {page!=="dashboard"&&page!=="sold"&&page!=="requests"&&page!=="listings"&&newSinceLastVisit>0&&<div style={{background:"#10b981",color:"#fff",padding:"9px 20px",textAlign:"center",fontSize:13,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
       <span>{newSinceLastVisit} new listing{newSinceLastVisit!==1?"s":""} added since your last visit</span>
     </div>}
@@ -647,46 +638,46 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
 
           {/* Search & Filters */}
           <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:20,padding:"24px 22px",boxShadow:"0 1px 3px rgba(0,0,0,.06),0 6px 24px rgba(0,0,0,.07)",display:"flex",flexDirection:"column",gap:14}}>
-            <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"#AAAAAA"}}>Search & Filter</div>
-            <div style={{display:"flex",gap:0,border:"1.5px solid #E0E0E0",borderRadius:10,overflow:"hidden",background:"#FAFAFA",transition:"border-color .15s,box-shadow .15s"}}
+            <div style={{fontSize:13,fontWeight:700,color:"#1A1A1A"}}>Search & Filter</div>
+            <div style={{display:"flex",gap:0,border:"1.5px solid #E0E0E0",borderRadius:10,overflow:"hidden",background:"#FAFAFA",transition:"border-color .15s"}}
               onFocusCapture={e=>e.currentTarget.style.borderColor="#1428A0"} onBlurCapture={e=>e.currentTarget.style.borderColor="#E0E0E0"}>
               <input style={{flex:1,padding:"10px 14px",border:"none",outline:"none",fontSize:14,fontFamily:"var(--fn)",color:"#1A1A1A",background:"transparent",minWidth:0}}
                 placeholder="Search listings..." value={searchInput}
                 onChange={e=>setSearchInput(e.target.value)}
                 onKeyDown={e=>{if(e.key==="Enter"){setFilter(p=>({...p,q:searchInput}));setPg(1);}}}/>
-              <button className="btn bp" style={{borderRadius:0,padding:"0 16px",fontSize:13}}
+              <button className="btn bp" style={{borderRadius:0,padding:"0 16px",fontSize:14}}
                 onClick={()=>{setFilter(p=>({...p,q:searchInput}));setPg(1);}}>Search</button>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
               <div>
-                <div style={{fontSize:11,fontWeight:600,color:"#AAAAAA",letterSpacing:".07em",textTransform:"uppercase",marginBottom:6}}>Category</div>
-                <select className="inp" style={{fontSize:13}} value={filter.cat} onChange={e=>{setFilter(p=>({...p,cat:e.target.value,subcat:""}));setPg(1);}}>
+                <label style={{display:"block",fontSize:13,fontWeight:600,color:"#636363",marginBottom:6}}>Category</label>
+                <select className="inp" value={filter.cat} onChange={e=>{setFilter(p=>({...p,cat:e.target.value,subcat:""}));setPg(1);}}>
                   <option value="">All Categories</option>
                   {CATS.map(c=><option key={c.name} value={c.name}>{c.name}</option>)}
                 </select>
               </div>
               <div>
-                <div style={{fontSize:11,fontWeight:600,color:"#AAAAAA",letterSpacing:".07em",textTransform:"uppercase",marginBottom:6}}>County</div>
-                <select className="inp" style={{fontSize:13}} value={filter.county} onChange={e=>{setFilter(p=>({...p,county:e.target.value}));setPg(1);}}>
+                <label style={{display:"block",fontSize:13,fontWeight:600,color:"#636363",marginBottom:6}}>County</label>
+                <select className="inp" value={filter.county} onChange={e=>{setFilter(p=>({...p,county:e.target.value}));setPg(1);}}>
                   <option value="">All Counties</option>
                   {counties.map(c=><option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div>
-                <div style={{fontSize:11,fontWeight:600,color:"#AAAAAA",letterSpacing:".07em",textTransform:"uppercase",marginBottom:6}}>Min Price (KSh)</div>
-                <input className="inp" style={{fontSize:13}} placeholder="e.g. 500" type="number" value={filter.minPrice} onChange={e=>{setFilter(p=>({...p,minPrice:e.target.value}));setPg(1);}}/>
+                <label style={{display:"block",fontSize:13,fontWeight:600,color:"#636363",marginBottom:6}}>Min Price (KSh)</label>
+                <input className="inp" placeholder="e.g. 500" type="number" value={filter.minPrice} onChange={e=>{setFilter(p=>({...p,minPrice:e.target.value}));setPg(1);}}/>
               </div>
               <div>
-                <div style={{fontSize:11,fontWeight:600,color:"#AAAAAA",letterSpacing:".07em",textTransform:"uppercase",marginBottom:6}}>Max Price (KSh)</div>
-                <input className="inp" style={{fontSize:13}} placeholder="e.g. 50000" type="number" value={filter.maxPrice} onChange={e=>{setFilter(p=>({...p,maxPrice:e.target.value}));setPg(1);}}/>
+                <label style={{display:"block",fontSize:13,fontWeight:600,color:"#636363",marginBottom:6}}>Max Price (KSh)</label>
+                <input className="inp" placeholder="e.g. 50000" type="number" value={filter.maxPrice} onChange={e=>{setFilter(p=>({...p,maxPrice:e.target.value}));setPg(1);}}/>
               </div>
             </div>
-            {filter.cat&&<select className="inp" style={{fontSize:13}} value={filter.subcat} onChange={e=>{setFilter(p=>({...p,subcat:e.target.value}));setPg(1);}}>
+            {filter.cat&&<select className="inp" value={filter.subcat} onChange={e=>{setFilter(p=>({...p,subcat:e.target.value}));setPg(1);}}>
               <option value="">All Subcategories</option>
               {(CATS.find(c=>c.name===filter.cat)?.sub||[]).map(s=><option key={s} value={s}>{s}</option>)}
             </select>}
             {(filter.cat||filter.subcat||filter.county||filter.minPrice||filter.maxPrice||filter.q)&&
-              <button className="btn bs" style={{width:"100%",borderRadius:10,fontSize:13}} onClick={()=>{setFilter({cat:"",subcat:"",q:"",county:"",minPrice:"",maxPrice:"",sort:"newest"});setSearchInput("");setPg(1);}}>Clear All Filters</button>}
+              <button className="btn bs" style={{width:"100%",borderRadius:10}} onClick={()=>{setFilter({cat:"",subcat:"",q:"",county:"",minPrice:"",maxPrice:"",sort:"newest"});setSearchInput("");setPg(1);}}>Clear Filters</button>}
           </div>
         </div>
 
@@ -753,37 +744,38 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         </div>}
       </div>
 
-      {/* PLATFORM STATS */}
-      <div style={{background:"#1428A0",borderRadius:0,padding:"clamp(28px,4vw,40px) clamp(20px,4vw,48px)",marginBottom:64,margin:"0 clamp(-16px,-4vw,-48px)",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:0,textAlign:"center"}}>
-        {[{label:"Active Listings",val:stats.activeAds||0},{label:"Items Sold",val:stats.sold||0},{label:"Registered Users",val:stats.users||0},{label:"Total Views",val:stats.views||0}].map((s,i)=>(
-          <div key={s.label} style={{padding:"0 24px",borderRight:i<3?"1px solid rgba(255,255,255,.2)":"none"}}>
-            <div style={{fontSize:40,fontWeight:800,color:"#fff",lineHeight:1,fontFamily:"var(--fn)"}}><Counter to={s.val}/></div>
-            <div style={{fontSize:14,fontWeight:500,color:"rgba(255,255,255,.7)",marginTop:8,letterSpacing:".02em"}}>{s.label}</div>
-          </div>
-        ))}
-      </div>
-
       {/* RECENTLY SOLD */}
-      <div style={{marginTop:64,paddingTop:56,borderTop:"2px solid #EBEBEB"}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:24,gap:12,flexWrap:"wrap"}}>
-          <div>
-            <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"#767676",marginBottom:6}}>Marketplace Activity</div>
-            <h2 style={{fontSize:22,fontWeight:700,letterSpacing:"-.02em",color:"#1A1A1A"}}>Recently Sold</h2>
-          </div>
-          <button style={{background:"#1D1D1D",color:"#fff",border:"none",padding:"10px 22px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:8}}
+      <div style={{marginTop:56,paddingTop:48,borderTop:"1px solid #EBEBEB"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20,gap:12,flexWrap:"wrap"}}>
+          <h2 style={{fontSize:20,fontWeight:700,letterSpacing:"-.02em",color:"#1A1A1A"}}>Recently Sold</h2>
+          <button className="btn bs sm" style={{borderRadius:8}}
             onClick={()=>{setPage("sold");if(typeof window!=='undefined')window.history.pushState({},"","/sold");}}>View All Sold Items →</button>
         </div>
         <SoldSection compact={true} onViewAll={()=>{setPage("sold");if(typeof window!=='undefined')window.history.pushState({},"","/sold");}}/>
       </div>
 
-      {/* HOW IT WORKS */}
-      <div style={{marginTop:80,paddingTop:64,borderTop:"2px solid #EBEBEB"}}>
-        <div style={{textAlign:"center",marginBottom:52,maxWidth:560,margin:"0 auto 52px"}}>
-          <div style={{fontSize:11,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"#1428A0",marginBottom:14}}>How It Works</div>
-          <h2 style={{fontSize:"clamp(26px,4vw,42px)",fontWeight:800,letterSpacing:"-.03em",color:"#111111",lineHeight:1.1,margin:"0 0 14px"}}>Simple. Safe.<br/>Built for Kenya.</h2>
-          <p style={{fontSize:16,color:"#636363",lineHeight:1.7,margin:0}}>No middlemen. No hidden fees. Just buyers and sellers who get things done.</p>
+      {/* HOW IT WORKS + STATS */}
+      <div style={{marginTop:56,paddingTop:48,borderTop:"1px solid #EBEBEB"}}>
+        {/* Stats row — inline, not full-bleed band */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:0,background:"#fff",border:"1px solid #EBEBEB",borderRadius:16,marginBottom:48,overflow:"hidden",boxShadow:"0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.06)"}}>
+          {[{label:"Active Listings",val:stats.activeAds||0},{label:"Items Sold",val:stats.sold||0},{label:"Registered Users",val:stats.users||0},{label:"Total Views",val:stats.views||0}].map((s,i)=>(
+            <div key={s.label} style={{padding:"20px 16px",textAlign:"center",borderRight:i<3?"1px solid #EBEBEB":"none"}}>
+              <div style={{fontSize:32,fontWeight:800,color:"#1428A0",lineHeight:1,fontFamily:"var(--fn)"}}><Counter to={s.val}/></div>
+              <div style={{fontSize:12,fontWeight:500,color:"#888",marginTop:6,letterSpacing:".01em"}}>{s.label}</div>
+            </div>
+          ))}
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:24,maxWidth:1100,margin:"0 auto"}}>
+
+        {/* Section heading */}
+        <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-between",marginBottom:28,flexWrap:"wrap",gap:12}}>
+          <div>
+            <div style={{fontSize:11,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"#1428A0",marginBottom:8}}>How It Works</div>
+            <h2 style={{fontSize:"clamp(22px,3vw,34px)",fontWeight:800,letterSpacing:"-.03em",color:"#111111",lineHeight:1.15,margin:0}}>Simple. Safe. Built for Kenya.</h2>
+          </div>
+          <p style={{fontSize:14,color:"#636363",lineHeight:1.7,margin:0,maxWidth:340}}>No middlemen. No hidden fees. Just buyers and sellers who get things done.</p>
+        </div>
+
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:20}}>
           {[
             ["doc","Post for Free","#1428A0","No upfront cost. Photos, description, location — done in 2 minutes."],
             ["chat","Chat Safely","#0d9488","Anonymous, moderated chat. Contact info hidden until unlock."],
@@ -792,67 +784,46 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
             ["lock","Safe Escrow","#7c3aed","Optional 5.5% escrow. Funds held until you confirm delivery."],
             ["trophy","Deal Done","#10b981","Leave a review. Build your seller reputation on the platform."]
           ].map(([icon,title,color,desc],i)=>(
-            <div key={title} style={{
-              background:"#fff",
-              borderRadius:20,
-              padding:"32px 28px",
-              boxShadow:"0 1px 3px rgba(0,0,0,.07), 0 6px 24px rgba(0,0,0,.08), 0 1px 0 rgba(0,0,0,.04)",
-              border:"1px solid rgba(0,0,0,.06)",
-              display:"flex",flexDirection:"column",gap:0,
-              transition:"transform .18s ease, box-shadow .18s ease",
-            }}
-            onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-4px)";e.currentTarget.style.boxShadow="0 2px 6px rgba(0,0,0,.07), 0 16px 40px rgba(0,0,0,.11), 0 1px 0 rgba(0,0,0,.04)";}}
-            onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="0 1px 3px rgba(0,0,0,.07), 0 6px 24px rgba(0,0,0,.08), 0 1px 0 rgba(0,0,0,.04)";}}
-            >
-              {/* Step number + icon */}
-              <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:20}}>
-                <div style={{width:52,height:52,borderRadius:14,background:color+"18",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                  {icon==="doc"&&<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>}
-                  {icon==="chat"&&<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>}
-                  {icon==="fire"&&<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2c0 0-5 4-5 9a5 5 0 0 0 10 0c0-5-5-9-5-9z"/><path d="M12 12c0 0-2 1.5-2 3a2 2 0 0 0 4 0c0-1.5-2-3-2-3z"/></svg>}
-                  {icon==="card"&&<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>}
-                  {icon==="lock"&&<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>}
-                  {icon==="trophy"&&<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="8 21 12 17 16 21"/><line x1="12" y1="17" x2="12" y2="11"/><path d="M7 4H4a2 2 0 0 0-2 2v1a5 5 0 0 0 5 5"/><path d="M17 4h3a2 2 0 0 1 2 2v1a5 5 0 0 1-5 5"/><rect x="7" y="2" width="10" height="10" rx="1"/></svg>}
+            <div key={title} style={{background:"#fff",borderRadius:16,padding:"24px 22px",boxShadow:"0 1px 3px rgba(0,0,0,.06),0 4px 18px rgba(0,0,0,.07)",border:"1px solid rgba(0,0,0,.05)",display:"flex",flexDirection:"column",transition:"transform .18s ease,box-shadow .18s ease"}}
+              onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-4px)";e.currentTarget.style.boxShadow="0 2px 6px rgba(0,0,0,.07),0 14px 36px rgba(0,0,0,.11)";}}
+              onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="0 1px 3px rgba(0,0,0,.06),0 4px 18px rgba(0,0,0,.07)";}}>
+              <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
+                <div style={{width:44,height:44,borderRadius:12,background:color+"18",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  {icon==="doc"&&<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>}
+                  {icon==="chat"&&<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>}
+                  {icon==="fire"&&<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2c0 0-5 4-5 9a5 5 0 0 0 10 0c0-5-5-9-5-9z"/><path d="M12 12c0 0-2 1.5-2 3a2 2 0 0 0 4 0c0-1.5-2-3-2-3z"/></svg>}
+                  {icon==="card"&&<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>}
+                  {icon==="lock"&&<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>}
+                  {icon==="trophy"&&<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="8 21 12 17 16 21"/><line x1="12" y1="17" x2="12" y2="11"/><path d="M7 4H4a2 2 0 0 0-2 2v1a5 5 0 0 0 5 5"/><path d="M17 4h3a2 2 0 0 1 2 2v1a5 5 0 0 1-5 5"/><rect x="7" y="2" width="10" height="10" rx="1"/></svg>}
                 </div>
-                <div style={{fontWeight:800,fontSize:11,letterSpacing:".1em",textTransform:"uppercase",color:color}}>Step {i+1}</div>
+                <span style={{fontWeight:700,fontSize:11,letterSpacing:".1em",textTransform:"uppercase",color:color}}>Step {i+1}</span>
               </div>
-              <div style={{fontWeight:800,fontSize:17,marginBottom:10,letterSpacing:"-.02em",color:"#1A1A1A",lineHeight:1.3}}>{title}</div>
-              <div style={{fontSize:14,color:"#636363",lineHeight:1.8}}>{desc}</div>
+              <div style={{fontWeight:700,fontSize:15,marginBottom:8,color:"#1A1A1A",lineHeight:1.3}}>{title}</div>
+              <div style={{fontSize:13,color:"#636363",lineHeight:1.75}}>{desc}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* FOOTER CTA */}
-      <div style={{marginTop:80,padding:"56px 0 0",textAlign:"center"}}>
-        <div style={{
-          background:"linear-gradient(135deg,#1428A0 0%,#1e3fd0 100%)",
-          borderRadius:24,
-          padding:"56px 40px",
-          maxWidth:760,
-          margin:"0 auto",
-          boxShadow:"0 8px 40px rgba(20,40,160,.25), 0 2px 8px rgba(20,40,160,.15)",
-        }}>
-          <div style={{fontSize:11,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"rgba(255,255,255,.6)",marginBottom:14}}>Ready to start?</div>
-          <h2 style={{fontSize:"clamp(22px,4vw,36px)",fontWeight:800,color:"#fff",letterSpacing:"-.02em",lineHeight:1.15,margin:"0 0 16px"}}>Sell something today.<br/>Pay only when it works.</h2>
-          <p style={{fontSize:15,color:"rgba(255,255,255,.75)",lineHeight:1.7,margin:"0 0 32px",maxWidth:440,marginLeft:"auto",marginRight:"auto"}}>Weka Soko connects Kenyan buyers and sellers with zero upfront risk. Post your ad in 2 minutes — free.</p>
-          <button className="btn" onClick={()=>setModal({type:"auth",mode:"register"})} style={{background:"#fff",color:"#1428A0",border:"none",padding:"15px 36px",fontSize:15,fontWeight:800,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",boxShadow:"0 4px 20px rgba(0,0,0,.15)",letterSpacing:"-.01em"}}>Post an Ad for Free</button>
+      {/* FOOTER — CTA + links + copyright in one compact block */}
+      <footer style={{marginTop:48,background:"linear-gradient(135deg,#1428A0 0%,#1e3fd0 100%)",borderRadius:20,padding:"40px 40px 32px",boxShadow:"0 8px 40px rgba(20,40,160,.2)"}}>
+        <div style={{display:"flex",gap:32,alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",marginBottom:28}}>
+          <div>
+            <span style={{fontWeight:800,fontSize:22,color:"#fff",letterSpacing:"-.02em"}}>WekaSoko</span>
+            <p style={{fontSize:13,color:"rgba(255,255,255,.65)",margin:"6px 0 0",lineHeight:1.6}}>Kenya's marketplace. Free to list.<br/>Pay KSh 250 only when a buyer locks in.</p>
+          </div>
+          <button className="btn" onClick={()=>setModal({type:"auth",mode:"register"})} style={{background:"#fff",color:"#1428A0",border:"none",padding:"13px 28px",fontSize:14,fontWeight:800,borderRadius:10,cursor:"pointer",fontFamily:"var(--fn)",boxShadow:"0 4px 16px rgba(0,0,0,.15)",whiteSpace:"nowrap"}}>Post an Ad for Free</button>
         </div>
-      </div>
-
-      {/* SITE FOOTER */}
-      <footer style={{marginTop:64,paddingTop:40,paddingBottom:40,borderTop:"1px solid #E8E8E8",textAlign:"center"}}>
-        <div style={{display:"flex",justifyContent:"center",marginBottom:20}}>
-          <a href="/" style={{textDecoration:"none"}}><span style={{fontWeight:800,fontSize:18,color:"#111",letterSpacing:"-.02em"}}>Weka<span style={{color:"#1428A0"}}>Soko</span></span></a>
-        </div>
-        <div style={{display:"flex",justifyContent:"center",gap:28,flexWrap:"wrap",marginBottom:20}}>
-          {[["Browse Listings",()=>{}],["Post an Ad",()=>setModal({type:"auth",mode:"register"})],["Buyer Requests",()=>{setPage("requests");if(typeof window!=="undefined")window.history.pushState({},"","/requests");}],["Sold Items",()=>{setPage("sold");if(typeof window!=="undefined")window.history.pushState({},"","/sold");}]].map(([label,fn])=>(
-            <button key={label} onClick={fn} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,fontWeight:500,color:"#555",fontFamily:"var(--fn)",padding:0,transition:"color .15s"}}
-              onMouseEnter={e=>e.target.style.color="#1428A0"} onMouseLeave={e=>e.target.style.color="#555"}>{label}</button>
-          ))}
-        </div>
-        <div style={{fontSize:12,color:"#AAAAAA",lineHeight:1.8}}>
-          &copy; {new Date().getFullYear()} Weka Soko. All rights reserved. &nbsp;·&nbsp; Till Number 5673935 &nbsp;·&nbsp; support@wekasoko.co.ke
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12,paddingTop:20,borderTop:"1px solid rgba(255,255,255,.15)"}}>
+          <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
+            {[["Browse Listings",()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"})],["Post an Ad",()=>setModal({type:"auth",mode:"register"})],["Buyer Requests",()=>{setPage("requests");if(typeof window!=="undefined")window.history.pushState({},"","/requests");}],["Sold Items",()=>{setPage("sold");if(typeof window!=="undefined")window.history.pushState({},"","/sold");}]].map(([label,fn])=>(
+              <button key={label} onClick={fn} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,fontWeight:500,color:"rgba(255,255,255,.7)",fontFamily:"var(--fn)",padding:0,transition:"color .15s"}}
+                onMouseEnter={e=>e.target.style.color="#fff"} onMouseLeave={e=>e.target.style.color="rgba(255,255,255,.7)"}>{label}</button>
+            ))}
+          </div>
+          <div style={{fontSize:12,color:"rgba(255,255,255,.45)"}}>
+            &copy; {new Date().getFullYear()} Weka Soko &nbsp;·&nbsp; Till 5673935
+          </div>
         </div>
       </footer>
     </main>}

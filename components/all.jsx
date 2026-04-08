@@ -4498,13 +4498,6 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
       {renderSlide(0)}
 
       {/* Fixed UI — always on top, not part of swipe stack */}
-      {/* Progress dots */}
-      <div style={{position:"absolute",top:16,left:0,right:0,display:"flex",justifyContent:"center",gap:5,zIndex:20,pointerEvents:"none"}}>
-        {Array.from({length:visCount},(_,i)=>{
-          const absI=visStart+i;
-          return<div key={absI} style={{width:absI===idx?20:6,height:6,borderRadius:3,background:absI<idx?"rgba(255,255,255,.6)":absI===idx?"#fff":"rgba(255,255,255,.25)",transition:"all .2s"}}/>;
-        })}
-      </div>
       {/* Back button */}
       {onClose&&<button onClick={onClose} style={{position:"absolute",top:14,left:14,width:38,height:38,borderRadius:"50%",background:"rgba(0,0,0,.6)",border:"2px solid rgba(255,255,255,.3)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:20,backdropFilter:"blur(4px)"}}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
