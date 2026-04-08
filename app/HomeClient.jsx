@@ -760,13 +760,13 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         </div>
 
         {/* Section heading */}
-        <div style={{marginBottom:28}}>
+        <div style={{marginBottom:36,textAlign:"center"}}>
           <div style={{fontSize:11,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"#1428A0",marginBottom:8}}>How It Works</div>
           <h2 style={{fontSize:"clamp(22px,3vw,34px)",fontWeight:800,letterSpacing:"-.03em",color:"#111111",lineHeight:1.15,margin:"0 0 10px"}}>Simple. Safe. Built for Kenya.</h2>
-          <p style={{fontSize:14,color:"#636363",lineHeight:1.7,margin:0}}>No middlemen. No hidden fees. Just buyers and sellers who get things done.</p>
+          <p style={{fontSize:14,color:"#636363",lineHeight:1.7,margin:"0 auto",maxWidth:480}}>No middlemen. No hidden fees. Just buyers and sellers who get things done.</p>
         </div>
 
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:20}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:20,maxWidth:1100,margin:"0 auto"}}>
           {[
             ["doc","Post for Free","#1428A0","No upfront cost. Photos, description, location — done in 2 minutes."],
             ["chat","Chat Safely","#0d9488","Anonymous, moderated chat. Contact info hidden until unlock."],
