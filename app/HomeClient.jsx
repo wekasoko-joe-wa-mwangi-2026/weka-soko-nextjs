@@ -586,58 +586,62 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         {/* LEFT: hero + categories + filters */}
         <div style={{flex:"1 1 380px",minWidth:0,display:"flex",flexDirection:"column",gap:20}}>
 
-          {/* Hero */}
-          <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:20,padding:"clamp(28px,4vw,44px) clamp(24px,4vw,40px)",boxShadow:"0 1px 3px rgba(0,0,0,.06),0 6px 24px rgba(0,0,0,.07)"}}>
-            <div style={{fontSize:12,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",marginBottom:14,color:"#1428A0"}}>Kenya's Resell Platform</div>
-            <h1 style={{fontSize:"clamp(28px,3vw,46px)",fontWeight:800,letterSpacing:"-.02em",lineHeight:1.12,marginBottom:16,color:"#1A1A1A",fontFamily:"var(--fn)"}}>
-              Post Free.<br/>
-              <span style={{color:"#1428A0"}}>Pay Only When</span><br/>
-              You Get a Buyer.
-            </h1>
-            <p style={{fontSize:15,color:"#636363",lineHeight:1.8,marginBottom:28,fontWeight:400}}>
-              List items in minutes with photos. Pay KSh 250 only when a serious buyer locks in.
-            </p>
-            <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
-              <button className="btn bp" style={{padding:"13px 28px",fontSize:15,borderRadius:10,boxShadow:"0 4px 14px rgba(20,40,160,.28)"}}
-                onClick={()=>{
-                  if(!user){setModal({type:"auth",mode:"signup"});return;}
-                  if(user.role==="buyer"){
-                    if(typeof window!=="undefined"&&window.confirm("You're currently a Buyer. Switch to Seller to post ads?"))
-                      apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token).then(d=>{const upd={...user,...d.user};setUser(upd);localStorage.setItem("ws_user",JSON.stringify(upd));notify("Switched to Seller!","success");setModal({type:"post"});}).catch(e=>notify(e.message,"error"));
-                    return;
-                  }
-                  setModal({type:"post"});
-                }}>+ Post an Ad for Free</button>
-              <button className="btn bs" style={{padding:"13px 24px",fontSize:15,borderRadius:10}}
-                onClick={()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"})}>Browse Listings</button>
-            </div>
-            <div style={{display:"flex",gap:18,fontSize:13,color:"#888",fontWeight:500,flexWrap:"wrap"}}>
-              {["Free to post","Anonymous chat","M-Pesa escrow"].map(t=>(
-                <span key={t} style={{display:"flex",alignItems:"center",gap:6}}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1428A0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>{t}
-                </span>
-              ))}
-            </div>
-          </div>
+          {/* Hero + Categories — split card */}
+          <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:20,boxShadow:"0 1px 3px rgba(0,0,0,.06),0 6px 24px rgba(0,0,0,.07)",display:"flex",overflow:"hidden",minHeight:320}}>
 
-          {/* Browse by Category */}
-          <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:20,padding:"24px 22px",boxShadow:"0 1px 3px rgba(0,0,0,.06),0 6px 24px rgba(0,0,0,.07)"}}>
-            <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:4}}>Browse by Category</div>
-            <h2 style={{fontSize:18,fontWeight:700,color:"#1A1A1A",marginBottom:18,letterSpacing:"-.01em"}}>What are you looking for?</h2>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(72px,1fr))",gap:8}}>
-              {CATS.map(c=>{
-                const active=filter.cat===c.name;
-                return <div key={c.name}
-                  onClick={()=>{setFilter(p=>({...p,cat:p.cat===c.name?"":c.name}));setPg(1);setTimeout(()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"}),100);}}
-                  style={{display:"flex",flexDirection:"column",alignItems:"center",gap:7,padding:"10px 4px",cursor:"pointer",borderRadius:14,background:active?"#EEF2FF":"transparent",border:`1.5px solid ${active?"#1428A0":"transparent"}`,transition:"all .16s cubic-bezier(.34,1.56,.64,1)",boxShadow:active?"0 0 0 2px rgba(20,40,160,.1)":"none"}}
-                  onMouseEnter={e=>{if(!active){e.currentTarget.style.background="#F5F7FF";e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow="0 4px 12px rgba(0,0,0,.1)";}}}
-                  onMouseLeave={e=>{if(!active){e.currentTarget.style.background="transparent";e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";}}}>
-                  <div style={{width:58,height:58,borderRadius:"50%",overflow:"hidden",flexShrink:0,border:`2.5px solid ${active?"#1428A0":"#E5E5E5"}`,boxShadow:"0 2px 8px rgba(0,0,0,.1)",transition:"border-color .15s,box-shadow .15s"}}>
-                    <img src={CAT_PHOTOS[c.name]||CAT_PHOTOS.Other} alt={c.name} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
-                  </div>
-                  <div style={{fontSize:10,fontWeight:600,color:active?"#1428A0":"#444",textAlign:"center",lineHeight:1.3,wordBreak:"break-word"}}>{c.name}</div>
-                </div>;
-              })}
+            {/* Left half — hero text */}
+            <div style={{flex:"1 1 0",minWidth:0,padding:"clamp(24px,3vw,40px) clamp(20px,3vw,36px)",display:"flex",flexDirection:"column",justifyContent:"center",borderRight:"1px solid #EBEBEB"}}>
+              <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",marginBottom:12,color:"#1428A0"}}>Kenya's Resell Platform</div>
+              <h1 style={{fontSize:"clamp(22px,2.4vw,38px)",fontWeight:800,letterSpacing:"-.02em",lineHeight:1.15,marginBottom:14,color:"#1A1A1A",fontFamily:"var(--fn)"}}>
+                Post Free.<br/>
+                <span style={{color:"#1428A0"}}>Pay Only When</span><br/>
+                You Get a Buyer.
+              </h1>
+              <p style={{fontSize:13,color:"#636363",lineHeight:1.8,marginBottom:22,fontWeight:400}}>
+                List items in minutes with photos. Pay KSh 250 only when a serious buyer locks in.
+              </p>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:18}}>
+                <button className="btn bp" style={{padding:"11px 22px",fontSize:13,borderRadius:10,boxShadow:"0 4px 14px rgba(20,40,160,.28)"}}
+                  onClick={()=>{
+                    if(!user){setModal({type:"auth",mode:"signup"});return;}
+                    if(user.role==="buyer"){
+                      if(typeof window!=="undefined"&&window.confirm("You're currently a Buyer. Switch to Seller to post ads?"))
+                        apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token).then(d=>{const upd={...user,...d.user};setUser(upd);localStorage.setItem("ws_user",JSON.stringify(upd));notify("Switched to Seller!","success");setModal({type:"post"});}).catch(e=>notify(e.message,"error"));
+                      return;
+                    }
+                    setModal({type:"post"});
+                  }}>+ Post an Ad</button>
+                <button className="btn bs" style={{padding:"11px 18px",fontSize:13,borderRadius:10}}
+                  onClick={()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"})}>Browse</button>
+              </div>
+              <div style={{display:"flex",gap:14,fontSize:12,color:"#888",fontWeight:500,flexWrap:"wrap"}}>
+                {["Free to post","Anonymous chat","M-Pesa escrow"].map(t=>(
+                  <span key={t} style={{display:"flex",alignItems:"center",gap:5}}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1428A0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>{t}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Right half — categories */}
+            <div style={{flex:"1 1 0",minWidth:0,padding:"clamp(20px,3vw,32px) clamp(16px,3vw,28px)",background:"#FAFAFA",overflowY:"auto"}}>
+              <div style={{fontSize:10,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:3}}>Browse by Category</div>
+              <div style={{fontSize:15,fontWeight:700,color:"#1A1A1A",marginBottom:14,letterSpacing:"-.01em"}}>What are you looking for?</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(64px,1fr))",gap:6}}>
+                {CATS.map(c=>{
+                  const active=filter.cat===c.name;
+                  return <div key={c.name}
+                    onClick={()=>{setFilter(p=>({...p,cat:p.cat===c.name?"":c.name}));setPg(1);setTimeout(()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"}),100);}}
+                    style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:"8px 4px",cursor:"pointer",borderRadius:12,background:active?"#EEF2FF":"transparent",border:`1.5px solid ${active?"#1428A0":"transparent"}`,transition:"all .16s cubic-bezier(.34,1.56,.64,1)",boxShadow:active?"0 0 0 2px rgba(20,40,160,.1)":"none"}}
+                    onMouseEnter={e=>{if(!active){e.currentTarget.style.background="#F0F4FF";e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 3px 10px rgba(0,0,0,.09)";}}}
+                    onMouseLeave={e=>{if(!active){e.currentTarget.style.background="transparent";e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";}}}>
+                    <div style={{width:50,height:50,borderRadius:"50%",overflow:"hidden",flexShrink:0,border:`2px solid ${active?"#1428A0":"#E5E5E5"}`,boxShadow:"0 2px 6px rgba(0,0,0,.08)",transition:"border-color .15s"}}>
+                      <img src={CAT_PHOTOS[c.name]||CAT_PHOTOS.Other} alt={c.name} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+                    </div>
+                    <div style={{fontSize:10,fontWeight:600,color:active?"#1428A0":"#444",textAlign:"center",lineHeight:1.3,wordBreak:"break-word"}}>{c.name}</div>
+                  </div>;
+                })}
+              </div>
             </div>
           </div>
 
