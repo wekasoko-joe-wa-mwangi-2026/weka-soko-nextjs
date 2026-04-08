@@ -766,7 +766,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
           <p style={{fontSize:14,color:"#636363",lineHeight:1.7,margin:"0 auto",maxWidth:480}}>No middlemen. No hidden fees. Just buyers and sellers who get things done.</p>
         </div>
 
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:20,maxWidth:1100,margin:"0 auto"}}>
+        <div style={{display:"flex",flexWrap:"nowrap",justifyContent:"center",gap:16,overflowX:"auto",paddingBottom:4}}>
           {[
             ["doc","Post for Free","#1428A0","No upfront cost. Photos, description, location — done in 2 minutes."],
             ["chat","Chat Safely","#0d9488","Anonymous, moderated chat. Contact info hidden until unlock."],
@@ -775,7 +775,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
             ["lock","Safe Escrow","#7c3aed","Optional 5.5% escrow. Funds held until you confirm delivery."],
             ["trophy","Deal Done","#10b981","Leave a review. Build your seller reputation on the platform."]
           ].map(([icon,title,color,desc],i)=>(
-            <div key={title} style={{background:"#fff",borderRadius:16,padding:"24px 22px",boxShadow:"0 1px 3px rgba(0,0,0,.06),0 4px 18px rgba(0,0,0,.07)",border:"1px solid rgba(0,0,0,.05)",display:"flex",flexDirection:"column",transition:"transform .18s ease,box-shadow .18s ease"}}
+            <div key={title} style={{background:"#fff",borderRadius:16,padding:"20px 18px",boxShadow:"0 1px 3px rgba(0,0,0,.06),0 4px 18px rgba(0,0,0,.07)",border:"1px solid rgba(0,0,0,.05)",display:"flex",flexDirection:"column",flex:"1 1 0",minWidth:150,maxWidth:210,transition:"transform .18s ease,box-shadow .18s ease"}}
               onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-4px)";e.currentTarget.style.boxShadow="0 2px 6px rgba(0,0,0,.07),0 14px 36px rgba(0,0,0,.11)";}}
               onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="0 1px 3px rgba(0,0,0,.06),0 4px 18px rgba(0,0,0,.07)";}}>
               <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
