@@ -4321,7 +4321,7 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
             <div key={panelI} style={{position:"absolute",inset:0,transform:`translateX(${tx})`,transition:animatingH?"transform .3s cubic-bezier(.25,.46,.45,.94)":"none",willChange:"transform",background:hasNoPhoto?"#F2F2F2":"#000",overflow:"hidden"}}>
               {/* Image or placeholder */}
               {src
-                ?<img src={src} alt={l.title} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}}/>
+                ?<img src={src} alt={l.title} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"contain"}}/>
                 :<div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10,background:"#F2F2F2"}}>
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#CCCCCC" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                     <span style={{fontSize:13,fontWeight:600,color:"#AAAAAA",letterSpacing:".04em"}}>No photos uploaded</span>
