@@ -1242,8 +1242,8 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
         if(missing.length){notify(`Please fill in: ${missing.join(", ")}`, "warning");return;}
         setStep(2);
       }} style={{display:"flex",alignItems:"center",gap:4}}>Continue {Ic.chevronRight(15)}</button>}
-      {step===2&&payChoice&&<button className="btn bp" onClick={()=>submitListing(payChoice==="now")} disabled={loading}>
-        {loading?<Spin/>:payChoice==="now"?"Post & Pay KSh 250 →":"Post Anonymously →"}
+      {step===2&&!listing&&<button className="btn bp" onClick={()=>submitListing(false)} disabled={loading}>
+        {loading?<Spin/>:"Submit Ad →"}
       </button>}
       {step===2&&listing&&<button className="btn bp" onClick={()=>submitListing(false)} disabled={loading}>
         {loading?<Spin/>:"Save Changes"}
@@ -1316,30 +1316,18 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
         </select>
       </FF>
 
-      {/* Pay Now vs Pay Later choice — shown before final buttons */}
-      {!listing&&!payChoice&&<div style={{marginTop:8,padding:"16px",background:"#F8F9FF",border:"1px solid #E0E7FF",borderRadius:12}}>
-        <div style={{fontWeight:700,fontSize:14,color:"#1A1A1A",marginBottom:4}}>How do you want to post?</div>
-        <div style={{fontSize:13,color:"#636363",marginBottom:14,lineHeight:1.6}}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> The buyer's contact info is hidden until you pay KSh 250. Choose when you'd like to pay:
-        </div>
+      {/* How it works — simple, honest explanation */}
+      {!listing&&<div style={{marginTop:8,padding:"16px",background:"#F0F4FF",border:"1px solid #C7D2FE",borderRadius:12}}>
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
-          <div onClick={()=>setPayChoice("now")} style={{padding:"14px 16px",border:"2px solid #1428A0",borderRadius:10,cursor:"pointer",background:"#EEF2FF"}}>
-            <div style={{fontWeight:700,fontSize:14,color:"#1428A0",marginBottom:3}}>Pay KSh 250 Now</div>
-            <div style={{fontSize:12,color:"#4338CA"}}>M-Pesa STK push sent immediately. Buyer contact revealed as soon as payment confirms.</div>
-          </div>
-          <div onClick={()=>setPayChoice("later")} style={{padding:"14px 16px",border:"1.5px solid #E0E0E0",borderRadius:10,cursor:"pointer",background:"#fff"}}>
-            <div style={{fontWeight:700,fontSize:14,color:"#1A1A1A",marginBottom:3}}>Post Anonymously (Pay Later)</div>
-            <div style={{fontSize:12,color:"#636363"}}>Your ad goes live but buyer contact stays hidden. Pay anytime from your dashboard to reveal it.</div>
-          </div>
+          {[
+            ["1","Your ad goes live after a quick review (usually under 1 hour)."],
+            ["2","When a serious buyer locks in, you get a notification + email."],
+            ["3","Pay KSh 250 via M-Pesa to reveal their contact. That's it."],
+          ].map(([n,txt])=><div key={n} style={{display:"flex",gap:10,alignItems:"flex-start"}}>
+            <div style={{width:22,height:22,borderRadius:"50%",background:"#1428A0",color:"#fff",fontSize:11,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{n}</div>
+            <div style={{fontSize:13,color:"#3730A3",lineHeight:1.5,paddingTop:2}}>{txt}</div>
+          </div>)}
         </div>
-      </div>}
-
-      {payChoice&&<div style={{background:payChoice==="now"?"#EEF2FF":"#F8F8F8",border:`1px solid ${payChoice==="now"?"#C7D2FE":"#E0E0E0"}`,borderRadius:10,padding:"12px 14px",display:"flex",alignItems:"center",gap:10}}>
-        <span><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
-        <div style={{flex:1,fontSize:13,color:payChoice==="now"?"#1428A0":"#636363"}}>
-          {payChoice==="now"?"You'll receive an M-Pesa prompt after posting. Buyer contact revealed on payment.":"Ad posted anonymously. Pay KSh 250 anytime from your dashboard."}
-        </div>
-        <button onClick={()=>setPayChoice(null)} style={{background:"none",border:"none",cursor:"pointer",color:"#AAAAAA",fontSize:18}}>Close</button>
       </div>}
 
 
@@ -3886,7 +3874,21 @@ function MobileLayout({
       {mobileTab==="home"&&!filter.q&&!filter.cat&&pg===1&&<div className="mob-hero-banner">
         <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"rgba(255,255,255,.6)",marginBottom:8}}>Kenya's Resell Platform</div>
         <div style={{fontSize:22,fontWeight:800,color:"#fff",lineHeight:1.2,marginBottom:10}}>Buy & Sell<br/>Anything in Kenya</div>
-        <div style={{fontSize:13,color:"rgba(255,255,255,.75)",marginBottom:16}}>Post free. Pay KSh 250 only when a buyer locks in.</div>
+        <div style={{fontSize:13,color:"rgba(255,255,255,.75)",marginBottom:16}}>Post free. Pay KSh 250 only when a serious buyer shows up.</div>
+        {stats&&(stats.activeAds>0||stats.sold>0||stats.users>0)&&<div style={{display:"flex",gap:16,marginBottom:18,justifyContent:"center"}}>
+          {stats.activeAds>0&&<div style={{textAlign:"center"}}>
+            <div style={{fontSize:20,fontWeight:800,color:"#fff",lineHeight:1}}>{Number(stats.activeAds).toLocaleString("en-KE")}</div>
+            <div style={{fontSize:10,color:"rgba(255,255,255,.6)",marginTop:2,textTransform:"uppercase",letterSpacing:".06em"}}>Active Ads</div>
+          </div>}
+          {stats.sold>0&&<div style={{textAlign:"center"}}>
+            <div style={{fontSize:20,fontWeight:800,color:"#fff",lineHeight:1}}>{Number(stats.sold).toLocaleString("en-KE")}</div>
+            <div style={{fontSize:10,color:"rgba(255,255,255,.6)",marginTop:2,textTransform:"uppercase",letterSpacing:".06em"}}>Items Sold</div>
+          </div>}
+          {stats.users>0&&<div style={{textAlign:"center"}}>
+            <div style={{fontSize:20,fontWeight:800,color:"#fff",lineHeight:1}}>{Number(stats.users).toLocaleString("en-KE")}</div>
+            <div style={{fontSize:10,color:"rgba(255,255,255,.6)",marginTop:2,textTransform:"uppercase",letterSpacing:".06em"}}>Members</div>
+          </div>}
+        </div>}
         <button onClick={postAd} style={{background:"#fff",color:"#1428A0",border:"none",padding:"11px 22px",borderRadius:10,fontSize:14,fontWeight:700,fontFamily:"var(--fn)",cursor:"pointer"}}>+ Post an Ad for Free</button>
       </div>}
 
@@ -3944,16 +3946,25 @@ function MobileLayout({
             ?<div style={{textAlign:"center",padding:"48px 20px",color:"#AAAAAA"}}>
                 <div style={{marginBottom:14,opacity:.25,display:"flex",justifyContent:"center"}}>{Ic.search(44,"currentColor")}</div>
                 <div style={{fontWeight:700,fontSize:15,marginBottom:6,color:"#1A1A1A"}}>No listings found</div>
-                <div style={{fontSize:13,lineHeight:1.65}}>Try different filters or check back later</div>
+                <div style={{fontSize:13,lineHeight:1.65,marginBottom:20}}>{filter.cat||filter.q?"Try different filters or clear your search":"Be the first to post something here"}</div>
+                {filter.cat||filter.q
+                  ?<button onClick={()=>{setFilter(p=>({...p,cat:"",q:""}));setPg(1);}} className="btn bs sm" style={{borderRadius:8,marginBottom:12}}>Clear Filters</button>
+                  :null}
+                <div><button onClick={postAd} className="btn bp sm" style={{borderRadius:8}}>+ Post an Ad for Free</button></div>
               </div>
             :<div className="mob-cards">
               {listings.map(l=>{
                 const photo=Array.isArray(l.photos)?l.photos.find(p=>typeof p==="string")||l.photos[0]?.url||null:null;
                 const isNew=Date.now()-new Date(l.created_at)<12*3600000;
-                return <div key={l.id} className="mob-lcard" onClick={()=>setSwipeFeedIdx(listings.findIndex(x=>x.id===l.id))} style={{position:"relative"}}>
+                return <div key={l.id} className="mob-lcard" onClick={()=>openListing(l)} style={{position:"relative"}}>
                   <div className="mob-lcard-img" style={{position:"relative"}}>
                     {photo?<img src={photo} alt={l.title}/>:<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",background:"#F2F2F7",opacity:.6}}>{Ic.image(24,"#CCCCCC")}</div>}
                     {isNew&&<div style={{position:"absolute",bottom:4,left:4,background:"#10b981",color:"#fff",fontSize:8,fontWeight:800,padding:"2px 6px",borderRadius:4,letterSpacing:".04em"}}>NEW</div>}
+                    {/* Swipe browse button — bottom right of image */}
+                    <button onClick={e=>{e.stopPropagation();setSwipeFeedIdx(listings.findIndex(x=>x.id===l.id));}} style={{position:"absolute",bottom:6,right:6,background:"rgba(0,0,0,.55)",color:"#fff",border:"none",borderRadius:6,padding:"4px 8px",fontSize:10,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontFamily:"var(--fn)"}}>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                      Browse
+                    </button>
                   </div>
                   <div className="mob-lcard-body">
                     <div className="mob-lcard-cat">{l.category}</div>
