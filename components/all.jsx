@@ -4299,24 +4299,20 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
           const infoLayer=panelI===0
             ?{// Panel 0: title + price
               top:<><div style={{fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"rgba(255,255,255,.7)",marginBottom:4}}>{l.category}{l.subcat?` · ${l.subcat}`:""}</div><div style={{fontSize:20,fontWeight:800,color:"#fff",lineHeight:1.2,marginBottom:6,textShadow:"0 1px 8px rgba(0,0,0,.8)"}}>{l.title}</div><div style={{fontSize:28,fontWeight:800,color:"#fff",letterSpacing:"-.01em",textShadow:"0 1px 8px rgba(0,0,0,.8)"}}>KSh {Number(l.price).toLocaleString("en-KE")}</div></>,
-              btns:<><button onClick={e=>{e.stopPropagation();onOpen&&onOpen(l);}} style={{flex:1,background:"rgba(255,255,255,.15)",color:"#fff",border:"1.5px solid rgba(255,255,255,.5)",padding:"13px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",backdropFilter:"blur(8px)"}}>View Details</button><button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onLockIn&&onLockIn(l);}} style={{background:"#1428A0",color:"#fff",border:"none",padding:"13px 16px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",boxShadow:"0 4px 14px rgba(20,40,160,.5)",whiteSpace:"nowrap"}}>I'm Interested</button></>}
+              btns:null}
             :panelI===1&&l.description
             ?{// Panel 1: full description in scrollable frosted card
               top:null,
-              card:<div style={{position:"absolute",bottom:0,left:0,right:0,maxHeight:"62vh",overflowY:"auto",WebkitOverflowScrolling:"touch",background:"rgba(10,10,10,.82)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",borderRadius:"20px 20px 0 0",padding:"18px 18px 0"}}>
+              card:<div style={{position:"absolute",bottom:80,left:0,right:0,maxHeight:"58vh",overflowY:"auto",WebkitOverflowScrolling:"touch",background:"rgba(10,10,10,.82)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",borderRadius:"20px 20px 0 0",padding:"18px 18px 14px"}}>
                 <div style={{width:36,height:4,borderRadius:2,background:"rgba(255,255,255,.3)",margin:"0 auto 16px"}}/>
                 <div style={{fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"rgba(255,255,255,.45)",marginBottom:10}}>About this item</div>
                 <p style={{fontSize:15,color:"rgba(255,255,255,.95)",lineHeight:1.75,margin:"0 0 14px",whiteSpace:"pre-wrap"}}>{l.description}</p>
                 {l.county&&<div style={{fontSize:12,color:"rgba(255,255,255,.5)",marginBottom:10,display:"flex",alignItems:"center",gap:5}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>{l.county}</div>}
-                <div style={{display:"flex",gap:8,padding:"12px 0 20px"}}>
-                  <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onMessage&&onMessage(l);}} style={{flex:1,background:"rgba(255,255,255,.15)",color:"#fff",border:"1.5px solid rgba(255,255,255,.4)",padding:"13px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",backdropFilter:"blur(8px)"}}>Message Seller</button>
-                  <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onLockIn&&onLockIn(l);}} style={{background:"#1428A0",color:"#fff",border:"none",padding:"13px 16px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",boxShadow:"0 4px 14px rgba(20,40,160,.5)",whiteSpace:"nowrap"}}>I'm Interested</button>
-                </div>
               </div>,
               btns:null}
             :{// Panel 2+ / last: seller & why selling
               top:<>{l.reason_for_sale&&<><div style={{fontSize:11,fontWeight:700,letterSpacing:".06em",textTransform:"uppercase",color:"rgba(255,255,255,.55)",marginBottom:4}}>Why selling</div><div style={{fontSize:14,color:"rgba(255,255,255,.9)",lineHeight:1.55,textShadow:"0 1px 4px rgba(0,0,0,.7)",marginBottom:8}}>{l.reason_for_sale.length>100?l.reason_for_sale.slice(0,100)+"…":l.reason_for_sale}</div></>}<div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>{l.county&&<span style={{background:"rgba(255,255,255,.15)",color:"rgba(255,255,255,.9)",fontSize:12,fontWeight:600,padding:"4px 10px",borderRadius:20,backdropFilter:"blur(4px)"}}>{l.county}</span>}{l.seller_avg_rating>0&&<span style={{background:"rgba(255,255,255,.15)",color:"rgba(255,255,255,.9)",fontSize:12,fontWeight:600,padding:"4px 10px",borderRadius:20,backdropFilter:"blur(4px)",display:"flex",alignItems:"center",gap:4}}><svg width="11" height="11" viewBox="0 0 24 24" fill="#FFD700" stroke="#FFD700" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>{Number(l.seller_avg_rating).toFixed(1)}</span>}<span style={{background:"rgba(255,255,255,.1)",color:"rgba(255,255,255,.7)",fontSize:12,padding:"4px 10px",borderRadius:20}}>{ago(l.created_at)}</span></div></>,
-              btns:<><button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onMessage&&onMessage(l);}} style={{flex:1,background:"rgba(255,255,255,.15)",color:"#fff",border:"1.5px solid rgba(255,255,255,.5)",padding:"13px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",backdropFilter:"blur(8px)"}}>Message Seller</button><button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onLockIn&&onLockIn(l);}} style={{background:"#1428A0",color:"#fff",border:"none",padding:"13px 16px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",boxShadow:"0 4px 14px rgba(20,40,160,.5)",whiteSpace:"nowrap"}}>I'm Interested</button></>};
+              btns:null};
           return(
             <div key={panelI} style={{position:"absolute",inset:0,transform:`translateX(${tx})`,transition:animatingH?"transform .3s cubic-bezier(.25,.46,.45,.94)":"none",willChange:"transform",background:hasNoPhoto?"#F2F2F2":"#000",overflow:"hidden"}}>
               {/* Image or placeholder */}
@@ -4345,41 +4341,13 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
                     {isExpiring&&<div style={{background:"#f59e0b",color:"#fff",fontSize:10,fontWeight:800,padding:"4px 10px",borderRadius:6}}>EXPIRING</div>}
                     {l.status==="sold"&&<div style={{background:"#111",color:"#fff",fontSize:10,fontWeight:800,padding:"4px 10px",borderRadius:6}}>SOLD</div>}
                   </div>
-                  {/* Right side actions */}
-                  <div style={{position:"absolute",right:12,bottom:190,display:"flex",flexDirection:"column",gap:14,alignItems:"center",zIndex:10}}>
-                    {/* Heart / Save */}
-                    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-                      <HeartBtn
-                        saved={isSaved}
-                        onToggle={e=>{if(e&&e.stopPropagation)e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onToggleSave&&onToggleSave(l);}}
-                        size={20}
-                        bg="rgba(0,0,0,.55)"
-                        style={{width:44,height:44,border:"1.5px solid rgba(255,255,255,.3)",backdropFilter:"blur(6px)"}}
-                      />
-                      <span style={{color:src?"#fff":"#555",fontSize:10,fontWeight:700,textShadow:src?"0 1px 4px rgba(0,0,0,.8)":"none"}}>{isSaved?"Saved":"Save"}</span>
-                    </div>
-                    {/* View count */}
-                    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-                      <div style={{width:44,height:44,borderRadius:"50%",background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid rgba(255,255,255,.2)",backdropFilter:"blur(6px)"}}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                      </div>
-                      <span style={{color:src?"rgba(255,255,255,.8)":"#888",fontSize:10,fontWeight:700}}>{l.view_count||0}</span>
-                    </div>
-                    {/* Interest count */}
-                    {l.interest_count>0&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-                      <div style={{width:44,height:44,borderRadius:"50%",background:"rgba(232,25,75,.8)",display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid rgba(255,255,255,.2)",backdropFilter:"blur(6px)",flexDirection:"column"}}>
-                        <span style={{color:"#fff",fontSize:12,fontWeight:800,lineHeight:1}}>{l.interest_count}</span>
-                        <span style={{color:"rgba(255,255,255,.7)",fontSize:8,fontWeight:700}}>INT</span>
-                      </div>
-                    </div>}
-                  </div>
                   {/* Progressive bottom info overlay */}
                   {infoLayer.card
                     /* Description panel: full scrollable frosted card replaces the overlay */
                     ?<div style={{position:"absolute",inset:0,zIndex:10,pointerEvents:"none"}}>
                         <div style={{position:"absolute",inset:0,pointerEvents:"auto"}}>{infoLayer.card}</div>
                       </div>
-                    :<div style={{position:"absolute",bottom:0,left:0,right:0,padding:"0 16px 88px",zIndex:10}}>
+                    :<div style={{position:"absolute",bottom:0,left:0,right:0,padding:"0 16px 110px",zIndex:10}}>
                         {infoLayer.top}
                         {isLastPhoto&&totalPanels>1&&<div style={{fontSize:11,fontWeight:700,color:src?"rgba(255,255,255,.55)":"#AAAAAA",marginTop:8,marginBottom:10,textAlign:"center",letterSpacing:".04em"}}>← Swipe left for full details →</div>}
                         {infoLayer.btns&&<div style={{display:"flex",gap:8,marginTop:isLastPhoto&&totalPanels>1?0:12}}>{infoLayer.btns}</div>}
@@ -4476,6 +4444,34 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
             </div>
           );
         })()}
+
+        {/* Fixed action bar — stays put while swiping through photo panels */}
+        {offset===0&&activePanelIdx<photoSrcs.length&&<>
+          {/* Right-side column: Save / Views / Interest */}
+          <div style={{position:"absolute",right:12,bottom:100,display:"flex",flexDirection:"column",gap:14,alignItems:"center",zIndex:30,pointerEvents:"auto"}}>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+              <HeartBtn saved={isSaved} onToggle={e=>{if(e&&e.stopPropagation)e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onToggleSave&&onToggleSave(l);}} size={20} bg="rgba(0,0,0,.55)" style={{width:44,height:44,border:"1.5px solid rgba(255,255,255,.3)",backdropFilter:"blur(6px)"}}/>
+              <span style={{color:"#fff",fontSize:10,fontWeight:700,textShadow:"0 1px 4px rgba(0,0,0,.8)"}}>{isSaved?"Saved":"Save"}</span>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+              <div style={{width:44,height:44,borderRadius:"50%",background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid rgba(255,255,255,.2)",backdropFilter:"blur(6px)"}}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </div>
+              <span style={{color:"rgba(255,255,255,.8)",fontSize:10,fontWeight:700}}>{l.view_count||0}</span>
+            </div>
+            {l.interest_count>0&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+              <div style={{width:44,height:44,borderRadius:"50%",background:"rgba(232,25,75,.8)",display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid rgba(255,255,255,.2)",backdropFilter:"blur(6px)",flexDirection:"column"}}>
+                <span style={{color:"#fff",fontSize:12,fontWeight:800,lineHeight:1}}>{l.interest_count}</span>
+                <span style={{color:"rgba(255,255,255,.7)",fontSize:8,fontWeight:700}}>INT</span>
+              </div>
+            </div>}
+          </div>
+          {/* Bottom action buttons */}
+          <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"12px 16px 24px",display:"flex",gap:8,zIndex:30,background:"linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 100%)"}}>
+            <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onMessage&&onMessage(l);}} style={{flex:1,background:"rgba(255,255,255,.15)",color:"#fff",border:"1.5px solid rgba(255,255,255,.4)",padding:"14px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",backdropFilter:"blur(8px)"}}>Message Seller</button>
+            <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onLockIn&&onLockIn(l);}} style={{background:"#1428A0",color:"#fff",border:"none",padding:"14px 16px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",boxShadow:"0 4px 14px rgba(20,40,160,.5)",whiteSpace:"nowrap"}}>I'm Interested</button>
+          </div>
+        </>}
       </div>
     );
   };
