@@ -1400,13 +1400,7 @@ function ListingCard({listing:l,onClick,listView,isSaved,onSave}){
       {onSave&&<HeartBtn saved={isSaved} onToggle={onSave} size={16} style={{position:"absolute",top:10,right:10}}/>}
     </div>
     <div style={{padding:"16px 18px",flex:1}}>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
-        <div style={{fontSize:11,fontWeight:700,letterSpacing:".07em",textTransform:"uppercase",color:"#AAAAAA"}}>{l.category}</div>
-        {l.store_slug&&<a href={`/store/${l.store_slug}`} onClick={e=>e.stopPropagation()} style={{display:"inline-flex",alignItems:"center",gap:3,background:"rgba(20,40,160,.07)",color:"#1428A0",fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:4,textDecoration:"none",flexShrink:0}}>
-          {l.store_verified&&<svg width="9" height="9" viewBox="0 0 24 24" fill="#1428A0"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>}
-          {l.store_name?.slice(0,14)||"Store"}
-        </a>}
-      </div>
+      <div style={{fontSize:11,fontWeight:700,letterSpacing:".07em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:6}}>{l.category}</div>
       <h4 style={{fontSize:15,fontWeight:700,lineHeight:1.4,marginBottom:7,letterSpacing:"-.01em",color:"#1A1A1A"}}>{l.title}</h4>
       <div style={{fontSize:21,fontWeight:800,color:"var(--a)",marginBottom:10,letterSpacing:"-.02em"}}>{fmtKES(l.price)}</div>
       {listView&&l.description&&<p style={{fontSize:13,color:"#636363",marginBottom:10,lineHeight:1.75}}>{l.description.slice(0,130)}…</p>}
@@ -3233,8 +3227,8 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
         {/* Tab row — flush to bottom of hero */}
         <div style={{display:"flex",gap:0,overflowX:"auto",borderBottom:"none",WebkitOverflowScrolling:"touch"}}>
           {(user.role==="seller"
-            ?[["overview","Overview"],["notifications","Notifications"+(unreadCount>0?` (${unreadCount})`:"")] ,["ads","My Ads"],["sold","Sold"],["requests","What Buyers Want"],["reviews","Reviews"],["store","My Store"],["settings","Settings"]]
-            :[["overview","Overview"],["notifications","Notifications"+(unreadCount>0?` (${unreadCount})`:"")] ,["saved","Saved"+(savedListings.length>0?` (${savedListings.length})`:"")],["interests","My Interests"],["pitches","Pitches Received"],["requests","What Buyers Want"],["reviews","Reviews"],["store","My Store"],["settings","Settings"]]
+            ?[["overview","Overview"],["notifications","Notifications"+(unreadCount>0?` (${unreadCount})`:"")] ,["ads","My Ads"],["sold","Sold"],["requests","What Buyers Want"],["reviews","Reviews"],["settings","Settings"]]
+            :[["overview","Overview"],["notifications","Notifications"+(unreadCount>0?` (${unreadCount})`:"")] ,["saved","Saved"+(savedListings.length>0?` (${savedListings.length})`:"")],["interests","My Interests"],["pitches","Pitches Received"],["requests","What Buyers Want"],["reviews","Reviews"],["settings","Settings"]]
           ).map(([id,label])=>(
             <button key={id} onClick={()=>setTab(id)} style={{padding:"14px 22px",border:"none",background:"transparent",cursor:"pointer",fontSize:13,fontWeight:700,letterSpacing:".04em",whiteSpace:"nowrap",color:tab===id?"#fff":"rgba(255,255,255,.55)",borderBottom:tab===id?"3px solid #fff":"3px solid transparent",transition:"all .15s",fontFamily:"var(--fn)"}}>
               {label}
@@ -3495,7 +3489,6 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
     {!loading&&tab==="reviews"&&<ReviewsSection token={token} user={user} notify={notify}/>}
     {!loading&&tab==="pitches"&&<PitchesTab token={token} notify={notify} user={user}/>}
     {!loading&&tab==="requests"&&<MyRequestsTab token={token} notify={notify} user={user}/>}
-    {tab==="store"&&<MyStoreTab user={user} token={token} notify={notify}/>}
 
     {!loading&&tab==="settings"&&<>
       <div style={{maxWidth:560,display:"flex",flexDirection:"column",gap:20}}>
@@ -3889,13 +3882,6 @@ function MobileLayout({
       {/* Hero banner — only on home tab, hidden in search mode */}
       {newSinceLastVisit>0&&mobileTab==="home"&&<div style={{background:"#1428A0",color:"#fff",padding:"9px 16px",textAlign:"center",fontSize:13,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
         <span>{newSinceLastVisit} new listing{newSinceLastVisit!==1?"s":""} since your last visit</span>
-      </div>}
-      {mobileTab==="home"&&!filter.q&&!filter.cat&&pg===1&&<div style={{padding:"8px 16px",background:"#fff",borderBottom:"1px solid #F0F0F0",display:"flex",gap:8,overflowX:"auto",WebkitOverflowScrolling:"touch",scrollbarWidth:"none"}}>
-        <a href="/malls" style={{display:"inline-flex",alignItems:"center",gap:5,background:"linear-gradient(135deg,#1428A0,#6c63ff)",color:"#fff",padding:"7px 14px",borderRadius:20,fontSize:12,fontWeight:700,textDecoration:"none",whiteSpace:"nowrap",flexShrink:0}}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          Malls &amp; Stores
-        </a>
-        <span style={{display:"inline-flex",alignItems:"center",gap:4,background:"#F5F5F5",color:"#444",padding:"7px 14px",borderRadius:20,fontSize:12,fontWeight:600,whiteSpace:"nowrap",flexShrink:0}}>Verified dealers</span>
       </div>}
       {mobileTab==="home"&&!filter.q&&!filter.cat&&pg===1&&<div className="mob-hero-banner">
         <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"rgba(255,255,255,.6)",marginBottom:8}}>Kenya's Resell Platform</div>
@@ -4960,193 +4946,6 @@ function BuyersWantPage({user,token,notify,onBack,onIHaveThis,onSignIn}){
   </div>;
 }
 
-// ── MY STORE TAB ─────────────────────────────────────────────────────────────
-function MyStoreTab({user,token,notify}){
-  const [store,setStore]=useState(null);
-  const [loading,setLoading]=useState(true);
-  const [saving,setSaving]=useState(false);
-  const [logoLoading,setLogoLoading]=useState(false);
-  const [bannerLoading,setBannerLoading]=useState(false);
-  const [form,setForm]=useState({name:"",tagline:"",description:"",category:"",county:"",phone:"",whatsapp:"",website:"",instagram:"",facebook:""});
-  const [editing,setEditing]=useState(false);
-  const sf=(k,v)=>setForm(f=>({...f,[k]:v}));
-
-  useEffect(()=>{
-    api("/api/stores/mine/store",{},token)
-      .then(s=>{setStore(s);setForm({name:s.name||"",tagline:s.tagline||"",description:s.description||"",category:s.category||"",county:s.county||"",phone:s.phone||"",whatsapp:s.whatsapp||"",website:s.website||"",instagram:s.instagram||"",facebook:s.facebook||""});})
-      .catch(()=>setStore(null))
-      .finally(()=>setLoading(false));
-  },[token]);
-
-  const createStore=async()=>{
-    if(!form.name.trim()){notify("Store name is required","warning");return;}
-    setSaving(true);
-    try{
-      const s=await api("/api/stores",{method:"POST",body:JSON.stringify(form)},token);
-      setStore(s);notify("Store created! Pending admin approval.","success");
-    }catch(e){notify(e.message,"error");}
-    finally{setSaving(false);}
-  };
-
-  const saveStore=async()=>{
-    setSaving(true);
-    try{
-      const s=await api("/api/stores/mine",{method:"PATCH",body:JSON.stringify(form)},token);
-      setStore(s);setEditing(false);notify("Store updated!","success");
-    }catch(e){notify(e.message,"error");}
-    finally{setSaving(false);}
-  };
-
-  const uploadLogo=async(file)=>{
-    if(!file)return;
-    setLogoLoading(true);
-    try{
-      const fd=new FormData();fd.append("logo",file);
-      const r=await api("/api/stores/mine/logo",{method:"POST",body:fd},token);
-      setStore(s=>({...s,logo_url:r.logo_url}));notify("Logo updated!","success");
-    }catch(e){notify(e.message,"error");}
-    finally{setLogoLoading(false);}
-  };
-
-  const uploadBanner=async(file)=>{
-    if(!file)return;
-    setBannerLoading(true);
-    try{
-      const fd=new FormData();fd.append("banner",file);
-      const r=await api("/api/stores/mine/banner",{method:"POST",body:fd},token);
-      setStore(s=>({...s,banner_url:r.banner_url}));notify("Banner updated!","success");
-    }catch(e){notify(e.message,"error");}
-    finally{setBannerLoading(false);}
-  };
-
-  const CATS_LIST=["Electronics","Vehicles","Property","Fashion","Furniture","Home & Garden","Sports","Baby & Kids","Books","Agriculture","Services","Jobs","Food","Health & Beauty","Pets","Other"];
-  const COUNTIES=["Nairobi","Mombasa","Kisumu","Nakuru","Eldoret","Thika","Kiambu","Machakos","Kajiado","Murang'a","Nyeri","Meru","Embu","Kirinyaga","Nyandarua","Laikipia","Baringo","Nandi","Uasin Gishu","Trans Nzoia","Kilifi","Kwale","Mombasa","Kakamega","Bungoma","Siaya","Homabay","Migori","Kisii","Nyamira","Other"];
-
-  if(loading)return<div style={{textAlign:"center",padding:60}}><Spin s="36px"/></div>;
-
-  const STATUS_COLORS={pending:{bg:"#FFF8E1",color:"#8B6400",label:"Pending Approval"},active:{bg:"#F0FFF4",color:"#15803d",label:"Active"},suspended:{bg:"#FFF1F1",color:"#dc2626",label:"Suspended"},rejected:{bg:"#FFF1F1",color:"#dc2626",label:"Rejected"}};
-  const sc=store?STATUS_COLORS[store.status]||STATUS_COLORS.pending:null;
-
-  // ── No store yet — create form ─────────────────────────────────────────────
-  if(!store)return(
-    <div style={{maxWidth:560}}>
-      <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:14,padding:"24px 24px 20px",marginBottom:20}}>
-        <div style={{fontWeight:700,fontSize:17,color:"#1A1A1A",marginBottom:6}}>Open Your Mall</div>
-        <p style={{fontSize:13,color:"#636363",lineHeight:1.7,marginBottom:20}}>Create a branded storefront for your business. Free to set up — your listings will auto-link to your store and appear on the Weka Soko Malls directory after admin approval.</p>
-        <div style={{display:"flex",flexDirection:"column",gap:14}}>
-          <FF label="Store Name" required><input className="inp" value={form.name} onChange={e=>sf("name",e.target.value)} placeholder="e.g. Tech Haven Nairobi"/></FF>
-          <FF label="Tagline"><input className="inp" value={form.tagline} onChange={e=>sf("tagline",e.target.value)} placeholder="Short description shown in the directory"/></FF>
-          <FF label="About Your Store"><textarea className="inp" rows={3} value={form.description} onChange={e=>sf("description",e.target.value)} placeholder="Tell buyers what you sell and why they should trust you"/></FF>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-            <FF label="Category">
-              <select className="inp" value={form.category} onChange={e=>sf("category",e.target.value)}>
-                <option value="">Select category</option>
-                {CATS_LIST.map(c=><option key={c} value={c}>{c}</option>)}
-              </select>
-            </FF>
-            <FF label="County">
-              <select className="inp" value={form.county} onChange={e=>sf("county",e.target.value)}>
-                <option value="">Select county</option>
-                {COUNTIES.map(c=><option key={c} value={c}>{c}</option>)}
-              </select>
-            </FF>
-          </div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-            <FF label="Phone"><input className="inp" value={form.phone} onChange={e=>sf("phone",e.target.value)} placeholder="0712 345 678"/></FF>
-            <FF label="WhatsApp"><input className="inp" value={form.whatsapp} onChange={e=>sf("whatsapp",e.target.value)} placeholder="254712345678"/></FF>
-          </div>
-          <FF label="Website (optional)"><input className="inp" value={form.website} onChange={e=>sf("website",e.target.value)} placeholder="https://yoursite.co.ke"/></FF>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-            <FF label="Instagram handle"><input className="inp" value={form.instagram} onChange={e=>sf("instagram",e.target.value)} placeholder="@yourstore"/></FF>
-            <FF label="Facebook page"><input className="inp" value={form.facebook} onChange={e=>sf("facebook",e.target.value)} placeholder="fb.com/yourstore"/></FF>
-          </div>
-          <button className="btn bp" style={{marginTop:4}} onClick={createStore} disabled={saving}>{saving?<Spin/>:"Create My Store"}</button>
-        </div>
-      </div>
-    </div>
-  );
-
-  // ── Existing store ─────────────────────────────────────────────────────────
-  return(
-    <div style={{maxWidth:640}}>
-      {/* Status banner */}
-      <div style={{background:sc.bg,border:`1px solid ${sc.color}22`,borderRadius:10,padding:"12px 16px",marginBottom:20,display:"flex",alignItems:"center",gap:10}}>
-        <div style={{width:8,height:8,borderRadius:"50%",background:sc.color,flexShrink:0}}/>
-        <span style={{fontSize:13,fontWeight:700,color:sc.color}}>{sc.label}</span>
-        {store.status==="pending"&&<span style={{fontSize:12,color:"#8B6400",marginLeft:4}}>— admin will review within 24 hours</span>}
-        {store.status==="rejected"&&store.rejection_reason&&<span style={{fontSize:12,color:"#dc2626",marginLeft:4}}>: {store.rejection_reason}</span>}
-        {store.status==="active"&&<a href={`/store/${store.slug}`} target="_blank" rel="noopener" style={{marginLeft:"auto",color:"#15803d",fontSize:12,fontWeight:700}}>View Store →</a>}
-      </div>
-
-      {/* Store preview card */}
-      <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:14,overflow:"hidden",marginBottom:20}}>
-        {/* Banner */}
-        <div style={{height:100,background:store.banner_url?`url(${store.banner_url}) center/cover`:"linear-gradient(135deg,#1428A0 0%,#6c63ff 100%)",position:"relative",cursor:"pointer"}} onClick={()=>document.getElementById("banner-upload")?.click()}>
-          <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.25)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <span style={{color:"rgba(255,255,255,.8)",fontSize:12,fontWeight:600,background:"rgba(0,0,0,.3)",padding:"5px 12px",borderRadius:6}}>{bannerLoading?"Uploading...":"Click to change banner"}</span>
-          </div>
-          <input id="banner-upload" type="file" accept="image/*" style={{display:"none"}} onChange={e=>uploadBanner(e.target.files[0])}/>
-        </div>
-        {/* Logo + name */}
-        <div style={{padding:"0 20px 20px",position:"relative"}}>
-          <div style={{display:"flex",alignItems:"flex-end",gap:14,marginTop:-28}}>
-            <div style={{width:56,height:56,borderRadius:12,background:"#fff",border:"2.5px solid #EBEBEB",overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,.1)",flexShrink:0,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}} onClick={()=>document.getElementById("logo-upload")?.click()}>
-              {logoLoading?<Spin/>:store.logo_url?<img src={store.logo_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span style={{fontWeight:800,fontSize:20,color:"#1428A0"}}>{(store.name||"?")[0].toUpperCase()}</span>}
-              <input id="logo-upload" type="file" accept="image/*" style={{display:"none"}} onChange={e=>uploadLogo(e.target.files[0])}/>
-            </div>
-            <div style={{flex:1,paddingBottom:4}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                <span style={{fontWeight:700,fontSize:16,color:"#1A1A1A"}}>{store.name}</span>
-                {store.is_verified&&<span style={{display:"inline-flex",alignItems:"center",gap:3,background:"rgba(20,40,160,.08)",color:"#1428A0",fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:4}}>Verified</span>}
-              </div>
-              {store.tagline&&<p style={{fontSize:12,color:"#636363",margin:"3px 0 0"}}>{store.tagline}</p>}
-            </div>
-          </div>
-          <p style={{fontSize:11,color:"#AAAAAA",marginTop:10}}>Click logo or banner to upload a new image</p>
-        </div>
-      </div>
-
-      {/* Edit form */}
-      <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:14,padding:"20px 22px"}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
-          <div style={{fontWeight:700,fontSize:15,color:"#1A1A1A"}}>Store Details</div>
-          {!editing&&<button className="btn bs sm" onClick={()=>setEditing(true)}>Edit</button>}
-        </div>
-        {editing?(
-          <div style={{display:"flex",flexDirection:"column",gap:14}}>
-            <FF label="Store Name" required><input className="inp" value={form.name} onChange={e=>sf("name",e.target.value)}/></FF>
-            <FF label="Tagline"><input className="inp" value={form.tagline} onChange={e=>sf("tagline",e.target.value)}/></FF>
-            <FF label="About Your Store"><textarea className="inp" rows={3} value={form.description} onChange={e=>sf("description",e.target.value)}/></FF>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-              <FF label="Category"><select className="inp" value={form.category} onChange={e=>sf("category",e.target.value)}><option value="">Select</option>{CATS_LIST.map(c=><option key={c} value={c}>{c}</option>)}</select></FF>
-              <FF label="County"><select className="inp" value={form.county} onChange={e=>sf("county",e.target.value)}><option value="">Select</option>{COUNTIES.map(c=><option key={c} value={c}>{c}</option>)}</select></FF>
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-              <FF label="Phone"><input className="inp" value={form.phone} onChange={e=>sf("phone",e.target.value)}/></FF>
-              <FF label="WhatsApp"><input className="inp" value={form.whatsapp} onChange={e=>sf("whatsapp",e.target.value)}/></FF>
-            </div>
-            <FF label="Website"><input className="inp" value={form.website} onChange={e=>sf("website",e.target.value)}/></FF>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-              <FF label="Instagram"><input className="inp" value={form.instagram} onChange={e=>sf("instagram",e.target.value)}/></FF>
-              <FF label="Facebook"><input className="inp" value={form.facebook} onChange={e=>sf("facebook",e.target.value)}/></FF>
-            </div>
-            <div style={{display:"flex",gap:8,marginTop:4}}>
-              <button className="btn bp" onClick={saveStore} disabled={saving}>{saving?<Spin/>:"Save Changes"}</button>
-              <button className="btn bs" onClick={()=>setEditing(false)}>Cancel</button>
-            </div>
-          </div>
-        ):(
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,fontSize:13}}>
-            {[["Category",store.category],["County",store.county],["Phone",store.phone],["WhatsApp",store.whatsapp],["Website",store.website],["Instagram",store.instagram],["Facebook",store.facebook]].filter(([,v])=>v).map(([k,v])=>(
-              <div key={k}><span style={{color:"#AAAAAA",fontWeight:600,fontSize:11,textTransform:"uppercase",letterSpacing:".06em"}}>{k}</span><div style={{color:"#1A1A1A",marginTop:2}}>{v}</div></div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 
-export { WekaSokoLogo, Spin, Toast, Modal, FF, Counter, ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal, WatermarkedImage, Lightbox, AuthModal, ShareModal, PayModal, ChatModal, PostAdModal, ListingCard, LeaveReviewBtn, ReportListingBtn, VerificationBanner, DetailModal, MarkSoldModal, RoleSwitcher, PostRequestModal, WhatBuyersWant, SoldSection, SoldCard, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab, ProfileSection, PasswordSection, VerificationSection, MobileDashboard, Dashboard, PWABanner, Pager, MobileRequestsTab, MobileLayout, BuyersWantPage, AllListingsPage, SoldPage, SwipeFeed, HotRightNow, MyStoreTab };
+export { WekaSokoLogo, Spin, Toast, Modal, FF, Counter, ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal, WatermarkedImage, Lightbox, AuthModal, ShareModal, PayModal, ChatModal, PostAdModal, ListingCard, LeaveReviewBtn, ReportListingBtn, VerificationBanner, DetailModal, MarkSoldModal, RoleSwitcher, PostRequestModal, WhatBuyersWant, SoldSection, SoldCard, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab, ProfileSection, PasswordSection, VerificationSection, MobileDashboard, Dashboard, PWABanner, Pager, MobileRequestsTab, MobileLayout, BuyersWantPage, AllListingsPage, SoldPage, SwipeFeed, HotRightNow };

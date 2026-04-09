@@ -537,7 +537,6 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     <nav className="nav">
       <div className="logo" onClick={()=>{setPage("home");setFilter({cat:"",subcat:"",q:"",county:"",minPrice:"",maxPrice:"",sort:"newest"});setSearchInput("");setPg(1);if(typeof window !== 'undefined') window.history.pushState({},"","/");}} style={{color:"#1428A0"}}><WekaSokoLogo size={38}/></div>
       <div style={{display:"flex",gap:8,alignItems:"center"}}>
-        <a href="/malls" style={{color:"#636363",fontSize:13,fontWeight:600,textDecoration:"none",padding:"8px 14px",whiteSpace:"nowrap",fontFamily:"var(--fn)"}}>Malls</a>
         <button className="bgh" style={{color:"#636363",fontSize:13,background:"transparent",border:"none",cursor:"pointer",fontFamily:"var(--fn)",padding:"8px 14px",whiteSpace:"nowrap"}} onClick={()=>{if(page==="sold"){setPage("home");if(typeof window !== 'undefined') window.history.pushState({},"","/");}else{setPage("sold");if(typeof window !== 'undefined') window.history.pushState({},"","/sold");}}}>Sold Items</button>
         {user?<>
           <button style={{background:"transparent",border:"none",color:"#1D1D1D",cursor:"pointer",fontSize:13,fontFamily:"var(--fn)",padding:"8px 14px",position:"relative",whiteSpace:"nowrap"}} onClick={()=>{setPage("dashboard");if(typeof window !== 'undefined') window.history.pushState({},"","/dashboard");}}>
