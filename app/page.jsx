@@ -4,7 +4,7 @@ import HomeClient from './HomeClient';
 export const dynamic = 'force-dynamic';
 
 async function getInitialData(searchParams) {
-  const { category = '', search = '', county = '', sort = 'newest', page = '1' } = searchParams || {};
+  const { category = '', search = '', county = '', sort = 'newest', page = '1' } = await searchParams || {};
   const params = new URLSearchParams({ page, limit: PER_PAGE, sort });
   if (category) params.set('category', category);
   if (search) params.set('search', search);
@@ -27,21 +27,30 @@ async function getInitialData(searchParams) {
 }
 
 export async function generateMetadata({ searchParams }) {
-  const { category, search } = searchParams || {};
+  const BASE = 'https://weka-soko-nextjs.vercel.app';
+  const { category, search } = await searchParams || {};
   let title = 'Weka Soko — Buy & Sell in Kenya';
-  let description = "Kenya's trusted marketplace. Post free. Pay KSh 250 only when a serious buyer locks in.";
+  let description = "Kenya's trusted marketplace. Post free. Pay KSh 250 only when a serious buyer locks in. Safe anonymous chat and M-Pesa escrow.";
+  let canonical = BASE;
   if (category) {
     title = `${category} for Sale in Kenya — Weka Soko`;
-    description = `Browse ${category} listings in Kenya. Buy and sell safely on Weka Soko.`;
+    description = `Browse ${category} listings in Kenya. Buy and sell safely on Weka Soko — anonymous chat, M-Pesa escrow, no hidden fees.`;
+    canonical = `${BASE}/?cat=${encodeURIComponent(category)}`;
   } else if (search) {
-    title = `"${search}" — Weka Soko Kenya`;
-    description = `Find "${search}" listings in Kenya on Weka Soko marketplace.`;
+    title = `"${search}" for Sale in Kenya — Weka Soko`;
+    description = `Find "${search}" listings in Kenya on Weka Soko. Post free, pay KSh 250 only when a serious buyer shows up.`;
   }
-  return { title, description, openGraph: { title, description } };
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: { title, description, url: canonical, siteName: 'Weka Soko', locale: 'en_KE' },
+  };
 }
 
 export default async function HomePage({ searchParams }) {
-  const { listings, stats, counties } = await getInitialData(searchParams);
+  const sp = await searchParams;
+  const { listings, stats, counties } = await getInitialData(sp);
   return (
     <HomeClient
       initialListings={listings.listings || []}
@@ -49,14 +58,14 @@ export default async function HomePage({ searchParams }) {
       initialStats={stats}
       initialCounties={counties}
       initialFilter={{
-        cat: searchParams?.category || '',
-        q: searchParams?.search || '',
-        county: searchParams?.county || '',
-        minPrice: searchParams?.minPrice || '',
-        maxPrice: searchParams?.maxPrice || '',
-        sort: searchParams?.sort || 'newest',
+        cat: sp?.category || '',
+        q: sp?.search || '',
+        county: sp?.county || '',
+        minPrice: sp?.minPrice || '',
+        maxPrice: sp?.maxPrice || '',
+        sort: sp?.sort || 'newest',
       }}
-      initialPage={parseInt(searchParams?.page || '1')}
+      initialPage={parseInt(sp?.page || '1')}
     />
   );
 }
