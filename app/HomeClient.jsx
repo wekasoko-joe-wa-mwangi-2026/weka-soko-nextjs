@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { apiCall, fmtKES, ago, CATS, KENYA_COUNTIES, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
-import { WekaSokoLogo, Spin, Toast, Modal, FF, Counter, ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal, WatermarkedImage, Lightbox, AuthModal, ShareModal, PayModal, ChatModal, PostAdModal, ListingCard, LeaveReviewBtn, ReportListingBtn, VerificationBanner, DetailModal, MarkSoldModal, RoleSwitcher, PostRequestModal, WhatBuyersWant, SoldSection, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab, ProfileSection, PasswordSection, VerificationSection, MobileDashboard, Dashboard, PWABanner, Pager, MobileRequestsTab, MobileLayout, BuyersWantPage, AllListingsPage, SoldPage, HotRightNow } from '@/components/all';
+import { WekaSokoLogo, Spin, Toast, Modal, FF, Counter, ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal, WatermarkedImage, Lightbox, AuthModal, ShareModal, PayModal, ChatModal, PostAdModal, ListingCard, LeaveReviewBtn, ReportListingBtn, VerificationBanner, DetailModal, MarkSoldModal, RoleSwitcher, PostRequestModal, WhatBuyersWant, SoldSection, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab, ProfileSection, PasswordSection, VerificationSection, MobileDashboard, Dashboard, PWABanner, Pager, MobileRequestsTab, MobileLayout, BuyersWantPage, AllListingsPage, SoldPage, HotRightNow, SwipeFeed } from '@/components/all';
 
 export default function HomeClient({ initialListings, initialTotal, initialStats, initialCounties, initialFilter, initialPage }) {
   const [user,setUser]=useState(null);
@@ -27,6 +27,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
   const [resetToken,setResetToken]=useState(null);
   const [savedIds,setSavedIds]=useState(new Set());
   const [newSinceLastVisit,setNewSinceLastVisit]=useState(0);
+  const [feedContext,setFeedContext]=useState(null);
 
   const notify=useCallback((msg,type="info")=>setToast({msg,type,id:Date.now()}),[]);
 
@@ -407,6 +408,11 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
   };
 
   const openListing=async l=>{
+    if (isMobile) {
+      const idx = listings.findIndex(x => x.id === l.id);
+      setFeedContext({ items: idx >= 0 ? listings : [l], index: Math.max(0, idx) });
+      return;
+    }
     setModal({type:"detail",listing:l});
     if(typeof window !== 'undefined') window.history.pushState({},'',`/?listing=${l.id}`);
     try{
@@ -490,6 +496,21 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         onClose={closeModal} notify={notify}/>}
       {toast&&<Toast key={toast.id} msg={toast.msg} type={toast.type} onClose={()=>setToast(null)}/>}
       {resetToken&&<ResetPasswordModal token={resetToken} notify={notify} onClose={()=>{setResetToken(null);setModal({type:"auth",mode:"login"});}}/>}
+      {feedContext && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 9999 }}>
+          <SwipeFeed
+            user={user} token={token}
+            initialListings={feedContext.items} startIndex={feedContext.index}
+            onOpen={l => { setFeedContext(null); setModal({type:"detail",listing:l}); }}
+            onLockIn={handleLockIn}
+            onMessage={l => { if(!user) { notify("Sign in to chat","warning"); setModal({type:"auth",mode:"login"}); } else { setModal({type:"chat",listing:l}); } }}
+            savedIds={savedIds} onToggleSave={handleToggleSave}
+            onSignIn={() => setModal({type:"auth",mode:"login"})}
+            onPostAd={() => { setFeedContext(null); setModal({type:"post"}); }}
+            onClose={() => setFeedContext(null)}
+          />
+        </div>
+      )}
     </>;
   }
 

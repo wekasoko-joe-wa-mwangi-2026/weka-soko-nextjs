@@ -4685,6 +4685,7 @@ function AllListingsPage({user,token,notify,onBack,onOpenListing,onToggleSave,sa
   const [maxPrice,setMaxPrice]=useState(initialFilter?.maxPrice||"");
   const [sort,setSort]=useState(initialFilter?.sort||"newest");
   const [pg,setPg]=useState(1);
+  const [feedIdx,setFeedIdx]=useState(null);
   const loaderRef=useRef(null);
   const PER=24;
   const filterCat=CATS.find(c=>c.name===category);
@@ -4791,7 +4792,13 @@ function AllListingsPage({user,token,notify,onBack,onOpenListing,onToggleSave,sa
         </div>
         :<>
           <div className={vm==="grid"?"g3":"lvc"}>
-            {listings.map(l=><ListingCard key={l.id} listing={l} onClick={()=>onOpenListing&&onOpenListing(l)} listView={vm==="list"} isSaved={savedIds?.has(l.id)} onSave={user?()=>onToggleSave&&onToggleSave(l):null}/>)}
+            {listings.map((l, i)=><ListingCard key={l.id} listing={l} onClick={()=>{
+              if(typeof window!=="undefined"&&window.innerWidth<768){
+                setFeedIdx(i);
+              }else{
+                onOpenListing&&onOpenListing(l);
+              }
+            }} listView={vm==="list"} isSaved={savedIds?.has(l.id)} onSave={user?()=>onToggleSave&&onToggleSave(l):null}/>)}
           </div>
           <div ref={loaderRef} style={{height:72,display:"flex",alignItems:"center",justifyContent:"center",marginTop:16}}>
             {loadingMore&&<div className={vm==="grid"?"g3":"lvc"} style={{width:"100%"}}>{[1,2,3].map(i=><SkeletonCard key={i}/>)}</div>}
@@ -4799,6 +4806,12 @@ function AllListingsPage({user,token,notify,onBack,onOpenListing,onToggleSave,sa
           </div>
         </>}
     </div>
+    {feedIdx!==null&&<div style={{position:"fixed",inset:0,zIndex:9999}}>
+      <SwipeFeed user={user} token={token} initialListings={listings} startIndex={feedIdx}
+        onOpen={l=>{setFeedIdx(null);onOpenListing&&onOpenListing(l);}}
+        onLockIn={()=>{}} onMessage={()=>{}} savedIds={savedIds} onToggleSave={onToggleSave}
+        onSignIn={onSignIn} onPostAd={onPostAd} onClose={()=>setFeedIdx(null)}/>
+    </div>}
   </div>;
 }
 

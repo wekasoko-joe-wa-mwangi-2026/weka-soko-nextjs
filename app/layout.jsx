@@ -31,6 +31,13 @@ export const metadata = {
   },
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#1428A0',
+};
+
 // Safe JSON-LD: these are static objects we define, not user content
 const orgLd = JSON.stringify({
   '@context': 'https://schema.org',
@@ -58,8 +65,6 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-        <meta name="theme-color" content="#1428A0" />
         <meta name="geo.region" content="KE" />
         <meta name="geo.placename" content="Kenya" />
 
