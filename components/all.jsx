@@ -742,7 +742,7 @@ function AuthModal({defaultMode,onClose,onAuth,notify}){
 
 // ── SHARE MODAL ───────────────────────────────────────────────────────────────
 function ShareModal({listing,onClose}){
-  const url=`${window.location.origin}/?listing=${listing.id}`;
+  const url=`${window.location.origin}/listings/${listing.id}`;
   const txt=`"${listing.title}" — ${fmtKES(listing.price)} on Weka Soko`;
   const [copied,setCopied]=useState(false);
 

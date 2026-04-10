@@ -157,7 +157,13 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       const listingId = params.get('listing');
       if (listingId) {
         apiCall(`/api/listings/${listingId}`, {}, null).then(l => {
-          if (l && l.id) setModal({ type: 'detail', listing: l });
+          if (l && l.id) {
+            if (window.innerWidth < 768) {
+              setFeedContext({ items: [l], index: 0 });
+            } else {
+              setModal({ type: 'detail', listing: l });
+            }
+          }
         }).catch(() => {});
       }
     }
@@ -196,7 +202,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     // Don't overwrite URL if auth/reset tokens are present
     if (typeof window !== 'undefined') {
       const _s = window.location.search;
-      if (_s.includes('reset_token=') || _s.includes('auth_token=') || _s.includes('verify_email=')) return;
+      if (_s.includes('reset_token=') || _s.includes('auth_token=') || _s.includes('verify_email=') || _s.includes('listing=')) return;
     }
     const p = new URLSearchParams();
     if (filter.cat) p.set('cat', filter.cat);
@@ -414,7 +420,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       return;
     }
     setModal({type:"detail",listing:l});
-    if(typeof window !== 'undefined') window.history.pushState({},'',`/?listing=${l.id}`);
+    if(typeof window !== 'undefined') window.history.pushState({},'',`/listings/${l.id}`);
     try{
       const fresh=await apiCall(`/api/listings/${l.id}`,{},token);
       setModal({type:"detail",listing:fresh});
