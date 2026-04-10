@@ -40,9 +40,16 @@ export default function ListingPageClient({ initialListing, listingId }) {
     } catch (e) { notify(e.message, 'error'); }
   };
 
-  if (!listing) return null;
   // Wait until we know mobile vs desktop before rendering anything interactive
   if (isMobile === null) return null;
+  if (!listing) return (
+    <div style={{position:'fixed',inset:0,zIndex:9999,background:'#fff',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16,padding:32,textAlign:'center'}}>
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#CCCCCC" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div style={{fontWeight:700,fontSize:18,color:'#1A1A1A'}}>Listing not found</div>
+      <div style={{fontSize:14,color:'#636363'}}>This ad may have been removed or is no longer available.</div>
+      <a href="/" style={{marginTop:8,background:'#1428A0',color:'#fff',padding:'12px 28px',borderRadius:10,fontWeight:700,fontSize:14,textDecoration:'none'}}>Browse Listings</a>
+    </div>
+  );
 
   const sharedModals = (
     <>
