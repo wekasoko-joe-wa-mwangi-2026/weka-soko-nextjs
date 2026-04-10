@@ -4166,6 +4166,7 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
   const [animating,setAnimating]=useState(false);
   const [animatingH,setAnimatingH]=useState(false);
   const [autoScroll,setAutoScroll]=useState(false);
+  const [shareModal,setShareModal]=useState(null);
   const animatingH_=useRef(false);
   const containerRef=useRef(null);
   const fetching=useRef(false);
@@ -4457,7 +4458,8 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
                   <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onLockIn&&onLockIn(l);}} style={{flex:1,background:"#1428A0",color:"#fff",border:"none",padding:"14px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",boxShadow:"0 4px 14px rgba(20,40,160,.35)"}}>I'm Interested</button>
                   <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onMessage&&onMessage(l);}} style={{flex:1,background:"#F5F5F5",color:"#1A1A1A",border:"none",padding:"14px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)"}}>Message Seller</button>
                 </div>
-                <button onClick={e=>{e.stopPropagation();onOpen&&onOpen(l);}} style={{width:"100%",background:"none",color:"#1428A0",border:"1.5px solid #1428A0",padding:"12px",fontSize:13,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",marginBottom:18}}>Open Full Listing →</button>
+                <button onClick={e=>{e.stopPropagation();onOpen&&onOpen(l);}} style={{width:"100%",background:"none",color:"#1428A0",border:"1.5px solid #1428A0",padding:"12px",fontSize:13,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",marginBottom:8}}>Open Full Listing →</button>
+                <button onClick={e=>{e.stopPropagation();setShareModal(l);}} style={{width:"100%",background:"none",color:"#636363",border:"1.5px solid #EBEBEB",padding:"12px",fontSize:13,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",marginBottom:18,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share this Listing</button>
               </div>
 
               {/* Divider */}
@@ -4527,6 +4529,12 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
                 <span style={{color:"rgba(255,255,255,.7)",fontSize:8,fontWeight:700}}>INT</span>
               </div>
             </div>}
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+              <button onClick={e=>{e.stopPropagation();setShareModal(l);}} style={{width:44,height:44,borderRadius:"50%",background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid rgba(255,255,255,.2)",backdropFilter:"blur(6px)",cursor:"pointer"}}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              </button>
+              <span style={{color:"rgba(255,255,255,.8)",fontSize:10,fontWeight:700}}>Share</span>
+            </div>
           </div>
           {/* Bottom action buttons */}
           <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"12px 16px 24px",display:"flex",gap:8,zIndex:30,background:"linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 100%)"}}>
@@ -4549,7 +4557,8 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
   const visCount=Math.min(listings.length,7);
   const visStart=Math.max(0,Math.min(idx-3,listings.length-visCount));
 
-  return(
+  return(<>
+    {shareModal&&<ShareModal listing={shareModal} onClose={()=>setShareModal(null)}/>}
     <div ref={containerRef} style={{height:"100vh",width:"100%",background:"#000",position:"relative",overflow:"hidden",userSelect:"none",WebkitUserSelect:"none",touchAction:"none"}}
       onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
 
@@ -4602,7 +4611,7 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
         </div>
       </div>
     </div>
-  );
+  </>);
 }
 
 // ── HOT RIGHT NOW — horizontal scroll of popular listings ─────────────────────

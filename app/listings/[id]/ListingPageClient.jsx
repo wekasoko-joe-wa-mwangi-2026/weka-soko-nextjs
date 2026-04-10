@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiCall } from '@/lib/utils';
-import { DetailModal, AuthModal, PayModal, ChatModal, ShareModal, Toast } from '@/components/all';
+import { DetailModal, AuthModal, PayModal, ChatModal, ShareModal, Toast, SwipeFeed } from '@/components/all';
 
 export default function ListingPageClient({ initialListing, listingId }) {
   const router = useRouter();
@@ -13,8 +13,16 @@ export default function ListingPageClient({ initialListing, listingId }) {
   const [modal, setModal] = useState('detail');
   const [payType, setPayType] = useState('unlock');
   const [toast, setToast] = useState(null);
+  const [isMobile, setIsMobile] = useState(null); // null = unknown until JS runs
 
   const notify = (msg, type = 'info') => setToast({ msg, type, id: Date.now() });
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   useEffect(() => {
     const t = localStorage.getItem('ws_token');
@@ -28,26 +36,16 @@ export default function ListingPageClient({ initialListing, listingId }) {
     try {
       await apiCall(`/api/listings/${listing.id}/lock-in`, { method: 'POST' }, token);
       setListing(p => ({ ...p, locked_buyer_id: user.id }));
-      notify('🔥 Locked in! The seller has been notified.', 'success');
+      notify('Locked in! The seller has been notified.', 'success');
     } catch (e) { notify(e.message, 'error'); }
   };
 
   if (!listing) return null;
+  // Wait until we know mobile vs desktop before rendering anything interactive
+  if (isMobile === null) return null;
 
-  return (
+  const sharedModals = (
     <>
-      {modal === 'detail' && (
-        <DetailModal
-          listing={listing} user={user} token={token}
-          onClose={() => router.push('/')}
-          notify={notify}
-          onShare={() => setModal('share')}
-          onChat={() => { if (!user) { setModal('auth'); return; } setModal('chat'); }}
-          onLockIn={handleLockIn}
-          onUnlock={() => { setPayType('unlock'); setModal('pay'); }}
-          onEscrow={() => { if (!user) { setModal('auth'); return; } setPayType('escrow'); setModal('pay'); }}
-        />
-      )}
       {modal === 'chat' && user && (
         <ChatModal listing={listing} user={user} token={token} onClose={() => setModal('detail')} notify={notify} />
       )}
@@ -58,14 +56,14 @@ export default function ListingPageClient({ initialListing, listingId }) {
         <PayModal
           type={payType}
           listingId={listing.id}
-          amount={payType === 'unlock' ? 250 : listing.price + Math.round(listing.price * 0.075)}
+          amount={payType === 'unlock' ? Math.max(0, 250 - (listing.unlock_discount || 0)) : listing.price + Math.round(listing.price * 0.075)}
           purpose={payType === 'unlock' ? `Reveal buyer: ${listing.title}` : `Escrow: ${listing.title}`}
           token={token} user={user} allowVoucher={true}
           onSuccess={async () => {
             const fresh = await apiCall(`/api/listings/${listing.id}`, {}, token).catch(() => null);
             if (fresh) setListing(fresh);
             setModal('detail');
-            notify(payType === 'unlock' ? '🔓 Buyer revealed!' : '🔐 Escrow activated!', 'success');
+            notify(payType === 'unlock' ? 'Buyer revealed!' : 'Escrow activated!', 'success');
           }}
           onClose={() => setModal('detail')} notify={notify}
         />
@@ -82,6 +80,50 @@ export default function ListingPageClient({ initialListing, listingId }) {
         />
       )}
       {toast && <Toast key={toast.id} msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
+    </>
+  );
+
+  // Mobile: full-screen SwipeFeed — same experience as in-app browsing
+  if (isMobile) {
+    return (
+      <>
+        {modal === 'detail' && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 9999 }}>
+            <SwipeFeed
+              user={user} token={token}
+              initialListings={[listing]} startIndex={0}
+              onOpen={() => {}}
+              onLockIn={handleLockIn}
+              onMessage={() => { if (!user) { setModal('auth'); return; } setModal('chat'); }}
+              savedIds={new Set()}
+              onToggleSave={null}
+              onSignIn={() => setModal('auth')}
+              onPostAd={() => router.push('/')}
+              onClose={() => router.push('/')}
+            />
+          </div>
+        )}
+        {sharedModals}
+      </>
+    );
+  }
+
+  // Desktop: slide-up DetailModal
+  return (
+    <>
+      {modal === 'detail' && (
+        <DetailModal
+          listing={listing} user={user} token={token}
+          onClose={() => router.push('/')}
+          notify={notify}
+          onShare={() => setModal('share')}
+          onChat={() => { if (!user) { setModal('auth'); return; } setModal('chat'); }}
+          onLockIn={handleLockIn}
+          onUnlock={() => { setPayType('unlock'); setModal('pay'); }}
+          onEscrow={() => { if (!user) { setModal('auth'); return; } setPayType('escrow'); setModal('pay'); }}
+        />
+      )}
+      {sharedModals}
     </>
   );
 }
