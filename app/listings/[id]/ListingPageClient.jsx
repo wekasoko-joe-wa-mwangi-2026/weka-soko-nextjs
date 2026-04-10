@@ -14,6 +14,8 @@ export default function ListingPageClient({ initialListing, listingId }) {
   const [payType, setPayType] = useState('unlock');
   const [toast, setToast] = useState(null);
   const [isMobile, setIsMobile] = useState(null); // null = unknown until JS runs
+  // true once the client-side fetch has settled (success or failure)
+  const [fetchDone, setFetchDone] = useState(initialListing !== null);
 
   const notify = (msg, type = 'info') => setToast({ msg, type, id: Date.now() });
 
@@ -28,7 +30,9 @@ export default function ListingPageClient({ initialListing, listingId }) {
     const t = localStorage.getItem('ws_token');
     const u = localStorage.getItem('ws_user');
     if (t && u) { try { setUser(JSON.parse(u)); setToken(t); } catch {} }
-    apiCall(`/api/listings/${listingId}`).then(fresh => setListing(fresh)).catch(() => {});
+    apiCall(`/api/listings/${listingId}`)
+      .then(fresh => { setListing(fresh); setFetchDone(true); })
+      .catch(() => setFetchDone(true));
   }, [listingId]);
 
   const handleLockIn = async () => {
@@ -40,8 +44,8 @@ export default function ListingPageClient({ initialListing, listingId }) {
     } catch (e) { notify(e.message, 'error'); }
   };
 
-  // Wait until we know mobile vs desktop before rendering anything interactive
-  if (isMobile === null) return null;
+  // Wait until device type is known AND the fetch has settled
+  if (isMobile === null || !fetchDone) return null;
   if (!listing) return (
     <div style={{position:'fixed',inset:0,zIndex:9999,background:'#fff',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16,padding:32,textAlign:'center'}}>
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#CCCCCC" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
