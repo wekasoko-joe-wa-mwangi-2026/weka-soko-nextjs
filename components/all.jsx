@@ -156,8 +156,9 @@ function checkContactInfo(text) {
   if (/\b(whatsapp|whats.?app|wa\.me|telegram|t\.me|signal|viber|snapchat|snap\b|instagram|insta\b|ig\b|facebook|fb\.com|twitter|x\.com|tiktok|dm me|call me|text me|reach me|my number|my phone|my email|my namba|nipa\s+call|nipigie)\b/i.test(t)) return true;
   // Add me / find me on ...
   if (/\b(add\s+me\s+(on|at)|find\s+me\s+(on|at)|follow\s+me\s+on|my\s+(ig|snap|insta|handle|username))\b/i.test(t)) return true;
-  // Digit sequence with separators (10+ digits)
-  if (/\d[\s.\-•/\\,]*\d[\s.\-•/\\,]*\d[\s.\-•/\\,]*\d[\s.\-•/\\,]*\d[\s.\-•/\\,]*\d[\s.\-•/\\,]*\d[\s.\-•/\\,]*\d[\s.\-•/\\,]*\d[\s.\-•/\\,]*\d/.test(t)) return true;
+  // Digit sequence with SHORT separators only (max 2 chars, no spaces)
+  // Spaces are excluded so technical specs like "205hp ... 202Nm ... 6 speed" don't false-positive
+  if (/\d[.\-•/\\,]{0,2}\d[.\-•/\\,]{0,2}\d[.\-•/\\,]{0,2}\d[.\-•/\\,]{0,2}\d[.\-•/\\,]{0,2}\d[.\-•/\\,]{0,2}\d[.\-•/\\,]{0,2}\d[.\-•/\\,]{0,2}\d[.\-•/\\,]{0,2}\d/.test(t)) return true;
   // Word-to-digit conversion then phone check
   const norm = t.toLowerCase()
     .replace(/\bzero\b/g,"0").replace(/\bone\b/g,"1").replace(/\btwo\b/g,"2")
@@ -172,8 +173,10 @@ function checkContactInfo(text) {
   if (/0\d{9,}/.test(digits)) return true;
   if (/254\d{9}/.test(digits)) return true;
   // After word-to-digit, check for 10-digit sequence with separators
-  const normSep = norm.replace(/[^0-9\s.\-,]/g,"");
-  if (/\d[\s.\-,]*\d[\s.\-,]*\d[\s.\-,]*\d[\s.\-,]*\d[\s.\-,]*\d[\s.\-,]*\d[\s.\-,]*\d[\s.\-,]*\d[\s.\-,]*\d/.test(normSep)) return true;
+  // After word-to-digit: check for phone-like clusters (short separators only, no spaces)
+  // Removing spaces prevents "205hp 202Nm 6speed" → 10 scattered digits from false-firing
+  const normSep = norm.replace(/[^0-9.\-,]/g,"");
+  if (/\d[.\-,]{0,2}\d[.\-,]{0,2}\d[.\-,]{0,2}\d[.\-,]{0,2}\d[.\-,]{0,2}\d[.\-,]{0,2}\d[.\-,]{0,2}\d[.\-,]{0,2}\d[.\-,]{0,2}\d/.test(normSep)) return true;
   return false;
 }
 
