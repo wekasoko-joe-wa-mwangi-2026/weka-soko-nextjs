@@ -2819,9 +2819,13 @@ function MobileDashboard({
   const navItems=[
     {id:"home",  label:"Home",   icon:<svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/><path d="M9 21V12h6v9" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/></svg>},
     {id:"ads",   label:user.role==="seller"?"My Ads":"Interests", icon:<svg viewBox="0 0 24 24" fill="none" width="22" height="22"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/><rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/></svg>},
-    {id:"notif", label:"Alerts",  icon:<svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>, badge:unreadCount>0?unreadCount:null},
+    {id:"notif", label:"Inbox",   icon:<svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>, badge:unreadCount>0?unreadCount:null},
     {id:"settings",label:"Account",icon:<svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>},
   ];
+
+  const [inboxTab,setInboxTab]=useState("chat");
+  const unreadMsgsMob=threads.reduce((a,t)=>a+parseInt(t.unread_count||0),0);
+  const unreadNotifsMob=notifs.filter(n=>!n.is_read).length;
 
   const markRead=async(id)=>{
     try{
@@ -2993,40 +2997,75 @@ function MobileDashboard({
         <MyRequestsTab token={token} notify={notify} user={user}/>
       </div>}
 
-      {/* ── NOTIFICATIONS SECTION ────────────────────────────────────────── */}
-      {!loading&&mobSection==="notif"&&<div style={{padding:"16px"}}>
-        <div style={{fontSize:16,fontWeight:700,color:"#1A1A1A",marginBottom:16}}>Notifications & Messages</div>
-        {notifs.length===0
-          ?<div style={{textAlign:"center",padding:"60px 20px",color:"#AAAAAA"}}>
-              <div style={{marginBottom:12,opacity:.2,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
-              <div style={{fontWeight:700}}>All caught up!</div>
-            </div>
-          :notifs.map(n=>(
-            <div key={n.id} onClick={()=>markRead(n.id)} style={{background:n.is_read?"#fff":"#F0F4FF",borderRadius:12,padding:"14px",marginBottom:8,border:`1px solid ${n.is_read?"#EBEBEB":"#C7D2FE"}`,cursor:"pointer"}}>
-              <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
-                <span style={{flexShrink:0,display:"flex",alignItems:"center"}}>
-                  {n.type==="new_message"
-                    ?<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1428A0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    :n.type==="buyer_locked_in"
-                    ?<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e55" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                    :n.type==="escrow_released"||n.type==="payment_confirmed"
-                    ?<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                    :n.type==="listing_approved"||n.type==="pitch_accepted"
-                    ?<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a9e1a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                    :n.type==="listing_rejected"||n.type==="suspension"
-                    ?<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e55" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
-                    :<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1428A0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>}
-                </span>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontWeight:n.is_read?600:700,fontSize:14,color:"#1A1A1A",marginBottom:3}}>{n.title}</div>
-                  <div style={{fontSize:13,color:"#636363",lineHeight:1.5}}>{n.body}</div>
-                  <div style={{fontSize:11,color:"#AAAAAA",marginTop:6}}>{ago(n.created_at)}</div>
-                </div>
-                {!n.is_read&&<div style={{width:8,height:8,borderRadius:"50%",background:"#1428A0",flexShrink:0,marginTop:4}}/>}
-              </div>
-            </div>
-          ))}
-      </div>}
+      {/* ── INBOX SECTION (Chat + Notifications sub-tabs) ────────────────── */}
+      {!loading&&mobSection==="notif"&&<div style={{display:"flex",flexDirection:"column",height:"100%"}}>
+          {/* Sub-tab bar */}
+          <div style={{display:"flex",background:"#fff",borderBottom:"1px solid #E5E5E5",position:"sticky",top:0,zIndex:10}}>
+            <button onClick={()=>setInboxTab("chat")} style={{flex:1,padding:"14px 0",border:"none",background:"transparent",cursor:"pointer",fontFamily:"var(--fn)",fontSize:13,fontWeight:700,color:inboxTab==="chat"?"#1428A0":"#AAAAAA",borderBottom:inboxTab==="chat"?"2.5px solid #1428A0":"2.5px solid transparent",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+              Chat{unreadMsgsMob>0&&<span style={{background:"#1428A0",color:"#fff",borderRadius:10,fontSize:9,fontWeight:700,padding:"1px 5px"}}>{unreadMsgsMob}</span>}
+            </button>
+            <button onClick={()=>setInboxTab("notifs")} style={{flex:1,padding:"14px 0",border:"none",background:"transparent",cursor:"pointer",fontFamily:"var(--fn)",fontSize:13,fontWeight:700,color:inboxTab==="notifs"?"#1428A0":"#AAAAAA",borderBottom:inboxTab==="notifs"?"2.5px solid #1428A0":"2.5px solid transparent",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+              Alerts{unreadNotifsMob>0&&<span style={{background:"#1428A0",color:"#fff",borderRadius:10,fontSize:9,fontWeight:700,padding:"1px 5px"}}>{unreadNotifsMob}</span>}
+            </button>
+          </div>
+
+          <div style={{padding:"16px",overflowY:"auto",flex:1}}>
+            {inboxTab==="chat"&&<>
+              {threads.length===0
+                ?<div style={{textAlign:"center",padding:"60px 20px",color:"#AAAAAA"}}>
+                    <div style={{marginBottom:12,opacity:.2,display:"flex",alignItems:"center",justifyContent:"center"}}><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+                    <div style={{fontWeight:700}}>No conversations yet</div>
+                  </div>
+                :threads.map((t,i)=>(
+                  <div key={i} onClick={()=>setSelectedListing({id:t.listing_id,title:t.title,seller_id:t.seller_id,is_unlocked:t.is_unlocked||false,locked_buyer_id:t.locked_buyer_id})}
+                    style={{display:"flex",alignItems:"center",gap:12,background:parseInt(t.unread_count||0)>0?"#F0F4FF":"#fff",borderRadius:12,padding:"14px",marginBottom:8,border:`1px solid ${parseInt(t.unread_count||0)>0?"#C7D2FE":"#EBEBEB"}`,cursor:"pointer"}}>
+                    <div style={{position:"relative",flexShrink:0}}>
+                      <div style={{width:42,height:42,borderRadius:"50%",background:"#1428A0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,color:"#fff",fontWeight:700}}>{t.other_party_anon?.charAt(0)?.toUpperCase()||"?"}</div>
+                      {t.is_online&&<div style={{position:"absolute",bottom:0,right:0,width:11,height:11,background:"#22C55E",borderRadius:"50%",border:"2px solid #fff"}}/>}
+                    </div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontWeight:parseInt(t.unread_count||0)>0?700:600,fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.title}</div>
+                      <div style={{fontSize:12,color:"#888888",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.last_message?.slice(0,40)||"No messages"}</div>
+                    </div>
+                    {parseInt(t.unread_count||0)>0&&<span style={{background:"#1428A0",color:"#fff",borderRadius:10,fontSize:10,fontWeight:700,padding:"2px 7px",flexShrink:0}}>{t.unread_count}</span>}
+                  </div>
+                ))}
+            </>}
+
+            {inboxTab==="notifs"&&<>
+              {notifs.length===0
+                ?<div style={{textAlign:"center",padding:"60px 20px",color:"#AAAAAA"}}>
+                    <div style={{marginBottom:12,opacity:.2,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+                    <div style={{fontWeight:700}}>All caught up!</div>
+                  </div>
+                :notifs.map(n=>(
+                  <div key={n.id} onClick={()=>markRead(n.id)} style={{background:n.is_read?"#fff":"#F0F4FF",borderRadius:12,padding:"14px",marginBottom:8,border:`1px solid ${n.is_read?"#EBEBEB":"#C7D2FE"}`,cursor:"pointer"}}>
+                    <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
+                      <span style={{flexShrink:0,display:"flex",alignItems:"center"}}>
+                        {n.type==="buyer_locked_in"
+                          ?<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e55" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                          :n.type==="escrow_released"||n.type==="payment_confirmed"
+                          ?<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                          :n.type==="listing_approved"||n.type==="pitch_accepted"
+                          ?<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a9e1a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                          :n.type==="listing_rejected"||n.type==="suspension"
+                          ?<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e55" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                          :<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1428A0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>}
+                      </span>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontWeight:n.is_read?600:700,fontSize:14,color:"#1A1A1A",marginBottom:3}}>{n.title}</div>
+                        <div style={{fontSize:13,color:"#636363",lineHeight:1.5}}>{n.body}</div>
+                        <div style={{fontSize:11,color:"#AAAAAA",marginTop:6}}>{ago(n.created_at)}</div>
+                      </div>
+                      {!n.is_read&&<div style={{width:8,height:8,borderRadius:"50%",background:"#1428A0",flexShrink:0,marginTop:4}}/>}
+                    </div>
+                  </div>
+                ))}
+            </>}
+          </div>
+        </div>}
 
       {/* ── SETTINGS / ACCOUNT SECTION ───────────────────────────────────── */}
       {!loading&&mobSection==="settings"&&<div style={{padding:"16px",display:"flex",flexDirection:"column",gap:12}}>
@@ -3080,7 +3119,7 @@ function MobileDashboard({
     {selectedListing&&<ChatModal listing={selectedListing} user={user} token={token} onClose={()=>setSelectedListing(null)} notify={notify}/>}
     {editingListing&&<PostAdModal listing={editingListing} token={token} notify={notify} onClose={()=>setEditingListing(null)} onSuccess={(updated)=>{setListings(p=>p.map(l=>l.id===updated.id?updated:l));setEditingListing(null);}}/>}
     {markSoldListing&&<MarkSoldModal listing={markSoldListing} token={token} notify={notify} onClose={()=>setMarkSoldListing(null)} onSuccess={(id,channel)=>setListings(p=>p.map(l=>l.id===id?{...l,status:"sold",sold_channel:channel}:l))}/>}
-    {showPayModal&&<PayModal type="unlock" listingId={showPayModal.id} amount={250} purpose={`Reveal buyer: ${showPayModal.title}`} token={token} user={user} allowVoucher={true}
+    {showPayModal&&<PayModal type="unlock" listingId={showPayModal.id} amount={Math.max(0,250-(showPayModal.unlock_discount||0))} purpose={`Reveal buyer: ${showPayModal.title}`} token={token} user={user} allowVoucher={true}
       onSuccess={async()=>{
         const lid=showPayModal.id;setShowPayModal(null);
         try{const fresh=await api(`/api/listings/${lid}`,{},token);setListings(p=>p.map(l=>l.id===lid?fresh:l));}
@@ -3165,7 +3204,9 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
     catch(err){notify(err.message,"error");}
   };
 
-  const unreadCount=(notifs.filter(n=>!n.is_read).length||0)+(threads.reduce((a,t)=>a+parseInt(t.unread_count||0),0)||0);
+  const unreadMsgs=threads.reduce((a,t)=>a+parseInt(t.unread_count||0),0);
+  const unreadNotifs=notifs.filter(n=>!n.is_read).length;
+  const unreadCount=unreadMsgs+unreadNotifs;
 
   // ── Mobile detection ────────────────────────────────────────────────────────
   const [isMobile, setIsMobile] = useState(()=>typeof window!=='undefined'?window.innerWidth<768:false);
@@ -3219,8 +3260,8 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
         {/* Tab row — flush to bottom of hero */}
         <div style={{display:"flex",gap:0,overflowX:"auto",borderBottom:"none",WebkitOverflowScrolling:"touch"}}>
           {(user.role==="seller"
-            ?[["overview","Overview"],["notifications","Notifications"+(unreadCount>0?` (${unreadCount})`:"")] ,["ads","My Ads"],["sold","Sold"],["requests","What Buyers Want"],["reviews","Reviews"],["settings","Settings"]]
-            :[["overview","Overview"],["notifications","Notifications"+(unreadCount>0?` (${unreadCount})`:"")] ,["saved","Saved"+(savedListings.length>0?` (${savedListings.length})`:"")],["interests","My Interests"],["pitches","Pitches Received"],["requests","What Buyers Want"],["reviews","Reviews"],["settings","Settings"]]
+            ?[["overview","Overview"],["messages","Messages"+(unreadMsgs>0?` (${unreadMsgs})`:"")] ,["notifications","Notifications"+(unreadNotifs>0?` (${unreadNotifs})`:"")] ,["ads","My Ads"],["sold","Sold"],["requests","What Buyers Want"],["reviews","Reviews"],["settings","Settings"]]
+            :[["overview","Overview"],["messages","Messages"+(unreadMsgs>0?` (${unreadMsgs})`:"")] ,["notifications","Notifications"+(unreadNotifs>0?` (${unreadNotifs})`:"")] ,["saved","Saved"+(savedListings.length>0?` (${savedListings.length})`:"")],["interests","My Interests"],["pitches","Pitches Received"],["requests","What Buyers Want"],["reviews","Reviews"],["settings","Settings"]]
           ).map(([id,label])=>(
             <button key={id} onClick={()=>setTab(id)} style={{padding:"14px 22px",border:"none",background:"transparent",cursor:"pointer",fontSize:13,fontWeight:700,letterSpacing:".04em",whiteSpace:"nowrap",color:tab===id?"#fff":"rgba(255,255,255,.55)",borderBottom:tab===id?"3px solid #fff":"3px solid transparent",transition:"all .15s",fontFamily:"var(--fn)"}}>
               {label}
@@ -3274,7 +3315,9 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
               <div style={{fontWeight:700,fontSize:15,marginBottom:2}}>{l.title}</div>
               <div style={{fontSize:12,color:"#888888"}}>{l.linked_request_id?"A buyer requested this item!":"A buyer has locked in!"} Pay KSh 250 to reveal their contact details.</div>
             </div>
-            <button className="btn bp sm" onClick={()=>setShowPayModal(l)}>Reveal Buyer — KSh 250</button>
+            <button className="btn bp sm" onClick={()=>setShowPayModal(l)}>
+              {(l.unlock_discount||0)>=250?"Reveal Buyer — FREE":l.unlock_discount>0?`Reveal Buyer — KSh ${250-(l.unlock_discount||0)}`:"Reveal Buyer — KSh 250"}
+            </button>
           </div>
         ))}
         <div style={{height:8}}/>
@@ -3312,40 +3355,44 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
       </div>}
     </>}
 
-    {!loading&&tab==="notifications"&&<>
-      {/* Chat Threads */}
-      {threads.length>0&&<>
-        <h3 style={{fontSize:15,fontWeight:700,marginBottom:14,letterSpacing:"-.01em"}}>Chat Threads</h3>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:12,marginBottom:32}}>
-          {threads.map((t,i)=>(
-            <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:"#fffA0",border:"1px solid #EBEBEB",borderRadius:6,cursor:"pointer",transition:"border-color .15s"}}
-              onMouseOver={e=>e.currentTarget.style.borderColor="#111111"}
-              onMouseOut={e=>e.currentTarget.style.borderColor="#EBEBEB"}
-              onClick={()=>setSelectedListing({id:t.listing_id,title:t.title,seller_id:t.seller_id,is_unlocked:t.is_unlocked||false,locked_buyer_id:t.locked_buyer_id})}>
-              <div style={{position:"relative",flexShrink:0}}>
-                <div style={{width:44,height:44,borderRadius:"50%",background:"#1428A0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,color:"#fff",fontWeight:700}}>
-                  {t.other_party_anon?.charAt(0)?.toUpperCase()||"?"}
-                </div>
-                {t.is_online&&<div style={{position:"absolute",bottom:1,right:1,width:11,height:11,background:"#22C55E",borderRadius:"50%",border:"2px solid #fff"}}/>}
+    {!loading&&tab==="messages"&&<>
+      <h3 style={{fontSize:15,fontWeight:700,marginBottom:14,letterSpacing:"-.01em"}}>Chat Threads</h3>
+      {threads.length===0&&<div style={{textAlign:"center",padding:"60px 20px",background:"#f9f9f9",border:"1px dashed #E5E5E5"}}>
+        <div style={{marginBottom:12,opacity:.2,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+        <p style={{fontWeight:700,marginBottom:6}}>No chat threads yet</p>
+        <p style={{fontSize:13,color:"#888888"}}>When buyers message you about your listings, the conversations will appear here.</p>
+      </div>}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:12}}>
+        {threads.map((t,i)=>(
+          <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:"#fff",border:`1px solid ${parseInt(t.unread_count||0)>0?"#1428A0":"#EBEBEB"}`,borderRadius:6,cursor:"pointer",transition:"border-color .15s"}}
+            onMouseOver={e=>{if(parseInt(t.unread_count||0)===0)e.currentTarget.style.borderColor="#111111";}}
+            onMouseOut={e=>{if(parseInt(t.unread_count||0)===0)e.currentTarget.style.borderColor="#EBEBEB";}}
+            onClick={()=>setSelectedListing({id:t.listing_id,title:t.title,seller_id:t.seller_id,is_unlocked:t.is_unlocked||false,locked_buyer_id:t.locked_buyer_id})}>
+            <div style={{position:"relative",flexShrink:0}}>
+              <div style={{width:44,height:44,borderRadius:"50%",background:"#1428A0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,color:"#fff",fontWeight:700}}>
+                {t.other_party_anon?.charAt(0)?.toUpperCase()||"?"}
               </div>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontWeight:600,fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.title}</div>
-                <div style={{fontSize:12,color:"#888888",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.last_message?.slice(0,45)||"No messages"}</div>
-              </div>
-              <div style={{textAlign:"right",flexShrink:0}}>
-                <div style={{fontSize:11,color:"#CCCCCC"}}>{ago(t.last_message_at)}</div>
-                {parseInt(t.unread_count||0)>0&&<div style={{background:"#0F1F8A",color:"#fff",borderRadius:10,fontSize:10,fontWeight:700,padding:"2px 7px",marginTop:4,display:"inline-block"}}>{t.unread_count}</div>}
-              </div>
+              {t.is_online&&<div style={{position:"absolute",bottom:1,right:1,width:11,height:11,background:"#22C55E",borderRadius:"50%",border:"2px solid #fff"}}/>}
             </div>
-          ))}
-        </div>
-      </>}
-
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
-        <h3 style={{fontSize:15,fontWeight:700,letterSpacing:"-.01em"}}>All Notifications</h3>
-        {notifs.length>0&&<button className="btn bs sm" style={{fontSize:11}} onClick={async()=>{await api("/api/notifications/read-all",{method:"PATCH"},token).catch(()=>{});setNotifs(p=>p.map(n=>({...n,is_read:true})));notify("All marked as read.","success");}}>Mark All Read</button>}
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontWeight:parseInt(t.unread_count||0)>0?700:600,fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.title}</div>
+              <div style={{fontSize:12,color:"#888888",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.last_message?.slice(0,50)||"No messages yet"}</div>
+              <div style={{fontSize:11,color:"#CCCCCC",marginTop:3}}>{t.other_party_anon||"Anonymous"} · {ago(t.last_message_at)}</div>
+            </div>
+            <div style={{textAlign:"right",flexShrink:0}}>
+              {parseInt(t.unread_count||0)>0&&<div style={{background:"#1428A0",color:"#fff",borderRadius:10,fontSize:10,fontWeight:700,padding:"3px 8px",display:"inline-block"}}>{t.unread_count}</div>}
+            </div>
+          </div>
+        ))}
       </div>
-      {notifs.length===0&&threads.length===0&&<div style={{textAlign:"center",padding:"60px 20px",background:"#f9f9f9",border:"1px dashed #E5E5E5"}}>
+    </>}
+
+    {!loading&&tab==="notifications"&&<>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+        <h3 style={{fontSize:15,fontWeight:700,letterSpacing:"-.01em"}}>Notifications</h3>
+        {notifs.some(n=>!n.is_read)&&<button className="btn bs sm" style={{fontSize:11}} onClick={async()=>{await api("/api/notifications/read-all",{method:"PATCH"},token).catch(()=>{});setNotifs(p=>p.map(n=>({...n,is_read:true})));notify("All marked as read.","success");}}>Mark All Read</button>}
+      </div>
+      {notifs.length===0&&<div style={{textAlign:"center",padding:"60px 20px",background:"#f9f9f9",border:"1px dashed #E5E5E5"}}>
         <div style={{marginBottom:12,opacity:.2,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div><p>No notifications yet</p>
       </div>}
       <div style={{maxWidth:680}}>
@@ -3522,7 +3569,7 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
     {selectedListing&&<ChatModal listing={selectedListing} user={user} token={token} onClose={()=>setSelectedListing(null)} notify={notify}/>}
     {editingListing&&<PostAdModal listing={editingListing} token={token} notify={notify} onClose={()=>setEditingListing(null)} onSuccess={(updated)=>{setListings(p=>p.map(l=>l.id===updated.id?updated:l));setEditingListing(null);}}/>}
     {markSoldListing&&<MarkSoldModal listing={markSoldListing} token={token} notify={notify} onClose={()=>setMarkSoldListing(null)} onSuccess={(id,channel)=>setListings(p=>p.map(l=>l.id===id?{...l,status:"sold",sold_channel:channel}:l))}/>}
-    {showPayModal&&<PayModal type="unlock" listingId={showPayModal.id} amount={250} purpose={`Unlock buyer contact for: ${showPayModal.title}`} token={token} user={user} allowVoucher={true}
+    {showPayModal&&<PayModal type="unlock" listingId={showPayModal.id} amount={Math.max(0,250-(showPayModal.unlock_discount||0))} purpose={`Unlock buyer contact for: ${showPayModal.title}`} token={token} user={user} allowVoucher={true}
       onSuccess={async(result)=>{
         const lid=showPayModal.id;setShowPayModal(null);
         try{const fresh=await api(`/api/listings/${lid}`,{},token);const ul=fresh.listing||fresh;setListings(p=>p.map(l=>l.id===lid?ul:l));}
