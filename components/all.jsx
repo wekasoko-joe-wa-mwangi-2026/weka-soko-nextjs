@@ -1406,6 +1406,7 @@ function ListingCard({listing:l,onClick,listView,isSaved,onSave}){
           <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
           {Number(l.seller_avg_rating).toFixed(1)}
         </span>}
+        {(l.total_listings_posted==null||l.total_listings_posted<3)&&<span style={{color:"#92400E",fontWeight:700,fontSize:10,background:"#FEF3C7",border:"1px solid #F59E0B",borderRadius:4,padding:"1px 5px"}}>New Seller</span>}
         <span style={{marginLeft:"auto",color:"#CCCCCC"}}>{ago(l.created_at)}</span>
       </div>
     </div>

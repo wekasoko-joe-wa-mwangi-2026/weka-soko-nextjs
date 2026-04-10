@@ -21,6 +21,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
   const [toast,setToast]=useState(null);
   const [modal,setModal]=useState(null);
   const [showPWA,setShowPWA]=useState(true);
+  const [maintenanceMsg,setMaintenanceMsg]=useState(null);
   const [notifCount,setNotifCount]=useState(0);
   const socketRef=useRef(null);
   const [resetToken,setResetToken]=useState(null);
@@ -282,7 +283,11 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         const data=await apiCall(`/api/listings?${p}`);
         setListings(data.listings||[]);
         setTotal(data.total||0);
-      }catch{if(!silent)setListings([]);}
+        setMaintenanceMsg(null);
+      }catch(e){
+        if(e.maintenance){setMaintenanceMsg(e.maintenance);if(!silent)setListings([]);}
+        else if(!silent)setListings([]);
+      }
       finally{if(!silent)setLoading(false);}
     };
     load(false);
@@ -558,7 +563,11 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       </div>
     </nav>
 
-    {page!=="dashboard"&&page!=="sold"&&page!=="requests"&&page!=="listings"&&newSinceLastVisit>0&&<div style={{background:"#10b981",color:"#fff",padding:"9px 20px",textAlign:"center",fontSize:13,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+    {maintenanceMsg&&<div style={{background:"#FEF3C7",borderBottom:"2px solid #F59E0B",color:"#92400E",padding:"12px 20px",textAlign:"center",fontSize:14,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:10}}>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#92400E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      {maintenanceMsg}
+    </div>}
+    {!maintenanceMsg&&page!=="dashboard"&&page!=="sold"&&page!=="requests"&&page!=="listings"&&newSinceLastVisit>0&&<div style={{background:"#10b981",color:"#fff",padding:"9px 20px",textAlign:"center",fontSize:13,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
       <span>{newSinceLastVisit} new listing{newSinceLastVisit!==1?"s":""} added since your last visit</span>
     </div>}
 
