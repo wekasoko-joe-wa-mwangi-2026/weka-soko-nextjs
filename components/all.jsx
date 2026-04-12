@@ -6,42 +6,43 @@ import { fmtKES, ago, CATS, KENYA_COUNTIES, API, PER_PAGE, CAT_PHOTOS } from '@/
 
 // ── WEKA SOKO LOGO COMPONENT ──────────────────────────────────────────────────
 function WekaSokoLogo({ size = 32, iconOnly = false, light = false }) {
+  const blue = light ? "#FFFFFF" : "#1428A0";
+  const gold = "#C49A00";
+  const textColor = light ? "#FFFFFF" : "#1428A0";
+  const iconW = size * 1.35;
   const iconH = size;
-  const iconW = size * (44/52);
-  const textSize = size * 0.72;
-  const subSize = size * 0.28;
-  const gap = size * 0.32;
-  const totalH = iconH;
-  const totalW = iconOnly ? iconW : iconW + gap + (textSize * (iconOnly ? 0 : 4.6));
-  const blue = light ? "#FFFFFF" : "#111111";
-  const textColor = light ? "#FFFFFF" : "#111111";
-  if (iconOnly) {
-    return (
-      <svg width={iconW} height={iconH} viewBox="0 0 44 52" fill="none" xmlns="http://www.w3.org/2000/svg" style={{display:"block",flexShrink:0}}>
-        <rect x="0" y="17" width="44" height="35" rx="3" fill="#111111"/>
-        <rect x="0" y="28" width="44" height="5" fill="#333333"/>
-        <path d="M10 17 Q10 3 22 3 Q34 3 34 17" fill="none" stroke={blue} strokeWidth="3.5" strokeLinecap="round"/>
-        <circle cx="22" cy="42" r="5" fill="white" opacity="0.9"/>
-        <circle cx="22" cy="42" r="2.5" fill="#111111"/>
-      </svg>
-    );
-  }
-  return (
-    <svg width={Math.round(totalW)} height={iconH} viewBox={`0 0 ${Math.round(totalW)} ${iconH}`} fill="none" xmlns="http://www.w3.org/2000/svg" style={{display:"block"}}>
-      {/* Bag body */}
-      <rect x="0" y={Math.round(iconH*0.33)} width={Math.round(iconW)} height={Math.round(iconH*0.67)} rx="3" fill="#111111"/>
-      {/* Bag shadow strip */}
-      <rect x="0" y={Math.round(iconH*0.53)} width={Math.round(iconW)} height={Math.round(iconH*0.1)} fill="#333333"/>
-      {/* Bag handle */}
-      <path d={`M${Math.round(iconW*0.23)} ${Math.round(iconH*0.33)} Q${Math.round(iconW*0.23)} ${Math.round(iconH*0.06)} ${Math.round(iconW*0.5)} ${Math.round(iconH*0.06)} Q${Math.round(iconW*0.77)} ${Math.round(iconH*0.06)} ${Math.round(iconW*0.77)} ${Math.round(iconH*0.33)}`} fill="none" stroke={blue} strokeWidth={Math.round(size*0.08)} strokeLinecap="round"/>
-      {/* Lock dot */}
-      <circle cx={Math.round(iconW*0.5)} cy={Math.round(iconH*0.81)} r={Math.round(iconH*0.096)} fill="white" opacity="0.9"/>
-      <circle cx={Math.round(iconW*0.5)} cy={Math.round(iconH*0.81)} r={Math.round(iconH*0.048)} fill="#111111"/>
-      {/* Wordmark */}
-      <text x={Math.round(iconW + gap)} y={Math.round(iconH*0.73)} fontFamily="var(--fn,-apple-system,'Segoe UI',Arial,sans-serif)" fontSize={Math.round(textSize)} fontWeight="700" fill={textColor} letterSpacing="-0.02em">Weka<tspan fill="#111111">Soko</tspan></text>
+  const gap = size * 0.25;
+
+  const Monogram = () => (
+    <svg width={iconW} height={iconH} viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg" style={{display: "block", flexShrink: 0}}>
+      {/* Stylized W */}
+      <path d="M5 25L20 65L35 25L50 65L65 25" stroke={blue} strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Stylized S */}
+      <path d="M95 25C85 25 75 28 75 35C75 48 95 48 95 61C95 68 85 71 75 71C65 71 55 68 55 61" stroke={blue} strokeWidth="12" strokeLinecap="round" />
+      {/* More Visible $ Sign (Vertical Stroke) */}
+      <path d="M75 14V76" stroke={gold} strokeWidth="10" strokeLinecap="round" />
     </svg>
   );
+
+  if (iconOnly) return <Monogram />;
+
+  return (
+    <div style={{display: "flex", alignItems: "center", gap: gap, userSelect: "none"}}>
+      <Monogram />
+      <span style={{
+        fontSize: size * 0.72,
+        fontWeight: 800,
+        color: textColor,
+        letterSpacing: "-0.02em",
+        lineHeight: 1,
+        fontFamily: "var(--fn)"
+      }}>
+        WEKA <span style={{fontWeight: 400}}>SOKO</span>
+      </span>
+    </div>
+  );
 }
+
 
 
 // ── CATEGORIES ────────────────────────────────────────────────────────────────
@@ -242,7 +243,7 @@ function useRipple(){
 }
 
 // ── HEART BUTTON (TikTok-style, optimistic) ───────────────────────────────────
-function HeartBtn({saved,onToggle,size=20,bg="rgba(255,255,255,.92)",style={}}){
+function HeartBtn({saved,onToggle,size=20,bg="rgba(255,255,255,0.95)",style={}}){
   const [optimistic,setOptimistic]=useState(saved);
   const [popping,setPopping]=useState(false);
   const [floats,setFloats]=useState([]);
@@ -251,7 +252,8 @@ function HeartBtn({saved,onToggle,size=20,bg="rgba(255,255,255,.92)",style={}}){
   useEffect(()=>setOptimistic(saved),[saved]);
 
   const tap=(e)=>{
-    e.stopPropagation();
+    if(e && e.preventDefault) e.preventDefault();
+    if(e && e.stopPropagation) e.stopPropagation();
     rpl(e);
     const next=!optimistic;
     setOptimistic(next);
@@ -262,34 +264,28 @@ function HeartBtn({saved,onToggle,size=20,bg="rgba(255,255,255,.92)",style={}}){
       setTimeout(()=>setFloats(f=>f.filter(x=>x!==id)),700);
       setTimeout(()=>setPopping(false),400);
     }
-    onToggle&&onToggle();
+    onToggle && onToggle(e);
   };
 
   return <button
     className={`heart-btn btn${popping?" popping":""}`}
     onClick={tap}
     style={{
-      width:size+14,height:size+14,borderRadius:"50%",padding:0,
-      background:bg,
-      boxShadow:"0 1px 6px rgba(0,0,0,.16)",
+      width:size*2.1,height:size*2.1,background:bg,
+      boxShadow: "0 2px 10px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.02)",
+      borderRadius: "50%", padding: 0, border: "none",
+      display: "flex", alignItems: "center", justifyContent: "center",
       ...style
-    }}
-    title={optimistic?"Remove from saved":"Save listing"}
-  >
-    <svg width={size} height={size} viewBox="0 0 24 24"
-      fill={optimistic?"#E8194B":"none"}
-      stroke={optimistic?"#E8194B":"#888888"}
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-      style={{transition:"fill .2s,stroke .2s"}}>
+    }}>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={optimistic?"#E8194B":"none"} stroke={optimistic?"#E8194B":"#1A1A1A"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transition:"transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275)"}}>
       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
     </svg>
-    {floats.map(id=>(
-      <span key={id} className="heart-float" style={{fontSize:size*.9,lineHeight:1}}>♥</span>
-    ))}
+    {floats.map(id=><span key={id} className="heart-float">❤️</span>)}
   </button>;
 }
 
 function Toast({msg,type,onClose}){
+
   useEffect(()=>{const t=setTimeout(onClose,5000);return()=>clearTimeout(t);},[]);
   const c={success:"#111111",error:"#444444",warning:"#B07F10",info:"#2563EB"}[type]||"#111111";
   return <div className="toast" style={{borderLeft:`3px solid ${c}`}}><span style={{display:"flex",alignItems:"center"}}>{({success:Ic.checkCircle(18,"#1428A0"),error:Ic.xCircle(18,"#C03030"),warning:Ic.warning(18,"#8B6400"),info:Ic.info(18,"#1428A0")})[type]||Ic.info(18,"#1428A0")}</span><span>{msg}</span><button className="btn bgh sm" style={{marginLeft:"auto",padding:"2px 6px"}} onClick={onClose}>{Ic.x(14)}</button></div>;
@@ -1210,7 +1206,8 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
       const url=isEdit?`/api/listings/${listing.id}`:"/api/listings";
       const method=isEdit?"PATCH":"POST";
       const result=await api(url,{method,body:fd},token);
-      if(isEdit){onSuccess(result);onClose();notify("Ad updated!","success");return;}
+      if(isEdit){onSuccess(result, true);onClose();notify("Ad updated!","success");return;}
+
       const lid=result.id||result.listing?.id;
       setCreatedListingId(lid);
       if(payNow){
@@ -1365,10 +1362,9 @@ function ListingCard({listing:l,onClick,listView,isSaved,onSave}){
   const photo=photos[0]||null;
   const photoCount=photos.length;
   const isNew=Date.now()-new Date(l.created_at)<12*3600000&&l.status!=="sold";
-  const isExpiring=l.expires_at&&new Date(l.expires_at)-Date.now()<3*86400000&&new Date(l.expires_at)-Date.now()>0;
   const ripple=useRipple();
 
-  return <div className={`lcard${listView?" lcard-list":""}`} onClick={e=>{ripple(e);onClick&&onClick();}}>
+  return <div className={`lcard depth-float${listView?" lcard-list":""}`} onClick={e=>{ripple(e);onClick&&onClick();}}>
     <div className="lthumb">
       {photo
         ?<WatermarkedImage src={photo} alt={l.title} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
@@ -1376,7 +1372,7 @@ function ListingCard({listing:l,onClick,listView,isSaved,onSave}){
           ?<div style={{width:"100%",height:"100%",position:"relative",overflow:"hidden",background:"#F0F0F0"}}>
               <img src={CAT_PHOTOS[l.category]} alt={l.category} style={{width:"100%",height:"100%",objectFit:"cover",opacity:.22,filter:"grayscale(30%)"}}/>
               <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                <span style={{fontSize:11,fontWeight:700,letterSpacing:".06em",textTransform:"uppercase",color:"#888888",background:"rgba(255,255,255,.85)",padding:"5px 12px",borderRadius:20,boxShadow:"0 1px 4px rgba(0,0,0,.08)"}}>{l.category}</span>
+                <span className="glass" style={{fontSize:10,fontWeight:800,letterSpacing:".08em",textTransform:"uppercase",color:"#333",padding:"6px 14px",borderRadius:20}}>{l.category}</span>
               </div>
             </div>
           :<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",background:"#F5F5F5"}}>
@@ -1384,34 +1380,29 @@ function ListingCard({listing:l,onClick,listView,isSaved,onSave}){
             </div>
       }
       {l.status==="sold"&&<div className="sold-badge">SOLD</div>}
-      {isNew&&<div style={{position:"absolute",top:10,left:10,background:"#10b981",color:"#fff",fontSize:9,fontWeight:800,padding:"3px 9px",borderRadius:5,letterSpacing:".06em",textTransform:"uppercase",boxShadow:"0 2px 6px rgba(16,185,129,.35)"}}>NEW</div>}
-      {isExpiring&&<div style={{position:"absolute",top:10,left:10,background:"#f59e0b",color:"#fff",fontSize:9,fontWeight:800,padding:"3px 9px",borderRadius:5,letterSpacing:".04em",textTransform:"uppercase",marginTop:isNew?26:0,boxShadow:"0 2px 6px rgba(245,158,11,.35)"}}>EXPIRING</div>}
-      {photoCount>1&&<div style={{position:"absolute",bottom:8,right:8,background:"rgba(0,0,0,.55)",color:"#fff",fontSize:10,fontWeight:600,padding:"3px 8px",borderRadius:10,pointerEvents:"none",backdropFilter:"blur(4px)"}}>+{photoCount-1}</div>}
-      {l.locked_buyer_id&&!l.is_unlocked&&<div style={{position:"absolute",bottom:0,left:0,right:0,background:"#1D1D1D",color:"#fff",fontSize:10,fontWeight:700,padding:"6px 10px",letterSpacing:".04em",textTransform:"uppercase"}}>Buyer Interested</div>}
-      {onSave&&<HeartBtn saved={isSaved} onToggle={onSave} size={16} style={{position:"absolute",top:10,right:10}}/>}
+      {isNew&&<div style={{position:"absolute",top:12,left:12,background:"#10b981",color:"#fff",fontSize:9,fontWeight:900,padding:"4px 10px",borderRadius:6,letterSpacing:".08em",textTransform:"uppercase",boxShadow:"0 4px 12px rgba(16,185,129,0.3)"}}>NEW</div>}
+      {onSave&&<HeartBtn saved={isSaved} onToggle={onSave} size={16} style={{position: 'absolute', top: 10, right: 10}}/>}
     </div>
-    <div style={{padding:"16px 18px",flex:1}}>
-      <div style={{fontSize:11,fontWeight:700,letterSpacing:".07em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:6}}>{l.category}</div>
-      <h4 style={{fontSize:15,fontWeight:700,lineHeight:1.4,marginBottom:7,letterSpacing:"-.01em",color:"#1A1A1A"}}>{l.title}</h4>
-      <div style={{fontSize:21,fontWeight:800,color:"var(--a)",marginBottom:10,letterSpacing:"-.02em"}}>{fmtKES(l.price)}</div>
-      {listView&&l.description&&<p style={{fontSize:13,color:"#636363",marginBottom:10,lineHeight:1.75}}>{l.description.slice(0,130)}…</p>}
-      <div style={{display:"flex",gap:12,color:"#AAAAAA",fontSize:11,flexWrap:"wrap",borderTop:"1px solid #F0F0F0",paddingTop:10,marginTop:4,lineHeight:1.4}}>
-        {l.location&&<span style={{display:"flex",alignItems:"center",gap:3}}>{Ic.mapPin(11,"currentColor")} {l.location}</span>}
-        <span style={{display:"flex",alignItems:"center",gap:3}}>{Ic.eye(11,"currentColor")} {l.view_count||0}</span>
-        {l.interest_count>0&&<span style={{color:"#E8194B",fontWeight:700,display:"flex",alignItems:"center",gap:3}}>
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="#E8194B" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-          {l.interest_count}
+    <div style={{padding: '20px 22px', flex: 1, display: 'flex', flexDirection: 'column', gap: 8}}>
+      <div style={{fontSize: 10, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase', color: '#AEAEB2', marginBottom: 2}}>{l.category}</div>
+      <h4 style={{fontSize: 16, fontWeight: 800, lineHeight: 1.3, letterSpacing: '-0.015em', color: '#111', margin: 0}}>{l.title}</h4>
+      <div style={{fontSize: 22, fontWeight: 900, color: 'var(--a)', letterSpacing: '-0.02em', margin: '4px 0'}}>{fmtKES(l.price)}</div>
+      
+      {listView&&l.description&&<p style={{fontSize: 14, color: '#6B6B7B', lineHeight: 1.75, margin: '4px 0 12px'}}>{l.description.slice(0, 140)}…</p>}
+      
+      <div style={{display: 'flex', gap: 12, color: '#6B6B7B', fontSize: 11, flexWrap: 'wrap', borderTop: '1px solid #F0F0F5', paddingTop: 14, marginTop: 'auto', lineHeight: 1.4, fontWeight: 600}}>
+        {l.location&&<span style={{display: 'flex', alignItems: 'center', gap: 3}}>{Ic.mapPin(12, '#AEAEB2')} {l.location}</span>}
+        <span style={{display: 'flex', alignItems: 'center', gap: 3}}>{Ic.eye(12, '#AEAEB2')} {l.view_count||0}</span>
+        {l.interest_count>0&&<span style={{color: '#E8194B', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 3}}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#E8194B" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          {l.interest_count} Interested
         </span>}
-        {l.seller_avg_rating>0&&<span style={{color:"#8B6400",fontWeight:700,display:"flex",alignItems:"center",gap:2}}>
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          {Number(l.seller_avg_rating).toFixed(1)}
-        </span>}
-        {(l.total_listings_posted==null||l.total_listings_posted<3)&&<span style={{color:"#92400E",fontWeight:700,fontSize:10,background:"#FEF3C7",border:"1px solid #F59E0B",borderRadius:4,padding:"1px 5px"}}>New Seller</span>}
-        <span style={{marginLeft:"auto",color:"#CCCCCC"}}>{ago(l.created_at)}</span>
+        <span style={{marginLeft: 'auto', color: '#AEAEB2', fontWeight: 500}}>{ago(l.created_at)}</span>
       </div>
     </div>
   </div>;
 }
+
 
 // ── DETAIL MODAL ──────────────────────────────────────────────────────────────
 // ── LEAVE REVIEW BUTTON ──────────────────────────────────────────────────────

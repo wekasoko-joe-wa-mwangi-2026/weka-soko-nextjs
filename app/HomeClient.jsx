@@ -538,7 +538,17 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       initialFilter={filter}
     />
     {modal?.type==="auth"&&<AuthModal defaultMode={modal.mode} onClose={closeModal} onAuth={handleAuth} notify={notify}/>}
-    {modal?.type==="post"&&token&&<PostAdModal onClose={closeModal} token={token} notify={notify} onSuccess={l=>{setListings(p=>[l,...p]);setTotal(t=>t+1);}}/>}
+    {modal?.type==="post"&&token&&<PostAdModal onClose={closeModal} token={token} notify={notify} onSuccess={(l, isEdit)=>{
+      if (isEdit) {
+        setPage("dashboard");
+        if(typeof window !== 'undefined') window.history.pushState({}, "", "/dashboard");
+        notify("Listing updated and sent for review", "success");
+      } else {
+        setListings(p=>[l,...p]);
+        setTotal(t=>t+1);
+      }
+    }}/>}
+
     {modal?.type==="detail"&&<DetailModal listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}
       onShare={()=>setModal({type:"share",listing:modal.listing})}
       onChat={()=>{if(!user){notify("Sign in to chat","warning");setModal({type:"auth",mode:"login"});return;}setModal({type:"chat",listing:modal.listing});}}
@@ -604,66 +614,70 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       <div style={{display:"flex",gap:28,alignItems:"flex-start",marginBottom:48,flexWrap:"wrap"}}>
 
         {/* LEFT: hero + categories + filters */}
-        <div style={{flex:"1 1 380px",minWidth:0,display:"flex",flexDirection:"column",gap:20}}>
+        <div style={{flex:"1 1 380px",minWidth:0,display:"flex",flexDirection:"column",gap:28}}>
 
-          {/* Hero + Categories — split card */}
-          <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:20,boxShadow:"0 1px 3px rgba(0,0,0,.06),0 6px 24px rgba(0,0,0,.07)",display:"flex",overflow:"hidden",minHeight:320}}>
-
-            {/* Left half — hero text */}
-            <div style={{flex:"1 1 0",minWidth:0,padding:"clamp(24px,3vw,40px) clamp(20px,3vw,36px)",display:"flex",flexDirection:"column",justifyContent:"center",borderRight:"1px solid #EBEBEB"}}>
-              <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",marginBottom:12,color:"#1428A0"}}>Kenya's Resell Platform</div>
-              <h1 style={{fontSize:"clamp(22px,2.4vw,38px)",fontWeight:800,letterSpacing:"-.02em",lineHeight:1.15,marginBottom:14,color:"#1A1A1A",fontFamily:"var(--fn)"}}>
-                Post Free.<br/>
-                <span style={{color:"#1428A0"}}>Pay Only When</span><br/>
-                You Get a Buyer.
-              </h1>
-              <p style={{fontSize:13,color:"#636363",lineHeight:1.8,marginBottom:22,fontWeight:400}}>
-                List items in minutes with photos. Pay KSh 250 only when a serious buyer locks in.
-              </p>
-              <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:18}}>
-                <button className="btn bp" style={{padding:"11px 22px",fontSize:13,borderRadius:10,boxShadow:"0 4px 14px rgba(20,40,160,.28)"}}
-                  onClick={()=>{
-                    if(!user){setModal({type:"auth",mode:"signup"});return;}
-                    if(user.role==="buyer"){
-                      if(typeof window!=="undefined"&&window.confirm("You're currently a Buyer. Switch to Seller to post ads?"))
-                        apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token).then(d=>{const upd={...user,...d.user};setUser(upd);localStorage.setItem("ws_user",JSON.stringify(upd));notify("Switched to Seller!","success");setModal({type:"post"});}).catch(e=>notify(e.message,"error"));
-                      return;
-                    }
-                    setModal({type:"post"});
-                  }}>+ Post an Ad</button>
-                <button className="btn bs" style={{padding:"11px 18px",fontSize:13,borderRadius:10}}
-                  onClick={()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"})}>Browse</button>
-              </div>
-              <div style={{display:"flex",gap:14,fontSize:12,color:"#888",fontWeight:500,flexWrap:"wrap"}}>
-                {["Free to post","Anonymous chat","M-Pesa escrow"].map(t=>(
-                  <span key={t} style={{display:"flex",alignItems:"center",gap:5}}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1428A0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>{t}
-                  </span>
-                ))}
-              </div>
+          {/* Premium Hero with Carousel */}
+          <div className="depth-float" style={{overflow:"hidden",position:"relative",minHeight:420,display:"flex",flexDirection:"column"}}>
+            <div style={{
+              position:"absolute",inset:0,zIndex:0,opacity:0.6,
+              background:"linear-gradient(45deg, var(--a) 0%, #1e3fd0 100%)"
+            }}>
+              {/* This is where the background carousel logic would live - but for now a premium gradient + shimmer */}
+              <div style={{position:"absolute",inset:0,background:"url(https://images.unsplash.com/photo-1555421689-491a97ff2040?q=80&w=2070&auto=format&fit=crop) center/cover"}} />
+              <div style={{position:"absolute",inset:0,background:"linear-gradient(to right, #fff 30%, transparent 100%)"}} />
             </div>
 
-            {/* Right half — categories */}
-            <div style={{flex:"1 1 0",minWidth:0,padding:"clamp(20px,3vw,32px) clamp(16px,3vw,28px)",background:"#FAFAFA",overflowY:"auto"}}>
-              <div style={{fontSize:10,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:3}}>Browse by Category</div>
-              <div style={{fontSize:15,fontWeight:700,color:"#1A1A1A",marginBottom:14,letterSpacing:"-.01em"}}>What are you looking for?</div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:6}}>
-                {CATS.map(c=>{
-                  const active=filter.cat===c.name;
-                  return <div key={c.name}
-                    onClick={()=>{setFilter(p=>({...p,cat:p.cat===c.name?"":c.name}));setPg(1);setTimeout(()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"}),100);}}
-                    style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:"8px 4px",cursor:"pointer",borderRadius:12,background:active?"#EEF2FF":"transparent",border:`1.5px solid ${active?"#1428A0":"transparent"}`,transition:"all .16s cubic-bezier(.34,1.56,.64,1)",boxShadow:active?"0 0 0 2px rgba(20,40,160,.1)":"none"}}
-                    onMouseEnter={e=>{if(!active){e.currentTarget.style.background="#F0F4FF";e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 3px 10px rgba(0,0,0,.09)";}}}
-                    onMouseLeave={e=>{if(!active){e.currentTarget.style.background="transparent";e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";}}}>
-                    <div style={{width:50,height:50,borderRadius:"50%",overflow:"hidden",flexShrink:0,border:`2px solid ${active?"#1428A0":"#E5E5E5"}`,boxShadow:"0 2px 6px rgba(0,0,0,.08)",transition:"border-color .15s"}}>
-                      <img src={CAT_PHOTOS[c.name]||CAT_PHOTOS.Other} alt={c.name} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
-                    </div>
-                    <div style={{fontSize:10,fontWeight:600,color:active?"#1428A0":"#444",textAlign:"center",lineHeight:1.3,wordBreak:"break-word"}}>{c.name}</div>
-                  </div>;
-                })}
+            <div style={{position:"relative",zIndex:1,flex:1,padding:"clamp(30px,5vw,50px)",display:"flex",flexDirection:"column",justifyContent:"center",maxWidth:600}}>
+              <div className="glass" style={{display:"inline-flex",padding:"6px 14px",borderRadius:30,fontSize:11,fontWeight:800,color:var(--a),letterSpacing:".12em",textTransform:"uppercase",marginBottom:20}}>
+                KENYA'S LARGEST DIGITAL CLASSIFIEDS
+              </div>
+              <h1 style={{fontSize:"clamp(28px,3.5vw,48px)",fontWeight:900,letterSpacing:"-0.03em",lineHeight:1.1,marginBottom:18,color:"#111",fontFamily:"var(--fn)"}}>
+                The Smart Way to <br/>
+                <span style={{color:var(--a)}}>Buy, Sell & Request</span>
+              </h1>
+              <p style={{fontSize:15,color:"#4B4B5B",lineHeight:1.8,marginBottom:32,fontWeight:500,maxWidth:440}}>
+                Weka Soko is your premium marketplace to dispose of pre-owned items, find high-value deals, or post a request for exactly what you need.
+              </p>
+              
+              <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+                <button className="btn bp lg" style={{boxShadow: "0 10px 25px rgba(20,40,160,0.25)"}}
+                  onClick={()=>{
+                    if(!user){setModal({type:"auth",mode:"signup"});return;}
+                    setModal({type:"post"});
+                  }}>Post an Ad Free</button>
+                <button className="btn bs lg glass" style={{fontWeight:700}}
+                  onClick={()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"})}>Explore Marketplace</button>
               </div>
             </div>
           </div>
+
+          {/* High-Visibility Categories Bar */}
+          <div style={{display:"flex",flexDirection:"column",gap:16}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <h3 style={{fontSize:16,fontWeight:800,letterSpacing:"-0.01em"}}>Popular Categories</h3>
+              <button className="btn bgh sm">View All</button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(100px, 1fr))",gap:12}}>
+              {CATS.slice(0, 8).map(c => {
+                const active = filter.cat === c.name;
+                return <div key={c.name}
+                  onClick={()=>{setFilter(p=>({...p,cat:p.cat===c.name?"":c.name}));setPg(1);setTimeout(()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"}),100);}}
+                  className={active ? "depth-float" : "glass"}
+                  style={{
+                    display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10,padding:"16px 10px",cursor:"pointer",borderRadius:22,
+                    border: active ? "2px solid var(--a)" : "1px solid rgba(0,0,0,0.05)",
+                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                    transform: active ? "scale(1.05)" : "scale(1)"
+                  }}>
+                  <div style={{width:48,height:48,borderRadius:"50%",overflow:"hidden",boxShadow:"0 4px 10px rgba(0,0,0,0.1)"}}>
+                    <img src={CAT_PHOTOS[c.name]||CAT_PHOTOS.Other} alt={c.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                  </div>
+                  <div style={{fontSize:11,fontWeight:800,color:active?var(--a):"#111",textAlign:"center"}}>{c.name}</div>
+                </div>;
+              })}
+            </div>
+          </div>
+
 
           {/* Search & Filters */}
           <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:20,padding:"24px 22px",boxShadow:"0 1px 3px rgba(0,0,0,.06),0 6px 24px rgba(0,0,0,.07)",display:"flex",flexDirection:"column",gap:14}}>
@@ -795,12 +809,44 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
           ))}
         </div>
 
-        {/* Section heading */}
-        <div style={{marginBottom:36,textAlign:"center"}}>
-          <div style={{fontSize:11,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"#1428A0",marginBottom:8}}>How It Works</div>
-          <h2 style={{fontSize:"clamp(22px,3vw,34px)",fontWeight:800,letterSpacing:"-.03em",color:"#111111",lineHeight:1.15,margin:"0 0 10px"}}>Simple. Safe. Built for Kenya.</h2>
-          <p style={{fontSize:14,color:"#636363",lineHeight:1.7,margin:"0 auto",maxWidth:480}}>No middlemen. No hidden fees. Just buyers and sellers who get things done.</p>
+        {/* ── EDUCATIONAL PILLARS: Sell, Buy, Request ── */}
+        <div style={{marginBottom:60,textAlign:"center"}}>
+          <div style={{fontSize:11,fontWeight:800,letterSpacing:".2em",textTransform:"uppercase",color:var(--a),marginBottom:12}}>How It Works</div>
+          <h2 style={{fontSize:"clamp(24px,3vw,38px)",fontWeight:900,letterSpacing:"-0.03em",color:"#111",lineHeight:1.1,marginBottom:12}}>Kenya's Most Versatile Marketplace</h2>
+          <p style={{fontSize:15,color:"#6B6B7B",lineHeight:1.8,margin:"0 auto",maxWidth:540}}>Weka Soko isn't just a grid of photos. It's an ecosystem built for intentional buying and selling.</p>
         </div>
+
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(300px, 1fr))",gap:24,marginBottom:80}}>
+          {[
+            {
+              title: "Sell & Dispose",
+              desc: "The fastest way to turn your pre-owned items into cash. List for free and only pay when we find you a locked-in buyer.",
+              icon: Ic.fire(24, var(--a)),
+              color: "#EEF2FF"
+            },
+            {
+              title: "Buy Smart",
+              desc: "Access high-quality items at unbeatable prices. Chat anonymously and use our Escrow service for total peace of mind.",
+              icon: Ic.card(24, "#0d9488"),
+              color: "#F0FDF4"
+            },
+            {
+              title: "Request Anything",
+              desc: "Can't find what you're looking for? Post a request and let the network of sellers find it for you.",
+              icon: Ic.search(24, "#B07F10"),
+              color: "#FFFBEB"
+            }
+          ].map((card, i) => (
+            <div key={i} className="depth-float" style={{padding:40,display:"flex",flexDirection:"column",gap:20,background:card.color}}>
+              <div style={{width:60,height:60,borderRadius:16,background:"#fff",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 12px rgba(0,0,0,0.05)"}}>
+                {card.icon}
+              </div>
+              <h3 style={{fontSize:22,fontWeight:900,color:"#111"}}>{card.title}</h3>
+              <p style={{fontSize:15,color:"#4B4B5B",lineHeight:1.8}}>{card.desc}</p>
+            </div>
+          ))}
+        </div>
+
 
         <div style={{display:"flex",flexWrap:"nowrap",justifyContent:"center",gap:16,overflowX:"auto",paddingBottom:4}}>
           {[
@@ -857,7 +903,17 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
 
     {/* MODALS */}
     {modal?.type==="auth"&&<AuthModal defaultMode={modal.mode} onClose={closeModal} onAuth={handleAuth} notify={notify}/>}
-    {modal?.type==="post"&&token&&<PostAdModal onClose={closeModal} token={token} notify={notify} linkedRequest={modal.linkedRequest||null} onSuccess={l=>{setListings(p=>[l,...p]);setTotal(t=>t+1);}}/>}
+    {modal?.type==="post"&&token&&<PostAdModal onClose={closeModal} token={token} notify={notify} linkedRequest={modal.linkedRequest||null} onSuccess={(l, isEdit)=>{
+      if (isEdit) {
+        setPage("dashboard");
+        if(typeof window !== 'undefined') window.history.pushState({}, "", "/dashboard");
+        notify("Listing updated and sent for review", "success");
+      } else {
+        setListings(p=>[l,...p]);
+        setTotal(t=>t+1);
+      }
+    }}/>}
+
     {modal?.type==="detail"&&<DetailModal
       listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}
       onShare={()=>setModal({type:"share",listing:modal.listing})}
