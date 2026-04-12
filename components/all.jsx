@@ -3894,6 +3894,16 @@ function MobileLayout({
   const ptrStartY=useRef(0);
   const ptrActive=useRef(false);
 
+  const [heroIdx, setHeroIdx] = useState(0);
+
+  useEffect(() => {
+    if (mobileTab === 'home') {
+      const iv = setInterval(() => setHeroIdx(i => (i + 1) % 3), 6000);
+      return () => clearInterval(iv);
+    }
+  }, [mobileTab]);
+
+
   // Pull-to-refresh handlers
   const onTouchStart=useCallback(e=>{
     if(window.scrollY===0&&e.touches[0]){ptrStartY.current=e.touches[0].clientY;ptrActive.current=true;}
@@ -3949,29 +3959,66 @@ function MobileLayout({
     {(mobileTab==="home"||mobileTab==="search")&&<>
 
       {/* Hero banner — only on home tab, hidden in search mode */}
-      {newSinceLastVisit>0&&mobileTab==="home"&&<div style={{background:"#1428A0",color:"#fff",padding:"9px 16px",textAlign:"center",fontSize:13,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-        <span>{newSinceLastVisit} new listing{newSinceLastVisit!==1?"s":""} since your last visit</span>
-      </div>}
-      {mobileTab==="home"&&!filter.q&&!filter.cat&&pg===1&&<div className="mob-hero-banner">
-        <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"rgba(255,255,255,.6)",marginBottom:8}}>Kenya's Resell Platform</div>
-        <div style={{fontSize:22,fontWeight:800,color:"#fff",lineHeight:1.2,marginBottom:10}}>Buy & Sell<br/>Anything in Kenya</div>
-        <div style={{fontSize:13,color:"rgba(255,255,255,.75)",marginBottom:16}}>Post free. Pay KSh 250 only when a serious buyer shows up.</div>
-        {stats&&(stats.activeAds>0||stats.sold>0||stats.users>0)&&<div style={{display:"flex",gap:16,marginBottom:18,justifyContent:"center"}}>
-          {stats.activeAds>0&&<div style={{textAlign:"center"}}>
-            <div style={{fontSize:20,fontWeight:800,color:"#fff",lineHeight:1}}>{Number(stats.activeAds).toLocaleString("en-KE")}</div>
-            <div style={{fontSize:10,color:"rgba(255,255,255,.6)",marginTop:2,textTransform:"uppercase",letterSpacing:".06em"}}>Active Ads</div>
-          </div>}
-          {stats.sold>0&&<div style={{textAlign:"center"}}>
-            <div style={{fontSize:20,fontWeight:800,color:"#fff",lineHeight:1}}>{Number(stats.sold).toLocaleString("en-KE")}</div>
-            <div style={{fontSize:10,color:"rgba(255,255,255,.6)",marginTop:2,textTransform:"uppercase",letterSpacing:".06em"}}>Items Sold</div>
-          </div>}
-          {stats.users>0&&<div style={{textAlign:"center"}}>
-            <div style={{fontSize:20,fontWeight:800,color:"#fff",lineHeight:1}}>{Number(stats.users).toLocaleString("en-KE")}</div>
-            <div style={{fontSize:10,color:"rgba(255,255,255,.6)",marginTop:2,textTransform:"uppercase",letterSpacing:".06em"}}>Members</div>
-          </div>}
-        </div>}
-        <button onClick={postAd} style={{background:"#fff",color:"#1428A0",border:"none",padding:"11px 22px",borderRadius:10,fontSize:14,fontWeight:700,fontFamily:"var(--fn)",cursor:"pointer"}}>+ Post an Ad for Free</button>
-      </div>}
+      {mobileTab==="home"&&!filter.q&&!filter.cat&&pg===1 && (
+        loading ? <div style={{margin:"10px 12px"}}><HeroSkeleton/></div> : (
+          <div className="depth-float" style={{overflow:"hidden",position:"relative",minHeight:320,margin:"10px 12px",display:"flex",flexDirection:"column", borderRadius: 24}}>
+            {[
+              {
+                img: "https://images.unsplash.com/photo-1555421689-491a97ff2040?q=80&w=2070&auto=format&fit=crop",
+                title: <>The Smart Way to <br/><span style={{color:"var(--a)"}}>Buy, Sell & Request</span></>,
+                label: "KENYA'S LARGEST CLASSIFIEDS"
+              },
+              {
+                img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2015&auto=format&fit=crop",
+                title: <>List Items for <br/><span style={{color:"#0d9488"}}>Free in 2 Minutes</span></>,
+                label: "ZERO UPFRONT COST"
+              },
+              {
+                img: "https://images.unsplash.com/photo-1556742044-3c52d6e88c62?q=80&w=2070&auto=format&fit=crop",
+                title: <>Secure Deals with <br/><span style={{color:"#7c3aed"}}>M-Pesa Escrow</span></>,
+                label: "100% PEACE OF MIND"
+              }
+            ].map((slide, i) => (
+              <div key={i} style={{
+                position: i === 0 ? "relative" : "absolute", 
+                inset: 0, 
+                opacity: i === heroIdx ? 1 : 0,
+                visibility: i === heroIdx ? "visible" : "hidden",
+                transition: "opacity 1s ease, transform 1.2s ease",
+                transform: i === heroIdx ? "scale(1)" : "scale(1.05)",
+                zIndex: i === heroIdx ? 1 : 0,
+                display: "flex", flexDirection: "column", justifyContent: "center"
+              }}>
+                <div style={{position:"absolute",inset:0,background:`url(${slide.img}) center/cover no-repeat`}} />
+                <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.8) 100%), linear-gradient(to right, #fff 30%, transparent 100%)"}} />
+                
+                <div style={{position:"relative",zIndex:2,padding:24,display:"flex",flexDirection:"column",justifyContent:"center",height:"100%"}}>
+                  <div className="glass" style={{display:"inline-flex",alignSelf:"flex-start",padding:"4px 10px",borderRadius:20,fontSize:9,fontWeight:800,color:"var(--a)",letterSpacing:".1em",textTransform:"uppercase",marginBottom:12}}>
+                    {slide.label}
+                  </div>
+                  <h2 style={{fontSize:24,fontWeight:900,letterSpacing:"-0.03em",lineHeight:1.1,marginBottom:12,color:"#111",fontFamily:"var(--fn)"}}>
+                    {slide.title}
+                  </h2>
+                  <p style={{fontSize:13,color:"#4B4B5B",lineHeight:1.6,marginBottom:20,fontWeight:500,maxWidth:240}}>
+                    The elite platform to flip, find, or request anything in Kenya.
+                  </p>
+                  <button onClick={postAd} className="btn bp sm" style={{alignSelf:"flex-start", boxShadow: "0 8px 16px rgba(20,40,160,0.2)"}}>+ Post Ad Free</button>
+                </div>
+              </div>
+            ))}
+            <div style={{position:"absolute", bottom:16, left: 24, display:"flex", gap:6, zIndex: 10}}>
+              {[0,1,2].map(i => (
+                <div key={i} onClick={() => setHeroIdx(i)} style={{
+                  width: i === heroIdx ? 16 : 6, height: 6, borderRadius: 10,
+                  background: i === heroIdx ? "var(--a)" : "rgba(0,0,0,0.1)",
+                  cursor: "pointer", transition: "all 0.3s ease"
+                }} />
+              ))}
+            </div>
+          </div>
+        )
+      )}
+
 
       {/* Hot Right Now — below hero, above categories */}
       {mobileTab==="home"&&!filter.q&&!filter.cat&&pg===1&&<HotRightNow onOpen={openListing} savedIds={savedIds} onToggleSave={onToggleSave} user={user}/>}
@@ -4022,8 +4069,11 @@ function MobileLayout({
           <div className="zeigarnik-track"><div className="zeigarnik-fill" style={{width:`${Math.round(listings.length/total*100)}%`}}/></div>
         </div>}
         {loading
-          ?<div>{[1,2,3,4,5].map(i=><SkeletonListRow key={i}/>)}</div>
-          :listings.length===0
+          ? <div style={{display:"flex",flexDirection:"column",gap:0}}>
+              {Array.from({length: 8}).map((_, i) => <div key={i} style={{padding:"6px 1px"}}><ListingCardSkeleton listView={true}/></div>)}
+            </div>
+          : listings.length===0
+
             ?<div style={{textAlign:"center",padding:"48px 20px",color:"#AAAAAA"}}>
                 <div style={{marginBottom:14,opacity:.25,display:"flex",justifyContent:"center"}}>{Ic.search(44,"currentColor")}</div>
                 <div style={{fontWeight:700,fontSize:15,marginBottom:6,color:"#1A1A1A"}}>No listings found</div>
