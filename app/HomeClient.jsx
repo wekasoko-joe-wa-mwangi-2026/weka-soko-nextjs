@@ -827,7 +827,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
             {
               title: "Buy Smart",
               desc: "Access high-quality items at unbeatable prices. Chat anonymously and use our Escrow service for total peace of mind.",
-              icon: Ic.card(24, "#0d9488"),
+              icon: Ic.creditCard(24, "#0d9488"),
               color: "#F0FDF4"
             },
             {
