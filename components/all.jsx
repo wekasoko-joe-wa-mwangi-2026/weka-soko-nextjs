@@ -3999,13 +3999,13 @@ function MobileLayout({
                   <h2 style={{fontSize:24,fontWeight:900,letterSpacing:"-0.03em",lineHeight:1.1,marginBottom:12,color:"#111",fontFamily:"var(--fn)"}}>
                     {slide.title}
                   </h2>
-                  <p style={{fontSize:13,color:"#4B4B5B",lineHeight:1.6,marginBottom:20,fontWeight:500,maxWidth:240}}>
+                  <p style={{fontSize:13,color:"#4B4B5B",lineHeight:1.6,marginBottom:0,fontWeight:500,maxWidth:240}}>
                     The elite platform to flip, find, or request anything in Kenya.
                   </p>
-                  <button onClick={postAd} className="btn bp sm" style={{alignSelf:"flex-start", boxShadow: "0 8px 16px rgba(20,40,160,0.2)"}}>+ Post Ad Free</button>
                 </div>
               </div>
             ))}
+
             <div style={{position:"absolute", bottom:16, left: 24, display:"flex", gap:6, zIndex: 10}}>
               {[0,1,2].map(i => (
                 <div key={i} onClick={() => setHeroIdx(i)} style={{
@@ -4020,8 +4020,30 @@ function MobileLayout({
       )}
 
 
-      {/* Hot Right Now — below hero, above categories */}
-      {mobileTab==="home"&&!filter.q&&!filter.cat&&pg===1&&<HotRightNow onOpen={openListing} savedIds={savedIds} onToggleSave={onToggleSave} user={user}/>}
+      {/* Hot Right Now — Premium mobile feed */}
+      {mobileTab==="home"&&!filter.q&&!filter.cat&&pg===1 && (
+        <div style={{margin: "24px 12px 10px"}}>
+          <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:16, padding:"0 4px"}}>
+             <div style={{width:4, height:18, background:"var(--a)", borderRadius:4}}/>
+             <h3 style={{fontSize:18, fontWeight:900, letterSpacing:"-0.02em"}}>Hot Right Now</h3>
+          </div>
+          <div style={{display:"flex", gap:14, overflowX:"auto", padding: "4px 4px 20px", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch"}}>
+             {listings.slice(0, 5).map(l => (
+               <div key={l.id} className="depth-float" onClick={() => setSwipeFeedIdx(listings.indexOf(l))} style={{
+                 flex: "0 0 280px", scrollSnapAlign: "start", background: "#fff", borderRadius: 24, overflow: "hidden", position: "relative"
+               }}>
+                 <img src={Array.isArray(l.photos)&&l.photos[0]?(typeof l.photos[0]==="string"?l.photos[0]:l.photos[0].url):CAT_PHOTOS[l.category]} alt={l.title} 
+                   style={{width: "100%", height: 160, objectFit: "cover"}}/>
+                 <div style={{padding:16}}>
+                   <div style={{fontSize:14, fontWeight:800, color: "#111", marginBottom:4, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{l.title}</div>
+                   <div style={{fontSize:16, fontWeight:900, color: "var(--a)"}}>{fmtKES(l.price)}</div>
+                 </div>
+               </div>
+             ))}
+          </div>
+        </div>
+      )}
+
       {/* Categories — hidden in search mode */}
       {mobileTab==="home"&&<div className="mob-section">
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px 4px"}}>
@@ -4168,23 +4190,6 @@ function MobileLayout({
       setModal={setModal}
     />}
 
-    {/* MOBILE THUMB-ZONE CTA (Fitts's Law) */}
-    {mobileTab === 'home' && !loading && (
-      <div className="thumb-cta glass" style={{
-        position:"fixed", bottom: "calc(66px + env(safe-area-inset-bottom) + 16px)", 
-        left: 16, right: 16, zIndex: 850,
-        display: "flex", gap: 10, padding: 8, borderRadius: 20,
-        animation: "spring-in 0.6s ease both 0.5s",
-        boxShadow: "var(--shadow-float)"
-      }}>
-        <button className="btn bp glass" style={{flex:1, background: 'var(--a)', color: '#fff', border: 'none', fontWeight: 800, height: 48}} onClick={postAd}>
-          {Ic.plus(18)} Post Ad Free
-        </button>
-        <button className="btn bs glass" style={{flex:1, background: 'rgba(255,255,255,0.9)', color: 'var(--txt)', border: '1px solid rgba(0,0,0,0.1)', height: 48}} onClick={() => document.getElementById("mobile-listings-section")?.scrollIntoView({behavior:"smooth"})}>
-          {Ic.search(18)} Browse
-        </button>
-      </div>
-    )}
 
     {/* ── BOTTOM TAB BAR ── */}
     <div className="mob-bottombar">
