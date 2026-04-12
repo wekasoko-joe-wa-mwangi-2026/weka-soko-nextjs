@@ -1356,7 +1356,36 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
   </Modal>;
 }
 
+// ── SKELETONS ────────────────────────────────────────────────────────────────
+function ListingCardSkeleton({listView}){
+  return <div className={`skel-card ${listView?"lcard-list":""}`} style={{display:listView?"flex":"block", borderRadius:18, overflow:"hidden", background:"#fff", border:"1px solid #EBEBEB"}}>
+    <div className="skel skel-img" style={{width:listView?200:"100%", height:listView?160:200, borderRadius:0}}/>
+    <div style={{padding:20, flex:1, display:"flex", flexDirection:"column", gap:10}}>
+      <div className="skel" style={{width:"30%", height:10, borderRadius:4}}/>
+      <div className="skel" style={{width:"80%", height:20, borderRadius:6}}/>
+      <div className="skel" style={{width:"50%", height:24, borderRadius:6, marginTop:4}}/>
+      <div style={{marginTop:"auto", paddingTop:14, borderTop:"1px solid #F0F0F0", display:"flex", gap:12}}>
+        <div className="skel" style={{width:60, height:12, borderRadius:4}}/>
+        <div className="skel" style={{width:40, height:12, borderRadius:4}}/>
+      </div>
+    </div>
+  </div>;
+}
+
+function HeroSkeleton(){
+  return <div className="skel-card" style={{minHeight:420, borderRadius:24, overflow:"hidden", position:"relative", background:"#fff"}}>
+    <div className="skel" style={{position:"absolute", inset:0, opacity:0.1}}/>
+    <div style={{position:"relative", padding:"60px 50px", maxWidth:600}}>
+      <div className="skel" style={{width:200, height:24, borderRadius:20, marginBottom:20}}/>
+      <div className="skel" style={{width:"100%", height:48, borderRadius:12, marginBottom:20}}/>
+      <div className="skel" style={{width:"80%", height:48, borderRadius:12, marginBottom:30}}/>
+      <div className="skel" style={{width:"60%", height:60, borderRadius:12}}/>
+    </div>
+  </div>;
+}
+
 // ── LISTING CARD ──────────────────────────────────────────────────────────────
+
 function ListingCard({listing:l,onClick,listView,isSaved,onSave}){
   const photos=Array.isArray(l.photos)?l.photos.map(p=>typeof p==="string"?p:p?.url).filter(Boolean):[];
   const photo=photos[0]||null;
@@ -1364,7 +1393,17 @@ function ListingCard({listing:l,onClick,listView,isSaved,onSave}){
   const isNew=Date.now()-new Date(l.created_at)<12*3600000&&l.status!=="sold";
   const ripple=useRipple();
 
-  return <div className={`lcard depth-float${listView?" lcard-list":""}`} onClick={e=>{ripple(e);onClick&&onClick();}}>
+  return <div className={`lcard depth-float${listView?" lcard-list":""}`} 
+    onClick={e=>{ripple(e);onClick&&onClick();}}
+    style={{
+      borderRadius: 18,
+      background: "#fff",
+      border: "1px solid rgba(0,0,0,0.04)",
+      overflow: "hidden",
+      position: "relative",
+      transition: "all 0.5s cubic-bezier(0.23, 1, 0.32, 1)"
+    }}>
+
     <div className="lthumb">
       {photo
         ?<WatermarkedImage src={photo} alt={l.title} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>

@@ -28,6 +28,14 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
   const [savedIds,setSavedIds]=useState(new Set());
   const [newSinceLastVisit,setNewSinceLastVisit]=useState(0);
   const [feedContext,setFeedContext]=useState(null);
+  const [heroIdx, setHeroIdx] = useState(0);
+
+  // Auto-slide hero
+  useEffect(() => {
+    const iv = setInterval(() => setHeroIdx(i => (i + 1) % 3), 6000);
+    return () => clearInterval(iv);
+  }, []);
+
 
   const notify=useCallback((msg,type="info")=>setToast({msg,type,id:Date.now()}),[]);
 
@@ -608,6 +616,19 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       <span>{newSinceLastVisit} new listing{newSinceLastVisit!==1?"s":""} added since your last visit</span>
     </div>}
 
+    {/* MOBILE THUMB-ZONE CTA (Fitts's Law) */}
+    {isMobile && page === 'home' && !loading && (
+      <div className="thumb-cta" style={{animation: "spring-in 0.6s ease both 0.5s"}}>
+        <button className="btn bp glass" style={{background: 'var(--a)', color: '#fff', border: 'none', fontWeight: 800}} onClick={() => { if(!user){setModal({type:"auth",mode:"signup"});return;} setModal({type:"post"}); }}>
+          {Ic.plus(18)} Post Ad Free
+        </button>
+        <button className="btn bs glass" style={{background: 'rgba(255,255,255,0.9)', color: 'var(--txt)', border: '1px solid rgba(0,0,0,0.1)'}} onClick={() => document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"})}>
+          {Ic.search(18)} Browse Deals
+        </button>
+      </div>
+    )}
+
+
     {page!=="dashboard"&&page!=="sold"&&page!=="requests"&&page!=="listings"&&<main style={{padding:"clamp(20px,4vw,40px) clamp(16px,4vw,48px) 80px"}}>
 
       {/* ── TOP PANEL: Left = Hero+Cats+Filters | Right = What Buyers Want ── */}
@@ -616,67 +637,102 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         {/* LEFT: hero + categories + filters */}
         <div style={{flex:"1 1 380px",minWidth:0,display:"flex",flexDirection:"column",gap:28}}>
 
-          {/* Premium Hero with Carousel */}
-          <div className="depth-float" style={{overflow:"hidden",position:"relative",minHeight:420,display:"flex",flexDirection:"column"}}>
-            <div style={{
-              position:"absolute",inset:0,zIndex:0,opacity:0.6,
-              background:"linear-gradient(45deg, var(--a) 0%, #1e3fd0 100%)"
-            }}>
-              {/* This is where the background carousel logic would live - but for now a premium gradient + shimmer */}
-              <div style={{position:"absolute",inset:0,background:"url(https://images.unsplash.com/photo-1555421689-491a97ff2040?q=80&w=2070&auto=format&fit=crop) center/cover"}} />
-              <div style={{position:"absolute",inset:0,background:"linear-gradient(to right, #fff 30%, transparent 100%)"}} />
-            </div>
-
-            <div style={{position:"relative",zIndex:1,flex:1,padding:"clamp(30px,5vw,50px)",display:"flex",flexDirection:"column",justifyContent:"center",maxWidth:600}}>
-              <div className="glass" style={{display:"inline-flex",padding:"6px 14px",borderRadius:30,fontSize:11,fontWeight:800,color:"var(--a)",letterSpacing:".12em",textTransform:"uppercase",marginBottom:20}}>
-                KENYA'S LARGEST DIGITAL CLASSIFIEDS
-              </div>
-              <h1 style={{fontSize:"clamp(28px,3.5vw,48px)",fontWeight:900,letterSpacing:"-0.03em",lineHeight:1.1,marginBottom:18,color:"#111",fontFamily:"var(--fn)"}}>
-                The Smart Way to <br/>
-                <span style={{color:"var(--a)"}}>Buy, Sell & Request</span>
-              </h1>
-              <p style={{fontSize:15,color:"#4B4B5B",lineHeight:1.8,marginBottom:32,fontWeight:500,maxWidth:440}}>
-                Weka Soko is your premium marketplace to dispose of pre-owned items, find high-value deals, or post a request for exactly what you need.
-              </p>
+          {/* Premium Hero with Real Carousel Content */}
+          {loading ? <HeroSkeleton/> : (
+            <div className="depth-float" style={{overflow:"hidden",position:"relative",minHeight:420,display:"flex",flexDirection:"column", borderRadius: 28}}>
+              {[
+                {
+                  img: "https://images.unsplash.com/photo-1555421689-491a97ff2040?q=80&w=2070&auto=format&fit=crop",
+                  title: <>The Smart Way to <br/><span style={{color:"var(--a)"}}>Buy, Sell & Request</span></>,
+                  label: "KENYA'S LARGEST DIGITAL CLASSIFIEDS"
+                },
+                {
+                  img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2015&auto=format&fit=crop",
+                  title: <>List Items for <br/><span style={{color:"#0d9488"}}>Free in 2 Minutes</span></>,
+                  label: "ZERO UPFRONT COST"
+                },
+                {
+                  img: "https://images.unsplash.com/photo-1556742044-3c52d6e88c62?q=80&w=2070&auto=format&fit=crop",
+                  title: <>Secure Deals with <br/><span style={{color:"#7c3aed"}}>M-Pesa Escrow</span></>,
+                  label: "100% PEACE OF MIND"
+                }
+              ].map((slide, i) => (
+                <div key={i} style={{
+                  position: i === 0 ? "relative" : "absolute", 
+                  inset: 0, 
+                  opacity: i === heroIdx ? 1 : 0,
+                  visibility: i === heroIdx ? "visible" : "hidden",
+                  transition: "opacity 1s ease, transform 1.2s ease",
+                  transform: i === heroIdx ? "scale(1)" : "scale(1.05)",
+                  zIndex: i === heroIdx ? 1 : 0
+                }}>
+                  <div style={{position:"absolute",inset:0,background:`url(${slide.img}) center/cover no-repeat`}} />
+                  <div style={{position:"absolute",inset:0,background:"linear-gradient(to right, #fff 40%, rgba(255,255,255,0.7) 60%, transparent 100%)"}} />
+                  
+                  <div style={{position:"relative",zIndex:2,padding:"clamp(30px,5vw,60px)",display:"flex",flexDirection:"column",justifyContent:"center",height:"100%",maxWidth:600}}>
+                    <div className="glass" style={{display:"inline-flex",alignSelf:"flex-start",padding:"6px 14px",borderRadius:30,fontSize:10,fontWeight:800,color:i===1?"#0d9488":i===2?"#7c3aed":"var(--a)",letterSpacing:".14em",textTransform:"uppercase",marginBottom:20}}>
+                      {slide.label}
+                    </div>
+                    <h1 style={{fontSize:"clamp(28px,3.8vw,52px)",fontWeight:900,letterSpacing:"-0.03em",lineHeight:1.05,marginBottom:20,color:"#111",fontFamily:"var(--fn)"}}>
+                      {slide.title}
+                    </h1>
+                    <p style={{fontSize:16,color:"#4B4B5B",lineHeight:1.7,marginBottom:36,fontWeight:500,maxWidth:460}}>
+                      Join thousands of Kenyans turning pre-owned items into cash and finding the best deals in the country.
+                    </p>
+                    
+                    <div style={{display:"flex",gap:14,flexWrap:"wrap"}}>
+                      <button className="btn bp lg" style={{boxShadow: "0 10px 25px rgba(20,40,160,0.2)"}} onClick={() => setModal({type:"post"})}>
+                        Post Now Free
+                      </button>
+                      <button className="btn bs lg glass" style={{fontWeight:800}} onClick={() => document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"})}>
+                        Browse Deals {Ic.chevronRight(16)}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
               
-              <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
-                <button className="btn bp lg" style={{boxShadow: "0 10px 25px rgba(20,40,160,0.25)"}}
-                  onClick={()=>{
-                    if(!user){setModal({type:"auth",mode:"signup"});return;}
-                    setModal({type:"post"});
-                  }}>Post an Ad Free</button>
-                <button className="btn bs lg glass" style={{fontWeight:700}}
-                  onClick={()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"})}>Explore Marketplace</button>
+              {/* Carousel Indicators */}
+              <div style={{position:"absolute", bottom:24, left: "clamp(30px, 5vw, 60px)", display:"flex", gap:8, zIndex: 10}}>
+                {[0,1,2].map(i => (
+                  <div key={i} onClick={() => setHeroIdx(i)} style={{
+                    width: i === heroIdx ? 24 : 8, height: 8, borderRadius: 10,
+                    background: i === heroIdx ? "var(--a)" : "rgba(0,0,0,0.1)",
+                    cursor: "pointer", transition: "all 0.3s ease"
+                  }} />
+                ))}
               </div>
             </div>
-          </div>
+          )}
 
           {/* High-Visibility Categories Bar */}
-          <div style={{display:"flex",flexDirection:"column",gap:16}}>
+          <div style={{display:"flex",flexDirection:"column",gap:20, marginTop: 10}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-              <h3 style={{fontSize:16,fontWeight:800,letterSpacing:"-0.01em"}}>Popular Categories</h3>
-              <button className="btn bgh sm">View All</button>
+              <h3 style={{fontSize:18,fontWeight:900,letterSpacing:"-0.02em"}}>Premium Categories</h3>
+              <button className="icon-btn" title="View all categories" style={{width: 40, height: 40}}>{Ic.chevronRight(20)}</button>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(100px, 1fr))",gap:12}}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(110px, 1fr))",gap:16}}>
               {CATS.slice(0, 8).map(c => {
                 const active = filter.cat === c.name;
                 return <div key={c.name}
                   onClick={()=>{setFilter(p=>({...p,cat:p.cat===c.name?"":c.name}));setPg(1);setTimeout(()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"}),100);}}
                   className={active ? "depth-float" : "glass"}
                   style={{
-                    display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10,padding:"16px 10px",cursor:"pointer",borderRadius:22,
-                    border: active ? "2px solid var(--a)" : "1px solid rgba(0,0,0,0.05)",
-                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                    transform: active ? "scale(1.05)" : "scale(1)"
+                    display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12,padding:"20px 10px",cursor:"pointer",borderRadius:24,
+                    border: active ? "2px solid var(--a)" : "1px solid rgba(0,0,0,0.04)",
+                    transition: "all 0.4s cubic-bezier(0.23, 1, 0.32, 1)",
+                    transform: active ? "scale(1.08) translateY(-4px)" : "scale(1)",
+                    boxShadow: active ? "var(--shadow-hover-float)" : "none"
                   }}>
-                  <div style={{width:48,height:48,borderRadius:"50%",overflow:"hidden",boxShadow:"0 4px 10px rgba(0,0,0,0.1)"}}>
+                  <div style={{width:54,height:54,borderRadius:"50%",overflow:"hidden",boxShadow:"0 6px 14px rgba(0,0,0,0.08)", border: "2px solid #fff"}}>
                     <img src={CAT_PHOTOS[c.name]||CAT_PHOTOS.Other} alt={c.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
                   </div>
-                  <div style={{fontSize:11,fontWeight:800,color:active?"var(--a)":"#111",textAlign:"center"}}>{c.name}</div>
+                  <div style={{fontSize:11,fontWeight:800,color:active?"var(--a)":"#111",textAlign:"center",letterSpacing: "-0.01em"}}>{c.name}</div>
                 </div>;
               })}
             </div>
           </div>
+
 
 
           {/* Search & Filters */}
@@ -775,16 +831,23 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
           </div>
         </div>
 
-        {loading?<div style={{textAlign:"center",padding:"80px 0"}}><Spin s="40px"/></div>
-          :listings.length===0?<div className="empty"><h3 style={{fontWeight:700,fontSize:20,marginBottom:8}}>No listings found</h3><p style={{color:"#767676"}}>Try a different search or filter</p></div>
-          :<div className={vm==="grid"?"g3":"lvc"}>{listings.map(l=><ListingCard key={l.id} listing={l} onClick={()=>openListing(l)} listView={vm==="list"} isSaved={savedIds.has(l.id)} onSave={user?()=>handleToggleSave(l):null}/>)}</div>}
+        {loading ? (
+          <div className={vm==="grid"?"g3":"lvc"}>
+            {Array.from({length: isMobile?12:24}).map((_, i) => <ListingCardSkeleton key={i} listView={vm==="list"}/>)}
+          </div>
+        ) : listings.length===0 ? (
+          <div className="empty glass" style={{padding:"120px 20px", borderRadius: 24}}><h3 style={{fontWeight:900,fontSize:24,marginBottom:12}}>No listings found</h3><p style={{color:"#767676", fontSize: 16}}>Try adjusting your search or category filters.</p></div>
+        ) : (
+          <div className={vm==="grid"?"g3":"lvc"}>{listings.map(l=><ListingCard key={l.id} listing={l} onClick={()=>openListing(l)} listView={vm==="list"} isSaved={savedIds.has(l.id)} onSave={user?()=>handleToggleSave(l):null}/>)}</div>
+        )}
 
-        {!loading&&total>0&&<div style={{textAlign:"center",marginTop:24}}>
-          <button className="btn bp" style={{padding:"13px 32px",fontSize:14,borderRadius:9}}
+        {!loading&&total>0&&<div style={{textAlign:"center",marginTop:40}}>
+          <button className="btn bp lg" style={{padding:"16px 48px", borderRadius: 14, boxShadow: "0 10px 30px rgba(20,40,160,0.2)"}}
             onClick={()=>{setPage("listings");if(typeof window!=='undefined')window.history.pushState({},"","/listings");}}>
-            View All Listings ({total}) →
+            Explore All {total} Listings {Ic.chevronRight(18)}
           </button>
         </div>}
+
       </div>
 
       {/* RECENTLY SOLD */}
