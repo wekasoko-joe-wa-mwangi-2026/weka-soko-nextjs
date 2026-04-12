@@ -672,7 +672,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
                   <div style={{width:48,height:48,borderRadius:"50%",overflow:"hidden",boxShadow:"0 4px 10px rgba(0,0,0,0.1)"}}>
                     <img src={CAT_PHOTOS[c.name]||CAT_PHOTOS.Other} alt={c.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
                   </div>
-                  <div style={{fontSize:11,fontWeight:800,color:active?var(--a):"#111",textAlign:"center"}}>{c.name}</div>
+                  <div style={{fontSize:11,fontWeight:800,color:active?"var(--a)":"#111",textAlign:"center"}}>{c.name}</div>
                 </div>;
               })}
             </div>
@@ -821,7 +821,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
             {
               title: "Sell & Dispose",
               desc: "The fastest way to turn your pre-owned items into cash. List for free and only pay when we find you a locked-in buyer.",
-              icon: Ic.fire(24, var(--a)),
+              icon: Ic.fire(24, "var(--a)"),
               color: "#EEF2FF"
             },
             {
