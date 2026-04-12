@@ -628,12 +628,12 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
             </div>
 
             <div style={{position:"relative",zIndex:1,flex:1,padding:"clamp(30px,5vw,50px)",display:"flex",flexDirection:"column",justifyContent:"center",maxWidth:600}}>
-              <div className="glass" style={{display:"inline-flex",padding:"6px 14px",borderRadius:30,fontSize:11,fontWeight:800,color:var(--a),letterSpacing:".12em",textTransform:"uppercase",marginBottom:20}}>
+              <div className="glass" style={{display:"inline-flex",padding:"6px 14px",borderRadius:30,fontSize:11,fontWeight:800,color:"var(--a)",letterSpacing:".12em",textTransform:"uppercase",marginBottom:20}}>
                 KENYA'S LARGEST DIGITAL CLASSIFIEDS
               </div>
               <h1 style={{fontSize:"clamp(28px,3.5vw,48px)",fontWeight:900,letterSpacing:"-0.03em",lineHeight:1.1,marginBottom:18,color:"#111",fontFamily:"var(--fn)"}}>
                 The Smart Way to <br/>
-                <span style={{color:var(--a)}}>Buy, Sell & Request</span>
+                <span style={{color:"var(--a)"}}>Buy, Sell & Request</span>
               </h1>
               <p style={{fontSize:15,color:"#4B4B5B",lineHeight:1.8,marginBottom:32,fontWeight:500,maxWidth:440}}>
                 Weka Soko is your premium marketplace to dispose of pre-owned items, find high-value deals, or post a request for exactly what you need.
@@ -811,7 +811,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
 
         {/* ── EDUCATIONAL PILLARS: Sell, Buy, Request ── */}
         <div style={{marginBottom:60,textAlign:"center"}}>
-          <div style={{fontSize:11,fontWeight:800,letterSpacing:".2em",textTransform:"uppercase",color:var(--a),marginBottom:12}}>How It Works</div>
+          <div style={{fontSize:11,fontWeight:800,letterSpacing:".2em",textTransform:"uppercase",color:"var(--a)",marginBottom:12}}>How It Works</div>
           <h2 style={{fontSize:"clamp(24px,3vw,38px)",fontWeight:900,letterSpacing:"-0.03em",color:"#111",lineHeight:1.1,marginBottom:12}}>Kenya's Most Versatile Marketplace</h2>
           <p style={{fontSize:15,color:"#6B6B7B",lineHeight:1.8,margin:"0 auto",maxWidth:540}}>Weka Soko isn't just a grid of photos. It's an ecosystem built for intentional buying and selling.</p>
         </div>
