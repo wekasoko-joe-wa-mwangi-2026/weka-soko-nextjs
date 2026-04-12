@@ -4168,8 +4168,27 @@ function MobileLayout({
       setModal={setModal}
     />}
 
+    {/* MOBILE THUMB-ZONE CTA (Fitts's Law) */}
+    {mobileTab === 'home' && !loading && (
+      <div className="thumb-cta glass" style={{
+        position:"fixed", bottom: "calc(66px + env(safe-area-inset-bottom) + 16px)", 
+        left: 16, right: 16, zIndex: 850,
+        display: "flex", gap: 10, padding: 8, borderRadius: 20,
+        animation: "spring-in 0.6s ease both 0.5s",
+        boxShadow: "var(--shadow-float)"
+      }}>
+        <button className="btn bp glass" style={{flex:1, background: 'var(--a)', color: '#fff', border: 'none', fontWeight: 800, height: 48}} onClick={postAd}>
+          {Ic.plus(18)} Post Ad Free
+        </button>
+        <button className="btn bs glass" style={{flex:1, background: 'rgba(255,255,255,0.9)', color: 'var(--txt)', border: '1px solid rgba(0,0,0,0.1)', height: 48}} onClick={() => document.getElementById("mobile-listings-section")?.scrollIntoView({behavior:"smooth"})}>
+          {Ic.search(18)} Browse
+        </button>
+      </div>
+    )}
+
     {/* ── BOTTOM TAB BAR ── */}
     <div className="mob-bottombar">
+
       {[
         {id:"home",icon:<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="5" rx="1" stroke="currentColor" strokeWidth="2"/><rect x="14" y="3" width="7" height="5" rx="1" stroke="currentColor" strokeWidth="2"/><rect x="3" y="12" width="7" height="9" rx="1" stroke="currentColor" strokeWidth="2"/><rect x="14" y="12" width="7" height="9" rx="1" stroke="currentColor" strokeWidth="2"/></svg>,label:"Overview"},
         {id:"discover",icon:<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,label:"Discover"},

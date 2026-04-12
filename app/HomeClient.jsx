@@ -617,17 +617,6 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       <span>{newSinceLastVisit} new listing{newSinceLastVisit!==1?"s":""} added since your last visit</span>
     </div>}
 
-    {/* MOBILE THUMB-ZONE CTA (Fitts's Law) */}
-    {isMobile && page === 'home' && !loading && (
-      <div className="thumb-cta" style={{animation: "spring-in 0.6s ease both 0.5s"}}>
-        <button className="btn bp glass" style={{background: 'var(--a)', color: '#fff', border: 'none', fontWeight: 800}} onClick={() => { if(!user){setModal({type:"auth",mode:"signup"});return;} setModal({type:"post"}); }}>
-          {Ic.plus(18)} Post Ad Free
-        </button>
-        <button className="btn bs glass" style={{background: 'rgba(255,255,255,0.9)', color: 'var(--txt)', border: '1px solid rgba(0,0,0,0.1)'}} onClick={() => document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"})}>
-          {Ic.search(18)} Browse Deals
-        </button>
-      </div>
-    )}
 
 
     {page!=="dashboard"&&page!=="sold"&&page!=="requests"&&page!=="listings"&&<main style={{padding:"clamp(20px,4vw,40px) clamp(16px,4vw,48px) 80px"}}>
