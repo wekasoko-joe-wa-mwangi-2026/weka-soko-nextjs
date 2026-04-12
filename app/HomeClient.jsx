@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { apiCall, fmtKES, ago, CATS, KENYA_COUNTIES, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
-import { Ic, urlBase64ToUint8Array, WekaSokoLogo, Spin, Toast, Modal, FF, Counter, ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal, WatermarkedImage, Lightbox, AuthModal, ShareModal, PayModal, ChatModal, PostAdModal, ListingCard, ListingCardSkeleton, HeroSkeleton, LeaveReviewBtn, ReportListingBtn, VerificationBanner, DetailModal, MarkSoldModal, RoleSwitcher, PostRequestModal, WhatBuyersWant, SoldSection, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab, ProfileSection, PasswordSection, VerificationSection, MobileDashboard, Dashboard, PWABanner, Pager, MobileRequestsTab, MobileLayout, BuyersWantPage, AllListingsPage, SoldPage, HotRightNow, SwipeFeed } from '@/components/all';
+import { Ic, urlBase64ToUint8Array, WekaSokoLogo, Spin, Toast, Modal, FF, Counter, ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal, WatermarkedImage, Lightbox, AuthModal, ShareModal, PayModal, ChatModal, PostAdModal, ListingCard, ListingCardSkeleton, HeroSkeleton, LeaveReviewBtn, ReportListingBtn, DetailModal, MarkSoldModal, RoleSwitcher, PostRequestModal, WhatBuyersWant, SoldSection, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab, ProfileSection, PasswordSection, VerificationSection, MobileDashboard, Dashboard, Pager, MobileRequestsTab, MobileLayout, BuyersWantPage, AllListingsPage, SoldPage, HotRightNow, SwipeFeed, useAudioNotification } from '@/components/all';
 
 
 export default function HomeClient({ initialListings, initialTotal, initialStats, initialCounties, initialFilter, initialPage }) {
@@ -21,7 +21,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
   const [vm,setVm]=useState("grid");
   const [toast,setToast]=useState(null);
   const [modal,setModal]=useState(null);
-  const [showPWA,setShowPWA]=useState(true);
+
   const [maintenanceMsg,setMaintenanceMsg]=useState(null);
   const [notifCount,setNotifCount]=useState(0);
   const socketRef=useRef(null);
@@ -39,6 +39,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
 
 
   const notify=useCallback((msg,type="info")=>setToast({msg,type,id:Date.now()}),[]);
+  const playChime = useAudioNotification();
 
   // <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="20 6 9 17 4 12"/></svg> FIX: Initialize isMobile as false, set on client-side only
   const [isMobile,setIsMobile]=useState(false);
@@ -319,30 +320,60 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     s.on("notification",(n)=>{
       setNotifCount(c=>c+1);
       if(n.type==="listing_match"){
+        playChime('success');
         setNotifCount(c=>c+1);
         return;
       }
       if(n.type==="request_match"){
+        playChime('success');
         notify(n.body||n.title,"success");
         setNotifCount(c=>c+1);
         return;
       }
       if(n.type==="listing_approved"){
+        playChime('success');
         notify("Your ad is now live on Weka Soko! "+(n.body||""),"success");
         setNotifCount(c=>c+1);
         return;
       }
+      if(n.type==="listing_unlocked"){
+        playChime('success');
+        notify(n.body||n.title,"success");
+        setNotifCount(c=>c+1);
+        return;
+      }
+      if(n.type==="escrow_released"){
+        playChime('success');
+        notify(n.body||n.title,"success");
+        setNotifCount(c=>c+1);
+        return;
+      }
       if(n.type==="seller_pitch"){
+        playChime('message');
         notify(n.body||n.title,"success");
         setNotifCount(c=>c+1);
         return;
       }
       if(n.type==="pitch_accepted"){
+        playChime('success');
         notify(n.body||n.title,"success");
         setNotifCount(c=>c+1);
         return;
       }
+      if(n.type==="chat_opened"){
+        playChime('message');
+        notify(n.body||n.title,"info");
+        setNotifCount(c=>c+1);
+        return;
+      }
+      if(n.type==="new_message"){
+        playChime('message');
+        notify(n.body||n.title,"info");
+        setNotifCount(c=>c+1);
+        return;
+      }
       if(n.type==="warning"||n.type==="suspension"){
+        playChime('error');
         notify(n.title+(n.body?" — "+n.body:""),"error");
         apiCall("/api/auth/me",{},token).then(fresh=>{
           setUser(fresh);localStorage.setItem("ws_user",JSON.stringify(fresh));
@@ -356,12 +387,15 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
           }
         }).catch(()=>{});
       } else if(n.type==="admin_edit"){
+        playChime('message');
         notify("Admin has updated your listing: "+(n.body||""),"info");
       } else {
+        playChime('message');
         notify(n.body||n.title,"info");
       }
     });
     s.on("new_message_inbox",(msg)=>{
+      playChime('message');
       setNotifCount(c=>c+1);
     });
     return()=>s.disconnect();
@@ -670,14 +704,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
                       Join thousands of Kenyans turning pre-owned items into cash and finding the best deals in the country.
                     </p>
                     
-                    <div style={{display:"flex",gap:14,flexWrap:"wrap"}}>
-                      <button className="btn bp lg" style={{boxShadow: "0 10px 25px rgba(20,40,160,0.2)"}} onClick={() => setModal({type:"post"})}>
-                        Post Now Free
-                      </button>
-                      <button className="btn bs lg glass" style={{fontWeight:800}} onClick={() => document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"})}>
-                        Browse Deals {Ic.chevronRight(16)}
-                      </button>
-                    </div>
+
                   </div>
                 </div>
               ))}
@@ -699,7 +726,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
           <div style={{display:"flex",flexDirection:"column",gap:20, marginTop: 10}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <h3 style={{fontSize:18,fontWeight:900,letterSpacing:"-0.02em"}}>Premium Categories</h3>
-              <button className="icon-btn" title="View all categories" style={{width: 40, height: 40}}>{Ic.chevronRight(20)}</button>
+
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(110px, 1fr))",gap:16}}>
               {CATS.slice(0, 8).map(c => {
@@ -1031,9 +1058,9 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       }}
       onSignIn={()=>setModal({type:"auth",mode:"login"})}
     />}
-    {user&&!user.is_verified&&page==="home"&&<div style={{position:"sticky",top:60,zIndex:99,padding:"0 16px"}}><VerificationBanner user={user} token={token} notify={notify}/></div>}
+
     {page==="dashboard"&&user&&<Dashboard user={user} token={token} notify={notify} onPostAd={()=>{setPage("home");if(typeof window !== 'undefined') window.history.pushState({},"","/");setModal({type:"post"});}} onClose={()=>{setPage("home");if(typeof window !== 'undefined') window.history.pushState({},"","/");}} onUserUpdate={updated=>{const m={...user,...updated};setUser(m);localStorage.setItem("ws_user",JSON.stringify(m));}} initialTab={typeof window !== 'undefined' && window.location.pathname.startsWith("/dashboard/")?window.location.pathname.split("/dashboard/")[1]:undefined}/>}
     {toast&&<Toast key={toast.id} msg={toast.msg} type={toast.type} onClose={()=>setToast(null)}/>}
-    {showPWA&&typeof window !== 'undefined' && !localStorage.getItem("pwa-dismissed")&&<PWABanner onDismiss={()=>{setShowPWA(false);localStorage.setItem("pwa-dismissed","1");}}/>}
+
   </>;
 }

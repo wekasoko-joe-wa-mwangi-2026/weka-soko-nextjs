@@ -129,6 +129,8 @@ export const Ic = {
   flag:     (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>,
   send:     (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
   plus:     (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+  home:     (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+  checklist:(s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>,
   minus:    (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>,
   dollarSign:(s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
   percent:  (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>,
@@ -187,6 +189,86 @@ export function urlBase64ToUint8Array(base64String) {
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
   const raw = atob(base64);
   return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
+// ── AUDIO NOTIFICATION HOOK ────────────────────────────────────────────────────
+// Synthesizes a premium notification chime via Web Audio API.
+// No external file needed — works fully offline.
+// Mobile browsers require a user gesture before audio context can be started.
+// We "warm up" the context on the first click anywhere so the chime is ready.
+export function useAudioNotification() {
+  const ctxRef = useRef(null);
+  const unlockedRef = useRef(false);
+
+  // Warm up the AudioContext on first user interaction
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const unlock = () => {
+      if (unlockedRef.current) return;
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        ctxRef.current = ctx;
+        // Play a silent buffer to unlock mobile audio
+        const buf = ctx.createBuffer(1, 1, 22050);
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.connect(ctx.destination);
+        src.start(0);
+        unlockedRef.current = true;
+      } catch {}
+    };
+    document.addEventListener('click', unlock, { once: true });
+    document.addEventListener('touchstart', unlock, { once: true });
+    return () => {
+      document.removeEventListener('click', unlock);
+      document.removeEventListener('touchstart', unlock);
+    };
+  }, []);
+
+  // Returns a function you call to play the chime
+  const play = useCallback((type = 'message') => {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = ctxRef.current || new AudioContext();
+      if (!ctxRef.current) ctxRef.current = ctx;
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+
+      const now = ctx.currentTime;
+
+      // Note frequencies for a premium three-tone chime (major chord)
+      const tones = type === 'error'
+        ? [523.25, 415.30, 349.23]   // descending minor — "warning"
+        : type === 'success'
+        ? [523.25, 659.25, 783.99]   // C-E-G ascending — "confirmed!"
+        : [783.99, 880.00, 1046.50]; // G-A-C ascending — "ding!" (message)
+
+      tones.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + i * 0.12);
+
+        // Smooth attack + quick decay — sounds premium, not jarring
+        gain.gain.setValueAtTime(0, now + i * 0.12);
+        gain.gain.linearRampToValueAtTime(0.18, now + i * 0.12 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.38);
+
+        osc.start(now + i * 0.12);
+        osc.stop(now + i * 0.12 + 0.4);
+      });
+    } catch (e) {
+      // Fail silently — audio is a nice-to-have, not mission-critical
+    }
+  }, []);
+
+  return play;
 }
 
 // ── COMPONENTS ────────────────────────────────────────────────────────────────
@@ -738,7 +820,8 @@ function AuthModal({defaultMode,onClose,onAuth,notify}){
 
 // ── SHARE MODAL ───────────────────────────────────────────────────────────────
 function ShareModal({listing,onClose}){
-  const url=`${window.location.origin}/listings/${listing.id}`;
+  const url=`https://weka-soko-nextjs.vercel.app/listings/${listing.id}`;
+
   const txt=`"${listing.title}" — ${fmtKES(listing.price)} on Weka Soko`;
   const [copied,setCopied]=useState(false);
 
@@ -1551,31 +1634,7 @@ function ReportListingBtn({listingId,token,notify}){
   </div>;
 }
 
-// ── EMAIL VERIFICATION BANNER ─────────────────────────────────────────────────
-function VerificationBanner({user,token,notify}){
-  const [sent,setSent]=useState(false);
-  const [loading,setLoading]=useState(false);
-  if(!user||user.is_verified)return null;
-  const resend=async()=>{
-    setLoading(true);
-    try{
-      await api("/api/auth/resend-verification",{method:"POST"},token);
-      setSent(true);
-      notify("Verification email sent! Check your inbox.","success");
-    }catch(e){notify(e.message,"error");}
-    finally{setLoading(false);}
-  };
-  return <div style={{background:"#F8F8F8",border:"1px solid #EBEBEB",borderRadius:6,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
-    <span><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
-    <div style={{flex:1,minWidth:200}}>
-      <div style={{fontWeight:600,fontSize:13,color:"rgba(180,90,0,1)"}}>Email not verified</div>
-      <div style={{fontSize:12,color:"#888888"}}>Check your inbox for a verification link, or request a new one.</div>
-    </div>
-    {!sent
-      ?<button className="btn by sm" onClick={resend} disabled={loading}>{loading?<Spin/>:"Resend Email"}</button>
-      :<span style={{fontSize:12,color:"#111111",fontWeight:600}}><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle",marginRight:3}}><polyline points="20 6 9 17 4 12"/></svg> Sent!</span>}
-  </div>;
-}
+
 
 function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnlock,onEscrow,notify,isSaved,onSave}){
   const isSeller=user?.id===l.seller_id;
@@ -3615,77 +3674,7 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
 // ── PITCH MODAL — Seller pitches to a buyer request ─────────────────────────
 
 // ── PWA INSTALL BANNER ────────────────────────────────────────────────────────
-function PWABanner({onDismiss}){
-  const [deferredPrompt,setDeferredPrompt]=useState(null);
-  const [isIOS,setIsIOS]=useState(false);
-  const [isStandalone,setIsStandalone]=useState(false);
-  const [notifPerm,setNotifPerm]=useState(null);
-  const [showIOSGuide,setShowIOSGuide]=useState(false);
 
-  useEffect(()=>{
-    const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
-    const standalone=window.matchMedia("(display-mode: standalone)").matches||!!window.navigator.standalone;
-    setIsIOS(ios);
-    setIsStandalone(standalone);
-    if("Notification" in window) setNotifPerm(Notification.permission);
-    const h=e=>{e.preventDefault();setDeferredPrompt(e);};
-    window.addEventListener("beforeinstallprompt",h);
-    return()=>window.removeEventListener("beforeinstallprompt",h);
-  },[]);
-
-  const requestNotif=async()=>{
-    if(!("Notification" in window))return;
-    const perm=await Notification.requestPermission();
-    setNotifPerm(perm);
-    if(perm==="granted"){
-      new Notification("Weka Soko",{body:"Notifications enabled! You'll be alerted for new messages and offers.",icon:"/icon.svg"});
-    }
-  };
-
-  const install=async()=>{
-    if(!deferredPrompt)return;
-    deferredPrompt.prompt();
-    const{outcome}=await deferredPrompt.userChoice;
-    if(outcome==="accepted")onDismiss();
-    setDeferredPrompt(null);
-  };
-
-  const canInstall=deferredPrompt||(isIOS&&!isStandalone);
-  const needsNotif=typeof window!=="undefined"&&"Notification" in window&&notifPerm==="default";
-  if(!canInstall&&!needsNotif)return null;
-
-  return <div className="pwa-banner" style={{flexDirection:"column",gap:0,padding:0,overflow:"hidden"}}>
-    {canInstall&&<div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderBottom:needsNotif?"1px solid #E8E8E8":"none"}}>
-      <span style={{flexShrink:0,color:"#1428A0"}}><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span>
-      <div style={{flex:1,minWidth:0}}>
-        <div style={{fontWeight:700,fontSize:13,color:"#1A1A1A"}}>Install Weka Soko on your phone</div>
-        <div style={{fontSize:11,color:"#888",marginTop:1}}>{isIOS?"Tap Share → Add to Home Screen for the full app":"Get instant access, faster loading & offline browsing"}</div>
-      </div>
-      {isIOS
-        ?<button className="btn bp sm" style={{fontSize:12,whiteSpace:"nowrap"}} onClick={()=>setShowIOSGuide(g=>!g)}>{showIOSGuide?"Got it ✓":"How?"}</button>
-        :<button className="btn bp sm" style={{fontSize:12,whiteSpace:"nowrap"}} onClick={install}>Install</button>
-      }
-      <button onClick={onDismiss} style={{background:"none",border:"none",cursor:"pointer",color:"#AAAAAA",padding:"4px",flexShrink:0,fontSize:16,lineHeight:1}}>✕</button>
-    </div>}
-    {canInstall&&isIOS&&showIOSGuide&&<div style={{padding:"10px 14px",background:"#F8F9FF",borderBottom:needsNotif?"1px solid #E8E8E8":"none",fontSize:12,color:"#444",display:"flex",gap:8,alignItems:"flex-start"}}>
-      <div>
-        <div style={{fontWeight:700,marginBottom:4,color:"#1428A0"}}>Add to Home Screen (iOS Safari)</div>
-        <div>1. Tap the <strong>Share</strong> button at the bottom of Safari</div>
-        <div>2. Scroll down and tap <strong>"Add to Home Screen"</strong></div>
-        <div>3. Tap <strong>Add</strong> — done! Open the app like any other app</div>
-      </div>
-    </div>}
-    {needsNotif&&<div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px"}}>
-      <span style={{flexShrink:0,color:"#F59E0B"}}><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
-      <div style={{flex:1,minWidth:0}}>
-        <div style={{fontWeight:700,fontSize:13,color:"#1A1A1A"}}>Enable sound & visual alerts</div>
-        <div style={{fontSize:11,color:"#888",marginTop:1}}>Get notified instantly when buyers message you or lock in</div>
-      </div>
-      <button className="btn" style={{background:"#F59E0B",color:"#fff",border:"none",fontSize:12,padding:"7px 12px",borderRadius:8,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",whiteSpace:"nowrap"}} onClick={requestNotif}>Allow</button>
-      {!canInstall&&<button onClick={onDismiss} style={{background:"none",border:"none",cursor:"pointer",color:"#AAAAAA",padding:"4px",flexShrink:0,fontSize:16,lineHeight:1}}>✕</button>}
-    </div>}
-  </div>;
-}
 
 // ── PAGER ─────────────────────────────────────────────────────────────────────
 function Pager({total,perPage,page,onChange}){
@@ -4191,30 +4180,37 @@ function MobileLayout({
     />}
 
 
-    {/* ── BOTTOM TAB BAR ── */}
+    {/* ── BOTTOM TAB BAR (Magic Navigation Menu 3) ── */}
     <div className="mob-bottombar">
-
-      {[
-        {id:"home",icon:<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="5" rx="1" stroke="currentColor" strokeWidth="2"/><rect x="14" y="3" width="7" height="5" rx="1" stroke="currentColor" strokeWidth="2"/><rect x="3" y="12" width="7" height="9" rx="1" stroke="currentColor" strokeWidth="2"/><rect x="14" y="12" width="7" height="9" rx="1" stroke="currentColor" strokeWidth="2"/></svg>,label:"Overview"},
-        {id:"discover",icon:<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,label:"Discover"},
-        {id:"post",icon:<svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>,label:"Post Ad",isPost:true},
-        {id:"dashboard",icon:<svg viewBox="0 0 24 24" fill="none"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>,label:user?user.name?.split(" ")[0]:"Account"},
-        {id:"requests",icon:<svg viewBox="0 0 24 24" fill="none"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M9 12h6M9 16h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>,label:"Requests"},
-      ].map(t=>(
-        <button key={t.id}
-          className={`mob-tab${t.isPost?" post-btn":mobileTab===t.id?" on":" off"}`}
-          onClick={()=>{
-            if(t.isPost){postAd();return;}
-            if(t.id==="dashboard"){if(!user){setModal({type:"auth",mode:"login"});return;}setPage("dashboard");window.history.pushState({},"","/dashboard");}
-            else if(t.id==="requests"){setPage("home");window.history.pushState({},"","/requests");}
-            else if(t.id==="discover"){setPage("home");}
-            else{setPage("home");}
-            setMobileTab(t.id);
-          }}>
-          {t.icon}
-          <span>{t.label}{t.id==="dashboard"&&notifCount>0?` (${notifCount})`:""}</span>
-        </button>
-      ))}
+      <div className="magic-nav">
+        {[
+          {id:"home", icon:Ic.home, label:"Home"},
+          {id:"discover", icon:Ic.search, label:"Browse"},
+          {id:"post", icon:Ic.plus, label:"Post Ad", isPost:true},
+          {id:"dashboard", icon:Ic.user, label:"Account"},
+          {id:"requests", icon:Ic.checklist, label:"Requests"},
+        ].map((t, idx) => {
+          const isActive = t.isPost ? false : mobileTab === t.id;
+          return (
+            <button key={t.id}
+              className={`mob-tab${isActive ? " on" : " off"}${t.isPost ? " post-btn" : ""}`}
+              onClick={() => {
+                if(t.isPost){ postAd(); return; }
+                if(t.id==="dashboard"){ if(!user){setModal({type:"auth",mode:"login"});return;} setPage("dashboard"); window.history.pushState({},"","/dashboard"); }
+                else if(t.id==="requests"){ setPage("home"); window.history.pushState({},"","/requests"); }
+                else { setPage("home"); }
+                setMobileTab(t.id);
+              }}>
+              {t.icon(24, "currentColor")}
+              <span>{t.label}</span>
+            </button>
+          );
+        })}
+        {/* Sliding Indicator Circle */}
+        <div className="magic-indicator" style={{
+          left: `calc(${(["home", "discover", "post", "dashboard", "requests"].indexOf(mobileTab) * 20) + 10}% - 30px)`
+        }} />
+      </div>
     </div>
 
     {/* ── FILTERS DRAWER ── */}
@@ -5136,5 +5132,5 @@ function BuyersWantPage({user,token,notify,onBack,onIHaveThis,onSignIn}){
 
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 
-export { WekaSokoLogo, Spin, Toast, Modal, FF, Counter, ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal, WatermarkedImage, Lightbox, AuthModal, ShareModal, PayModal, ChatModal, PostAdModal, ListingCard, ListingCardSkeleton, HeroSkeleton, LeaveReviewBtn, ReportListingBtn, VerificationBanner, DetailModal, MarkSoldModal, RoleSwitcher, PostRequestModal, WhatBuyersWant, SoldSection, SoldCard, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab, ProfileSection, PasswordSection, VerificationSection, MobileDashboard, Dashboard, PWABanner, Pager, MobileRequestsTab, MobileLayout, BuyersWantPage, AllListingsPage, SoldPage, SwipeFeed, HotRightNow };
+export { WekaSokoLogo, Spin, Toast, Modal, FF, Counter, ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal, WatermarkedImage, Lightbox, AuthModal, ShareModal, PayModal, ChatModal, PostAdModal, ListingCard, ListingCardSkeleton, HeroSkeleton, LeaveReviewBtn, ReportListingBtn, DetailModal, MarkSoldModal, RoleSwitcher, PostRequestModal, WhatBuyersWant, SoldSection, SoldCard, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab, ProfileSection, PasswordSection, VerificationSection, MobileDashboard, Dashboard, Pager, MobileRequestsTab, MobileLayout, BuyersWantPage, AllListingsPage, SoldPage, SwipeFeed, HotRightNow };
 
