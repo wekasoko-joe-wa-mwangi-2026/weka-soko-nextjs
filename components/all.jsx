@@ -3762,8 +3762,8 @@ function MobileRequestsTab({user, token, notify, setModal}){
   };
 
   return <div style={{paddingBottom:80}}>
-    {/* Sticky header */}
-    <div style={{padding:"16px 16px 12px",borderBottom:"1px solid #F0F0F0",background:"#fff",position:"sticky",top:0,zIndex:10}}>
+    {/* Sticky header — offset by topbar height so it sticks below the topbar */}
+    <div style={{padding:"16px 16px 12px",borderBottom:"1px solid #F0F0F0",background:"#fff",position:"sticky",top:"calc(60px + env(safe-area-inset-top))",zIndex:10}}>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
         <div>
           <div style={{fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:2}}>Community</div>
