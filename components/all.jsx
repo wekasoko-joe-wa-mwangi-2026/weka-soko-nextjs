@@ -2636,7 +2636,14 @@ function PitchesTab({token, notify, user}) {
                       <span style={{fontSize:11,color:"#AAAAAA",marginLeft:"auto"}}>{ago(p.created_at)}</span>
                     </div>
                     <p style={{fontSize:14,color:"#333",lineHeight:1.65,marginBottom:10,padding:"10px 12px",background:"#F8F8F8",borderRadius:8}}>{p.message}</p>
-                    {p.status === "accepted" && <div style={{fontSize:13,color:"#16a34a",fontWeight:600}}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="20 6 9 17 4 12"/></svg> Accepted — you've unlocked their contact details</div>}
+                    {p.status === "accepted" && <div style={{marginTop:6}}>
+                      <div style={{fontSize:13,color:"#16a34a",fontWeight:600,marginBottom:8}}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="20 6 9 17 4 12"/></svg> Accepted — contact revealed</div>
+                      {(p.seller_phone||p.seller_email)&&<div style={{background:"#F0FFF4",border:"1px solid #BBF7D0",borderRadius:10,padding:"10px 14px",fontSize:13,lineHeight:1.7}}>
+                        <div style={{fontWeight:700,color:"#1A1A1A",marginBottom:4}}>{p.seller_name||p.seller_anon}</div>
+                        {p.seller_phone&&<div style={{color:"#15803d"}}>Phone: <a href={`tel:${p.seller_phone}`} style={{color:"#15803d",fontWeight:700}}>{p.seller_phone}</a></div>}
+                        {p.seller_email&&<div style={{color:"#15803d"}}>Email: <a href={`mailto:${p.seller_email}`} style={{color:"#15803d",fontWeight:700}}>{p.seller_email}</a></div>}
+                      </div>}
+                    </div>}
                     {p.status === "declined" && <div style={{fontSize:13,color:"#888"}}>Declined</div>}
                   </div>
                 </div>
@@ -2794,8 +2801,8 @@ function PasswordSection({user, token, notify}){
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
 
-  // Detect Google OAuth user (no password)
-  const isGoogleUser = user.email?.endsWith("@gmail.com") && !user.has_password;
+  // Detect Google OAuth user — backend returns is_google_user from /api/auth/me
+  const isGoogleUser = !!user.is_google_user;
 
   const save = async()=>{
     if(f.newPwd.length < 8){notify("New password must be at least 8 characters","warning");return;}
@@ -4188,37 +4195,33 @@ function MobileLayout({
     />}
 
 
-    {/* ── BOTTOM TAB BAR (Magic Navigation Menu 3) ── */}
+    {/* ── BOTTOM TAB BAR ── */}
     <div className="mob-bottombar">
-      <div className="magic-nav">
-        {[
-          {id:"home", icon:Ic.home, label:"Home"},
-          {id:"discover", icon:Ic.search, label:"Browse"},
-          {id:"post", icon:Ic.plus, label:"Post Ad", isPost:true},
-          {id:"dashboard", icon:Ic.user, label:"Account"},
-          {id:"requests", icon:Ic.checklist, label:"Requests"},
-        ].map((t, idx) => {
-          const isActive = t.isPost ? false : mobileTab === t.id;
-          return (
-            <button key={t.id}
-              className={`mob-tab${isActive ? " on" : " off"}${t.isPost ? " post-btn" : ""}`}
-              onClick={() => {
-                if(t.isPost){ postAd(); return; }
-                if(t.id==="dashboard"){ if(!user){setModal({type:"auth",mode:"login"});return;} setPage("dashboard"); window.history.pushState({},"","/dashboard"); }
-                else if(t.id==="requests"){ setPage("home"); window.history.pushState({},"","/requests"); }
-                else { setPage("home"); }
-                setMobileTab(t.id);
-              }}>
-              {t.icon(24, "currentColor")}
-              <span>{t.label}</span>
-            </button>
-          );
-        })}
-        {/* Sliding Indicator Circle */}
-        <div className="magic-indicator" style={{
-          left: `calc(${(["home", "discover", "post", "dashboard", "requests"].indexOf(mobileTab) * 20) + 10}% - 30px)`
-        }} />
-      </div>
+      {[
+        {id:"home", icon:Ic.home, label:"Home"},
+        {id:"discover", icon:Ic.search, label:"Browse"},
+        {id:"post", icon:Ic.plus, label:"Post Ad", isPost:true},
+        {id:"dashboard", icon:Ic.user, label:"Account"},
+        {id:"requests", icon:Ic.checklist, label:"Requests"},
+      ].map((t) => {
+        const isActive = t.isPost ? false : mobileTab === t.id;
+        return (
+          <button key={t.id}
+            className={`mob-tab${isActive ? " on" : ""}${t.isPost ? " post-btn" : ""}`}
+            onClick={() => {
+              if(t.isPost){ postAd(); return; }
+              if(t.id==="dashboard"){ if(!user){setModal({type:"auth",mode:"login"});return;} setPage("dashboard"); window.history.pushState({},"","/dashboard"); }
+              else if(t.id==="requests"){ setPage("home"); window.history.pushState({},"","/requests"); }
+              else { setPage("home"); }
+              setMobileTab(t.id);
+            }}>
+            {t.isPost
+              ? <><div className="post-circle">{t.icon(20,"#fff")}</div><span>{t.label}</span></>
+              : <>{t.icon(22,"currentColor")}<span>{t.label}</span></>
+            }
+          </button>
+        );
+      })}
     </div>
 
     {/* ── FILTERS DRAWER ── */}
