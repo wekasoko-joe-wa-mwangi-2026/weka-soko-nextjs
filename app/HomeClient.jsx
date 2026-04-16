@@ -443,7 +443,16 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     return ()=>clearTimeout(t);
   },[token,user]);
 
-  const handleAuth=(u,t)=>{setUser(u);setToken(t);setNotifCount(0);setPage("dashboard");if(typeof window !== 'undefined') window.history.pushState({},"","/dashboard");};
+  const handleAuth=(u,t)=>{
+    setUser(u);setToken(t);setNotifCount(0);
+    setPage("dashboard");
+    if(typeof window !== 'undefined') window.history.pushState({},"","/dashboard");
+    // Fetch full profile in background so phone, whatsapp_phone, created_at, is_google_user etc. are populated
+    apiCall("/api/auth/me",{},t).then(fresh=>{
+      setUser(fresh);
+      if(typeof window!=='undefined') localStorage.setItem("ws_user",JSON.stringify(fresh));
+    }).catch(()=>{});
+  };
   const logout=()=>{
     // Unsubscribe push notifications before clearing token
     if(typeof window!=='undefined'&&'serviceWorker' in navigator){
@@ -717,10 +726,28 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
                     <h1 style={{fontSize:"clamp(28px,3.8vw,52px)",fontWeight:900,letterSpacing:"-0.03em",lineHeight:1.05,marginBottom:20,color:"#111",fontFamily:"var(--fn)"}}>
                       {slide.title}
                     </h1>
-                    <p style={{fontSize:16,color:"#4B4B5B",lineHeight:1.7,marginBottom:36,fontWeight:500,maxWidth:460}}>
+                    <p style={{fontSize:16,color:"#4B4B5B",lineHeight:1.7,marginBottom:28,fontWeight:500,maxWidth:460}}>
                       Join thousands of Kenyans turning pre-owned items into cash and finding the best deals in the country.
                     </p>
-                    
+                    <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+                      <button className="btn bp" style={{padding:"12px 24px",fontSize:14,borderRadius:10}}
+                        onClick={()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"})}>
+                        Browse Listings
+                      </button>
+                      {!user
+                        ?<button className="btn bs" style={{padding:"12px 24px",fontSize:14,borderRadius:10}}
+                            onClick={()=>setModal({type:"auth",mode:"signup"})}>
+                            Join Free
+                          </button>
+                        :<button className="btn bs" style={{padding:"12px 24px",fontSize:14,borderRadius:10}}
+                            onClick={()=>{
+                              if(user.role==="buyer"){if(typeof window!=="undefined"&&window.confirm("Switch to Seller to post ads?"))apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token).then(d=>{const u={...user,...d.user};setUser(u);localStorage.setItem("ws_user",JSON.stringify(u));notify("Switched to Seller!","success");setModal({type:"post"});}).catch(e=>notify(e.message,"error"));return;}
+                              setModal({type:"post"});
+                            }}>
+                            + Post Ad Free
+                          </button>
+                      }
+                    </div>
 
                   </div>
                 </div>

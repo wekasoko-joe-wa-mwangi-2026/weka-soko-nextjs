@@ -2649,7 +2649,7 @@ function PitchesTab({token, notify, user}) {
                 </div>
                 {p.status === "pending" && <div style={{display:"flex",gap:8,marginTop:10}}>
                   <button className="btn bp" style={{borderRadius:8,fontSize:13,padding:"8px 18px"}}
-                    onClick={() => setPaying(p)}>
+                    onClick={() => setPaying({...p, request_id: r.id})}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg> Accept — Pay KSh 250
                   </button>
                   <button className="btn bs" style={{borderRadius:8,fontSize:13,padding:"8px 18px"}}
@@ -2675,7 +2675,11 @@ function PitchesTab({token, notify, user}) {
         } else {
           notify("Pitch accepted! Payment confirmed.", "success");
         }
-        setPaying(null);
+        setPaying(prev => {
+          // clear pitch cache for this request so re-expansion fetches fresh data
+          if (prev?.request_id) setPitches(p => { const n={...p}; delete n[prev.request_id]; return n; });
+          return null;
+        });
         load();
       }}
       onClose={() => setPaying(null)}
@@ -3921,7 +3925,7 @@ function MobileLayout({
   },[ptrY]);
 
   const postAd=()=>{
-    if(!user){setModal({type:"auth",mode:"signup"});return;}
+    if(!user){setModal({type:"auth",mode:"login"});return;}
     setModal({type:"post"});
   };
 
@@ -3947,7 +3951,7 @@ function MobileLayout({
         {user
           ?<svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round"/></svg>
           :<svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round"/></svg>}
-        {notifCount>0&&<span style={{position:"absolute",top:4,right:4,width:8,height:8,background:"#1428A0",borderRadius:"50%",border:"2px solid #fff"}}/>}
+        {notifCount>0&&<span style={{position:"absolute",top:4,right:4,width:8,height:8,background:"#FF3B30",borderRadius:"50%",border:"2px solid #fff"}}/>}
       </div>
     </div>
 
@@ -3957,7 +3961,7 @@ function MobileLayout({
       {/* Hero banner — only on home tab, hidden in search mode */}
       {mobileTab==="home"&&!filter.q&&!filter.cat&&pg===1 && (
         loading ? <div style={{margin:"10px 12px"}}><HeroSkeleton/></div> : (
-          <div className="depth-float" style={{overflow:"hidden",position:"relative",minHeight:320,margin:"10px 12px",display:"flex",flexDirection:"column", borderRadius: 24}}>
+          <div className="depth-float" style={{overflow:"hidden",position:"relative",minHeight:360,margin:"10px 12px",display:"flex",flexDirection:"column", borderRadius: 24}}>
             {[
               {
                 img: "https://images.unsplash.com/photo-1555421689-491a97ff2040?q=80&w=2070&auto=format&fit=crop",
@@ -3995,9 +3999,19 @@ function MobileLayout({
                   <h2 style={{fontSize:24,fontWeight:900,letterSpacing:"-0.03em",lineHeight:1.1,marginBottom:12,color:"#111",fontFamily:"var(--fn)"}}>
                     {slide.title}
                   </h2>
-                  <p style={{fontSize:13,color:"#4B4B5B",lineHeight:1.6,marginBottom:0,fontWeight:500,maxWidth:240}}>
+                  <p style={{fontSize:13,color:"#4B4B5B",lineHeight:1.6,marginBottom:16,fontWeight:500,maxWidth:240}}>
                     The elite platform to flip, find, or request anything in Kenya.
                   </p>
+                  {i===0&&<div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+                    <button className="btn bp" style={{padding:"10px 18px",fontSize:12,borderRadius:8,fontWeight:700}}
+                      onClick={e=>{e.stopPropagation();document.querySelector(".mob-section")?.scrollIntoView({behavior:"smooth"});}}>
+                      Browse Listings
+                    </button>
+                    <button className="btn bs" style={{padding:"10px 18px",fontSize:12,borderRadius:8,fontWeight:700}}
+                      onClick={e=>{e.stopPropagation();postAd();}}>
+                      Post Ad Free
+                    </button>
+                  </div>}
                 </div>
               </div>
             ))}
@@ -4176,7 +4190,7 @@ function MobileLayout({
         savedIds={savedIds} onToggleSave={onToggleSave}
         onSignIn={()=>setModal({type:"auth",mode:"login"})}
         onPostAd={()=>{
-          if(!user){setModal({type:"auth",mode:"signup"});return;}
+          if(!user){setModal({type:"auth",mode:"login"});return;}
           if(user.role==="buyer"){
             if(typeof window!=="undefined"&&window.confirm("Switch to Seller to post ads?"))
               api("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token)
