@@ -398,6 +398,29 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       playChime('message');
       setNotifCount(c=>c+1);
     });
+
+    // Live feed: new listing approved → prepend if it matches current filters
+    s.on("new_listing",(listing)=>{
+      const f=listingsFilterRef.current;
+      const catOk=!f.cat||listing.category===f.cat;
+      const subcatOk=!f.subcat||(listing.subcat||"").toLowerCase()===(f.subcat||"").toLowerCase();
+      const countyOk=!f.county||(listing.county||"").toLowerCase()===(f.county||"").toLowerCase();
+      const searchOk=!f.q; // can't verify text match client-side
+      if(catOk&&subcatOk&&countyOk&&searchOk&&(!f.sort||f.sort==="newest")){
+        setListings(p=>{
+          if(p.some(l=>l.id===listing.id))return p;
+          return[listing,...p];
+        });
+        setTotal(t=>t+1);
+      }
+    });
+
+    // Live feed: listing sold/deleted/flagged → remove card immediately
+    s.on("listing_removed",({id})=>{
+      setListings(p=>p.filter(l=>l.id!==id));
+      setTotal(t=>Math.max(0,t-1));
+    });
+
     return()=>s.disconnect();
   },[token,user,notify]);
 
