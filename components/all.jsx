@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { io } from 'socket.io-client';
-import { fmtKES, ago, CATS, KENYA_COUNTIES, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
+import { fmtKES, ago, CATS, KENYA_COUNTIES, KENYA_TOWNS, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
 
 // ── WEKA SOKO LOGO COMPONENT ──────────────────────────────────────────────────
 function WekaSokoLogo({ size = 32, iconOnly = false, light = false }) {
@@ -944,7 +944,7 @@ function PayModal({type,listingId,pitchId,amount,purpose,token,user,onSuccess,on
     <p style={{fontSize:11,color:"#CCCCCC",marginTop:5}}>We confirm the code was paid to Till 5673935 before unlocking.</p>
   </div>;
 
-  return <Modal title={pitchId?"Reveal Seller Contact — KSh 250":type==="unlock"?"Reveal Buyer Contact — KSh 250":"Escrow Payment"} onClose={onClose}>
+  return <Modal title={pitchId?"Reveal Contact Info — KSh 250":type==="unlock"?"Reveal Contact Info — KSh 250":"Escrow Payment"} onClose={onClose}>
     {step==="form"&&<>
       {/* Decoy: Show the 3 options with escrow as the clearly "best" choice */}
       {type==="unlock"&&<div style={{marginBottom:20}}>
@@ -1251,14 +1251,15 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
     if(listing) return {
       title:listing.title||"",category:listing.category||"",subcat:listing.subcat||"",
       price:String(listing.price||""),description:listing.description||"",
-      reason:listing.reason_for_sale||"",location:listing.location||"",county:listing.county||""
+      reason:listing.reason_for_sale||"",location:listing.location||"",county:listing.county||"",
+      precise_location:listing.precise_location||""
     };
     // Pre-fill from linked buyer request ("I Have This" flow)
     return {
       title:linkedRequest?.title||"",
       category:linkedRequest?.category||"",
       subcat:linkedRequest?.subcat||"",
-      price:"",description:"",reason:"",location:"",county:""
+      price:"",description:"",reason:"",location:"",county:"",precise_location:""
     };
   });
 
@@ -1284,7 +1285,7 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
       const isEdit=!!listing;
       const fd=new FormData();
       Object.entries({title:f.title,category:f.category,price:f.price,description:f.description,
-        reason_for_sale:f.reason,location:f.location,county:f.county}).forEach(([k,v])=>v&&fd.append(k,v));
+        reason_for_sale:f.reason,location:f.location,county:f.county,precise_location:f.precise_location}).forEach(([k,v])=>v&&fd.append(k,v));
       if(f.subcat)fd.append("subcat",f.subcat);
       if(linkedRequest?.id)fd.append("linked_request_id",linkedRequest.id);
       fd.append("is_contact_public","false");
@@ -1394,9 +1395,16 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
       <FF label="Reason for Selling" required>
         <input className="inp" placeholder="e.g. Upgrading to newer model" value={f.reason} onChange={e=>sf("reason",e.target.value)}/>
       </FF>
-      <FF label="Collection Location" required hint="General area e.g. Westlands, Nairobi — exact address shared after unlock.">
-        <input className="inp" placeholder="e.g. Westlands, Nairobi" value={f.location} onChange={e=>sf("location",e.target.value)}/>
+      <FF label="Collection Location" required hint="Town where item can be collected. Shown publicly.">
+        <select className="inp" value={f.location} onChange={e=>sf("location",e.target.value)}>
+          <option value="">Select town...</option>
+          {KENYA_TOWNS.map(t=><option key={t} value={t}>{t}</option>)}
+          <option value="Other">Other</option>
+        </select>
       </FF>
+      {f.location&&<FF label="Precise Location" hint="Exact street / landmark — only shown to buyer after they reveal contact info.">
+        <input className="inp" placeholder="e.g. ABC Place, 3rd floor, Westlands" value={f.precise_location} onChange={e=>sf("precise_location",e.target.value)}/>
+      </FF>}
       <FF label="County">
         <select className="inp" value={f.county} onChange={e=>sf("county",e.target.value)}>
           <option value="">Select county...</option>
@@ -1424,7 +1432,7 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
     {/* M-Pesa payment after listing is created */}
     {showPayModal&&createdListingId&&<PayModal
       type="unlock" listingId={createdListingId} amount={250}
-      purpose={`Reveal buyer contact for: ${f.title}`}
+      purpose={`Reveal contact info for: ${f.title}`}
       token={token} user={{}} allowVoucher={true}
       onSuccess={async()=>{
         setShowPayModal(false);
@@ -1665,7 +1673,7 @@ function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnl
       {user&&!isSeller&&<button className="btn bs sm" onClick={onChat}>Chat with Seller</button>}
       {isSeller&&<button className="btn bs sm" onClick={onChat}>View Messages</button>}
       {!isSeller&&l.status==="active"&&user&&<button className="btn bs sm" onClick={onEscrow}>Buy with Escrow</button>}
-      {isSeller&&l.locked_buyer_id&&!l.is_unlocked&&<button className="btn bp" style={{flex:1}} onClick={onUnlock}>Pay KSh 250 to See Buyer Contact</button>}
+      {isSeller&&l.locked_buyer_id&&!l.is_unlocked&&<button className="btn bp" style={{flex:1}} onClick={onUnlock}>Reveal Contact Info — KSh 250</button>}
       {!user&&<button className="btn bp" onClick={()=>onSignIn&&onSignIn()}>Sign In to Contact Seller</button>}
     </div>
   }>
@@ -1771,7 +1779,7 @@ function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnl
               </span>}
             </div>
           </div>
-          {isSeller&&l.locked_buyer_id&&<button className="btn bp sm" style={{marginLeft:"auto"}} onClick={onUnlock}>Unlock → KSh 250</button>}
+          {isSeller&&l.locked_buyer_id&&!l.is_unlocked&&<button className="btn bp sm" style={{marginLeft:"auto"}} onClick={onUnlock}>Reveal Contact Info — KSh 250</button>}
         </div>}
     </div>
 
@@ -3084,10 +3092,12 @@ function MobileDashboard({
                   <span style={{padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700,background:l.status==="active"?"#DCFCE7":l.status==="sold"?"#F3F4F6":"#FEF3C7",color:l.status==="active"?"#16a34a":l.status==="sold"?"#888":"#D97706"}}>{l.status}</span>
                 </div>
               </div>
-              {user.role==="seller"&&<div style={{borderTop:"1px solid #F5F5F5",padding:"8px 12px",display:"flex",gap:8}}>
-                {!l.is_unlocked&&l.locked_buyer_id&&<button className="btn bp sm" style={{borderRadius:8,flex:1,fontSize:12}} onClick={()=>setShowPayModal(l)}>Reveal Buyer — KSh 250</button>}
-                <button className="btn bs sm" style={{borderRadius:8,fontSize:12}} onClick={()=>setEditingListing(l)}>Edit</button>
-                {l.status==="active"&&<button className="btn bs sm" style={{borderRadius:8,fontSize:12}} onClick={()=>setMarkSoldListing(l)}>Mark Sold</button>}
+              {user.role==="seller"&&<div style={{borderTop:"1px solid #F5F5F5",padding:"8px 12px",display:"flex",flexWrap:"wrap",gap:6}}>
+                {l.is_unlocked&&<span style={{padding:"4px 10px",borderRadius:20,fontSize:11,fontWeight:700,background:"#DCFCE7",color:"#16a34a",display:"flex",alignItems:"center",gap:4}}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>Contact Revealed</span>}
+                {!l.is_unlocked&&l.locked_buyer_id&&<button className="btn bp sm" style={{borderRadius:8,fontSize:11}} onClick={()=>setShowPayModal(l)}>Reveal Contact Info — KSh 250</button>}
+                <button className="btn bs sm" style={{borderRadius:8,fontSize:11}} onClick={()=>setEditingListing(l)}>Edit</button>
+                {l.status==="active"&&<button className="btn bs sm" style={{borderRadius:8,fontSize:11}} onClick={()=>setMarkSoldListing(l)}>Mark Sold</button>}
+                <button className="btn br sm" style={{borderRadius:8,fontSize:11}} onClick={()=>deleteListing(l.id)}>Delete</button>
               </div>}
             </div>;
           })}
@@ -3418,7 +3428,7 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
               <div style={{fontSize:12,color:"#888888"}}>{l.linked_request_id?"A buyer requested this item!":"A buyer has locked in!"} Pay KSh 250 to reveal their contact details.</div>
             </div>
             <button className="btn bp sm" onClick={()=>setShowPayModal(l)}>
-              {(l.unlock_discount||0)>=250?"Reveal Buyer — FREE":l.unlock_discount>0?`Reveal Buyer — KSh ${250-(l.unlock_discount||0)}`:"Reveal Buyer — KSh 250"}
+              {(l.unlock_discount||0)>=250?"Reveal Contact Info — FREE":l.unlock_discount>0?`Reveal Contact Info — KSh ${250-(l.unlock_discount||0)}`:"Reveal Contact Info — KSh 250"}
             </button>
           </div>
         ))}
@@ -3615,7 +3625,7 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
                 <span className={`badge ${l.status==="active"||l.status==="locked"?"bg-g":l.status==="sold"?"bg-y":l.status==="pending_review"?"bg-b":l.status==="rejected"?"br2":"bg-m"}`} style={{fontSize:10}}>{l.status==="pending_review"?"Review":l.status==="rejected"?"Rejected":l.status}</span>
                 {!l.is_unlocked&&l.status!=="sold"&&(l.free_unlock_approved
                   ?<button className="btn bg2 sm" onClick={async()=>{try{await api(`/api/payments/unlock`,{method:"POST",body:JSON.stringify({listing_id:l.id,phone:user.phone||"0700000000",voucher_code:"ADMIN-FREE"})},token);setListings(p=>p.map(x=>x.id===l.id?{...x,is_unlocked:true}:x));notify("Unlocked!","success");}catch{setShowPayModal(l);}}}>Free</button>
-                  :<button className="btn bp sm" onClick={()=>setShowPayModal(l)}>{l.linked_request_id?"Reveal Buyer":"Unlock"} — KSh 250</button>)}
+                  :<button className="btn bp sm" onClick={()=>setShowPayModal(l)}>Reveal Contact Info — KSh 250</button>)}
                 {(l.status==="active"||l.status==="locked")&&<button className="btn bp sm" onClick={()=>setMarkSoldListing(l)}>Sold</button>}
                 {l.status!=="sold"&&<button className="btn bs sm" onClick={()=>setEditingListing(l)}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>}
                 {(l.status==="rejected"||l.status==="needs_changes")&&<button className="btn bg2 sm" onClick={async()=>{try{await api(`/api/listings/${l.id}/resubmit`,{method:"POST"},token);setListings(p=>p.map(x=>x.id===l.id?{...x,status:"pending_review",moderation_note:null}:x));notify("Resubmitted","success");}catch(e){notify(e.message,"error");}}}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>}
@@ -3869,7 +3879,7 @@ function MobileLayout({
   listings,total,loading,filter,setFilter,pg,setPg,
   stats,counties,modal,setModal,notifCount,
   mobileFiltersOpen,setMobileFiltersOpen,mobileTab,setMobileTab,
-  openListing,handleLockIn,savedIds,onToggleSave,newSinceLastVisit
+  openListing,handleLockIn,savedIds,onToggleSave,newSinceLastVisit,maintenanceMsg
 }){
   const photoMap={
     Electronics:"https://images.unsplash.com/photo-1498049794561-7780e7231661?w=140&h=140&fit=crop",
@@ -3941,6 +3951,12 @@ function MobileLayout({
           :<><svg className="ptr-arrow" style={{transform:`rotate(${Math.min(ptrY/56*180,180)}deg)`}} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg><span>{ptrY>56?"Release to refresh":"Pull to refresh"}</span></>}
       </div>
     </div>
+
+    {/* ── MAINTENANCE BANNER ── */}
+    {maintenanceMsg&&<div style={{background:"#FEF3C7",borderBottom:"2px solid #F59E0B",color:"#92400E",padding:"10px 16px",textAlign:"center",fontSize:13,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:8,position:"sticky",top:0,zIndex:200}}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#92400E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      {maintenanceMsg}
+    </div>}
 
     {/* ── TOP BAR ── */}
     <div className="mob-topbar">
@@ -4039,10 +4055,10 @@ function MobileLayout({
              <div style={{width:4, height:18, background:"var(--a)", borderRadius:4}}/>
              <h3 style={{fontSize:18, fontWeight:900, letterSpacing:"-0.02em"}}>Hot Right Now</h3>
           </div>
-          <div style={{display:"flex", gap:14, overflowX:"auto", padding: "4px 4px 20px", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch"}}>
+          <div style={{display:"flex", gap:10, overflowX:"auto", padding: "4px 4px 20px", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch", msOverflowStyle:"none", scrollbarWidth:"none"}}>
              {listings.slice(0, 5).map(l => (
                <div key={l.id} className="depth-float" onClick={() => setSwipeFeedIdx(listings.indexOf(l))} style={{
-                 flex: "0 0 min(260px,75vw)", scrollSnapAlign: "start", background: "#fff", borderRadius: 24, overflow: "hidden", position: "relative"
+                 flex: "0 0 calc(50% - 5px)", scrollSnapAlign: "start", background: "#fff", borderRadius: 24, overflow: "hidden", position: "relative"
                }}>
                  <img src={Array.isArray(l.photos)&&l.photos[0]?(typeof l.photos[0]==="string"?l.photos[0]:l.photos[0].url):CAT_PHOTOS[l.category]} alt={l.title} 
                    style={{width: "100%", height: 160, objectFit: "cover"}}/>
@@ -4073,13 +4089,10 @@ function MobileLayout({
         </div>
       </div>}
 
-      {/* Filter row */}
-      <div style={{display:"flex",gap:8,padding:"8px 12px",overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
-        <button onClick={()=>setMobileFiltersOpen(true)} style={{display:"flex",alignItems:"center",gap:6,background:"#fff",border:"1.5px solid #E0E0E0",borderRadius:20,padding:"8px 16px",fontSize:13,fontWeight:600,fontFamily:"var(--fn)",color:"#333",cursor:"pointer",flexShrink:0,whiteSpace:"nowrap"}}>
-          <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M3 6h18M7 12h10M11 18h2" stroke="#333" strokeWidth="2.5" strokeLinecap="round"/></svg>
-          Filters {(filter.county||filter.minPrice||filter.maxPrice||filter.sort!=="newest")?`(${[filter.county,filter.minPrice,filter.maxPrice].filter(Boolean).length+(filter.sort!=="newest"?1:0)})`:""}</button>
+      {/* Sort pills */}
+      <div style={{display:"flex",gap:8,padding:"0 12px 8px",overflowX:"auto",WebkitOverflowScrolling:"touch",msOverflowStyle:"none",scrollbarWidth:"none"}}>
         {["newest","price_asc","price_desc","popular"].map(s=>(
-          <button key={s} onClick={()=>{setFilter(p=>({...p,sort:s}));setPg(1);}} style={{background:filter.sort===s?"#1428A0":"#fff",color:filter.sort===s?"#fff":"#555",border:`1.5px solid ${filter.sort===s?"#1428A0":"#E0E0E0"}`,borderRadius:20,padding:"8px 14px",fontSize:12,fontWeight:600,fontFamily:"var(--fn)",cursor:"pointer",flexShrink:0,whiteSpace:"nowrap"}}>
+          <button key={s} onClick={()=>{setFilter(p=>({...p,sort:s}));setPg(1);}} style={{background:filter.sort===s?"#1428A0":"#fff",color:filter.sort===s?"#fff":"#555",border:`1.5px solid ${filter.sort===s?"#1428A0":"#E0E0E0"}`,borderRadius:20,padding:"7px 14px",fontSize:12,fontWeight:600,fontFamily:"var(--fn)",cursor:"pointer",flexShrink:0,whiteSpace:"nowrap"}}>
             {s==="newest"?"Latest":s==="price_asc"?"Price: Low":s==="price_desc"?"Price: High":"Popular"}
           </button>
         ))}
@@ -4087,12 +4100,16 @@ function MobileLayout({
 
       {/* Listings */}
       <div className="mob-section" style={{marginTop:4}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 18px 10px"}}>
-          <div style={{fontSize:14,fontWeight:700,color:"#1A1A1A",lineHeight:1.3}}>{filter.cat||"All Listings"} <span style={{color:"#AAAAAA",fontWeight:400,fontSize:13}}>({total})</span></div>
-          {total>0&&listings.length>0&&<div style={{display:"flex",alignItems:"center",gap:6}}>
-            <div className="live-dot"/>
-            <span style={{fontSize:11,color:"#22c55e",fontWeight:600}}>Live</span>
-          </div>}
+        <div style={{display:"flex",alignItems:"center",gap:8,padding:"12px 12px 8px"}}>
+          <div style={{fontSize:14,fontWeight:700,color:"#1A1A1A",lineHeight:1.3,whiteSpace:"nowrap"}}>{filter.cat||"All Listings"} <span style={{color:"#AAAAAA",fontWeight:400,fontSize:12}}>({total})</span></div>
+          <div style={{flex:1,display:"flex",alignItems:"center",background:"#F5F5F7",borderRadius:10,padding:"6px 10px",gap:6,minWidth:0}}>
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" stroke="#AAAAAA" strokeWidth="2"/><path d="M20 20l-3-3" stroke="#AAAAAA" strokeWidth="2" strokeLinecap="round"/></svg>
+            <input placeholder="Search..." value={filter.q} onChange={e=>{setFilter(p=>({...p,q:e.target.value}));setPg(1);}} style={{border:"none",background:"transparent",outline:"none",fontSize:13,flex:1,minWidth:0,fontFamily:"var(--fn)"}}/>
+          </div>
+          <button onClick={()=>setMobileFiltersOpen(true)} style={{flexShrink:0,background:"#F5F5F7",border:"none",borderRadius:10,padding:"7px 10px",display:"flex",alignItems:"center",gap:5,cursor:"pointer",fontFamily:"var(--fn)",fontSize:12,fontWeight:600,color:"#333"}}>
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6h16M8 12h8M11 18h2"/></svg>
+            Filter
+          </button>
         </div>
         {/* Zeigarnik progress — how many listings seen out of total */}
         {total>PER_PAGE&&listings.length>0&&<div style={{padding:"0 18px 10px"}}>
@@ -4219,7 +4236,7 @@ function MobileLayout({
         {id:"discover", icon:Ic.search, label:"Browse"},
         {id:"post", icon:Ic.plus, label:"Post Ad", isPost:true},
         {id:"dashboard", icon:Ic.user, label:"Account"},
-        {id:"requests", icon:Ic.checklist, label:"Requests"},
+        {id:"requests", icon:Ic.checklist, label:"Buyer Reqs"},
       ].map((t) => {
         const isActive = t.isPost ? false : mobileTab === t.id;
         return (
@@ -4250,6 +4267,20 @@ function MobileLayout({
           <button onClick={()=>setMobileFiltersOpen(false)} style={{background:"#F5F5F5",border:"none",borderRadius:"50%",width:32,height:32,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>Close</button>
         </div>
         <div className="mob-filter-row">
+          <div className="mob-filter-label">Category</div>
+          <select className="inp" style={{borderRadius:10}} value={filter.cat} onChange={e=>{setFilter(p=>({...p,cat:e.target.value,subcat:""}));setPg(1);}}>
+            <option value="">All Categories</option>
+            {CATS.map(c=><option key={c.name} value={c.name}>{c.name}</option>)}
+          </select>
+        </div>
+        {filter.cat&&(()=>{const cat=CATS.find(c=>c.name===filter.cat);return cat?.subs?.length?(<div className="mob-filter-row">
+          <div className="mob-filter-label">Subcategory</div>
+          <select className="inp" style={{borderRadius:10}} value={filter.subcat||""} onChange={e=>{setFilter(p=>({...p,subcat:e.target.value}));setPg(1);}}>
+            <option value="">All Subcategories</option>
+            {cat.subs.map(s=><option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>):null;})()}
+        <div className="mob-filter-row">
           <div className="mob-filter-label">County</div>
           <select className="inp" style={{borderRadius:10}} value={filter.county} onChange={e=>{setFilter(p=>({...p,county:e.target.value}));setPg(1);}}>
             <option value="">All Counties</option>
@@ -4272,7 +4303,7 @@ function MobileLayout({
           </div>
         </div>
         <div style={{display:"flex",gap:10,marginTop:8}}>
-          <button onClick={()=>{setFilter({cat:"",q:"",county:"",minPrice:"",maxPrice:"",sort:"newest"});setPg(1);setMobileFiltersOpen(false);}} className="btn bs" style={{flex:1,borderRadius:10}}>Clear All</button>
+          <button onClick={()=>{setFilter({cat:"",subcat:"",q:"",county:"",minPrice:"",maxPrice:"",sort:"newest"});setPg(1);setMobileFiltersOpen(false);}} className="btn bs" style={{flex:1,borderRadius:10}}>Clear All</button>
           <button onClick={()=>setMobileFiltersOpen(false)} className="btn bp" style={{flex:1,borderRadius:10}}>Show Results ({total})</button>
         </div>
       </div>
@@ -4281,6 +4312,56 @@ function MobileLayout({
   </div>;
 }
 
+
+// ── REPORT LISTING MODAL ───────────────────────────────────────────────────────
+function ReportListingModal({listing,token,onClose}){
+  const [reason,setReason]=useState("");
+  const [details,setDetails]=useState("");
+  const [saving,setSaving]=useState(false);
+  const [done,setDone]=useState(false);
+  const reasons=["Wrong category","Misleading title/description","Suspected scam","Offensive content","Duplicate listing","Item already sold","Other"];
+  const submit=async()=>{
+    if(!reason)return;
+    setSaving(true);
+    try{
+      await apiCall(`/api/listings/${listing.id}/report`,{method:"POST",body:JSON.stringify({reason,details})},token);
+      setDone(true);
+    }catch(e){setSaving(false);}
+  };
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",zIndex:9000,display:"flex",alignItems:"flex-end"}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",padding:"24px 20px 40px",maxHeight:"80vh",overflowY:"auto"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+          <div style={{fontWeight:800,fontSize:17}}>Report Listing</div>
+          <button onClick={onClose} style={{background:"none",border:"none",fontSize:22,cursor:"pointer",color:"#888",lineHeight:1}}>×</button>
+        </div>
+        {done?(
+          <div style={{textAlign:"center",padding:"20px 0"}}>
+            <div style={{fontSize:32,marginBottom:12}}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div style={{fontWeight:700,fontSize:16,marginBottom:6}}>Report submitted</div>
+            <div style={{fontSize:13,color:"#888",marginBottom:20}}>Our team will review this listing.</div>
+            <button onClick={onClose} style={{background:"#1428A0",color:"#fff",border:"none",padding:"12px 32px",borderRadius:10,fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"var(--fn)"}}>Done</button>
+          </div>
+        ):(
+          <>
+            <div style={{fontSize:13,color:"#555",marginBottom:14}}>What's wrong with <strong>"{listing.title}"</strong>?</div>
+            <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
+              {reasons.map(r=>(
+                <button key={r} onClick={()=>setReason(r)} style={{background:reason===r?"#EEF2FF":"#F5F5F7",border:`1.5px solid ${reason===r?"#1428A0":"transparent"}`,borderRadius:10,padding:"11px 14px",fontSize:14,fontWeight:600,textAlign:"left",cursor:"pointer",fontFamily:"var(--fn)",color:reason===r?"#1428A0":"#333"}}>{r}</button>
+              ))}
+            </div>
+            <textarea placeholder="Additional details (optional)" value={details} onChange={e=>setDetails(e.target.value)} rows={3} style={{width:"100%",border:"1.5px solid #E0E0E0",borderRadius:10,padding:"10px 12px",fontSize:13,fontFamily:"var(--fn)",resize:"vertical",marginBottom:16,boxSizing:"border-box"}}/>
+            <button onClick={submit} disabled={!reason||saving} style={{width:"100%",background:reason?"#E8194B":"#CCC",color:"#fff",border:"none",padding:"14px",fontSize:14,fontWeight:700,borderRadius:12,cursor:reason?"pointer":"default",fontFamily:"var(--fn)"}}>
+              {saving?"Submitting...":"Submit Report"}
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 
 // ── SWIPE FEED — vertical scroll between ads, tap edges to browse photos ──────
 function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,onSignIn,onPostAd,initialListings,startIndex,onClose,filter}){
@@ -4295,6 +4376,7 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
   const [animatingH,setAnimatingH]=useState(false);
   const [autoScroll,setAutoScroll]=useState(false);
   const [shareModal,setShareModal]=useState(null);
+  const [reportTarget,setReportTarget]=useState(null);
   const animatingH_=useRef(false);
   const containerRef=useRef(null);
   const fetching=useRef(false);
@@ -4581,13 +4663,31 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
                   {isExpiring&&<span style={{background:"#f59e0b",color:"#fff",fontSize:12,fontWeight:700,padding:"5px 12px",borderRadius:20}}>Expiring soon</span>}
                 </div>
 
-                {/* CTA buttons — always visible at top of detail panel */}
+                {/* CTA buttons */}
                 <div style={{display:"flex",gap:8,marginBottom:8}}>
-                  <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onLockIn&&onLockIn(l);}} style={{flex:1,background:"#1428A0",color:"#fff",border:"none",padding:"14px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",boxShadow:"0 4px 14px rgba(20,40,160,.35)"}}>I'm Interested</button>
-                  <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onMessage&&onMessage(l);}} style={{flex:1,background:"#F5F5F5",color:"#1A1A1A",border:"none",padding:"14px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)"}}>Message Seller</button>
+                  {user?.id!==l.seller_id&&<button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onMessage&&onMessage(l);}} style={{flex:1,background:"#1428A0",color:"#fff",border:"none",padding:"14px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",boxShadow:"0 4px 14px rgba(20,40,160,.35)"}}>Message Seller</button>}
+                  {user?.id===l.seller_id&&<div style={{flex:1,background:"#F0F0F0",borderRadius:12,padding:"14px",fontSize:13,fontWeight:600,color:"#888",textAlign:"center"}}>Your Listing</div>}
+                  <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onToggleSave&&onToggleSave(l);}} style={{background:isSaved?"#E8194B":"#F5F5F5",color:isSaved?"#fff":"#1A1A1A",border:"none",padding:"14px 18px",fontSize:13,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",display:"flex",alignItems:"center",gap:6}}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill={isSaved?"#fff":"none"} stroke={isSaved?"#fff":"currentColor"} strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    {isSaved?"Saved":"Save"}
+                  </button>
                 </div>
-                <button onClick={e=>{e.stopPropagation();onOpen&&onOpen(l);}} style={{width:"100%",background:"none",color:"#1428A0",border:"1.5px solid #1428A0",padding:"12px",fontSize:13,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",marginBottom:8}}>Open Full Listing →</button>
-                <button onClick={e=>{e.stopPropagation();setShareModal(l);}} style={{width:"100%",background:"none",color:"#636363",border:"1.5px solid #EBEBEB",padding:"12px",fontSize:13,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",marginBottom:18,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share this Listing</button>
+                {/* Contact info block */}
+                {l.is_unlocked?(
+                  <div style={{background:"#F0FDF4",border:"1.5px solid #86EFAC",borderRadius:12,padding:"14px 16px",marginBottom:8}}>
+                    <div style={{fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#166534",marginBottom:10}}>Contact Info Revealed</div>
+                    {l.seller_name&&<div style={{fontSize:14,fontWeight:700,color:"#1A1A1A",marginBottom:6}}>{l.seller_name}</div>}
+                    {l.seller_phone&&<a href={`tel:${l.seller_phone}`} style={{display:"flex",alignItems:"center",gap:8,fontSize:14,color:"#1428A0",fontWeight:600,marginBottom:6,textDecoration:"none"}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.38 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.77a16 16 0 0 0 6.29 6.29l.87-.87a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>{l.seller_phone}</a>}
+                    {l.seller_email&&<a href={`mailto:${l.seller_email}`} style={{display:"flex",alignItems:"center",gap:8,fontSize:13,color:"#555",textDecoration:"none"}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>{l.seller_email}</a>}
+                  </div>
+                ):(
+                  user?.id!==l.seller_id&&<button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onLockIn&&onLockIn(l);}} style={{width:"100%",background:"#1428A0",color:"#fff",border:"none",padding:"14px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",marginBottom:8,boxShadow:"0 4px 14px rgba(20,40,160,.25)"}}>Reveal Contact Info — KSh 250</button>
+                )}
+                <div style={{display:"flex",gap:8,marginBottom:18}}>
+                  <button onClick={e=>{e.stopPropagation();setShareModal(l);}} style={{flex:1,background:"none",color:"#636363",border:"1.5px solid #EBEBEB",padding:"10px",fontSize:12,fontWeight:700,borderRadius:10,cursor:"pointer",fontFamily:"var(--fn)",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share</button>
+                  <button onClick={e=>{e.stopPropagation();onOpen&&onOpen(l);}} style={{flex:1,background:"none",color:"#636363",border:"1.5px solid #EBEBEB",padding:"10px",fontSize:12,fontWeight:700,borderRadius:10,cursor:"pointer",fontFamily:"var(--fn)",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Full Listing</button>
+                  <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}setReportTarget(l);}} style={{flex:1,background:"none",color:"#E8194B",border:"1.5px solid #FECDD3",padding:"10px",fontSize:12,fontWeight:700,borderRadius:10,cursor:"pointer",fontFamily:"var(--fn)",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>Report</button>
+                </div>
               </div>
 
               {/* Divider */}
@@ -4665,10 +4765,9 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
             </div>
           </div>
           {/* Bottom action buttons */}
-          <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"12px 16px 24px",display:"flex",gap:8,zIndex:30,background:"linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 100%)"}}>
+          {user?.id!==l.seller_id&&<div style={{position:"absolute",bottom:0,left:0,right:0,padding:"12px 16px 24px",display:"flex",gap:8,zIndex:30,background:"linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 100%)"}}>
             <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onMessage&&onMessage(l);}} style={{flex:1,background:"rgba(255,255,255,.15)",color:"#fff",border:"1.5px solid rgba(255,255,255,.4)",padding:"14px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",backdropFilter:"blur(8px)"}}>Message Seller</button>
-            <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onLockIn&&onLockIn(l);}} style={{background:"#1428A0",color:"#fff",border:"none",padding:"14px 16px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",boxShadow:"0 4px 14px rgba(20,40,160,.5)",whiteSpace:"nowrap"}}>I'm Interested</button>
-          </div>
+          </div>}
         </>}
       </div>
     );
@@ -4687,6 +4786,7 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
 
   return(<>
     {shareModal&&<ShareModal listing={shareModal} onClose={()=>setShareModal(null)}/>}
+    {reportTarget&&<ReportListingModal listing={reportTarget} token={token} onClose={()=>setReportTarget(null)}/>}
     <div ref={containerRef} style={{height:"100vh",width:"100%",background:"#000",position:"relative",overflow:"hidden",userSelect:"none",WebkitUserSelect:"none",touchAction:"none"}}
       onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
 

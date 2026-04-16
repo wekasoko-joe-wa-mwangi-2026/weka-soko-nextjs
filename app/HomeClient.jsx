@@ -302,7 +302,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         setTotal(data.total||0);
         setMaintenanceMsg(null);
       }catch(e){
-        if(e.maintenance){setMaintenanceMsg(e.maintenance);if(!silent)setListings([]);}
+        if(e.maintenance){setMaintenanceMsg(e.maintenance);}  // keep existing listings visible during maintenance
         else if(!silent)setListings([]);
       }
       finally{if(!silent)setLoading(false);}
@@ -537,6 +537,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         stats={stats} counties={counties}
         modal={modal} setModal={setModal}
         notifCount={notifCount}
+        maintenanceMsg={maintenanceMsg}
         mobileFiltersOpen={mobileFiltersOpen} setMobileFiltersOpen={setMobileFiltersOpen}
         mobileTab={mobileTab} setMobileTab={setMobileTab}
         openListing={openListing} handleLockIn={handleLockIn}
