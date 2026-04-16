@@ -444,7 +444,20 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
   },[token,user]);
 
   const handleAuth=(u,t)=>{setUser(u);setToken(t);setNotifCount(0);setPage("dashboard");if(typeof window !== 'undefined') window.history.pushState({},"","/dashboard");};
-  const logout=()=>{setUser(null);setToken(null);setNotifCount(0);if(typeof window !== 'undefined') localStorage.removeItem("ws_token");if(typeof window !== 'undefined') localStorage.removeItem("ws_user");notify("Signed out.","info");};
+  const logout=()=>{
+    // Unsubscribe push notifications before clearing token
+    if(typeof window!=='undefined'&&'serviceWorker' in navigator){
+      navigator.serviceWorker.ready.then(reg=>reg.pushManager.getSubscription()).then(sub=>{
+        if(sub&&token){
+          apiCall("/api/push/unsubscribe",{method:"DELETE",body:JSON.stringify({endpoint:sub.endpoint})},token).catch(()=>{});
+          sub.unsubscribe().catch(()=>{});
+        }
+      }).catch(()=>{});
+    }
+    setUser(null);setToken(null);setNotifCount(0);
+    if(typeof window!=='undefined'){localStorage.removeItem("ws_token");localStorage.removeItem("ws_user");}
+    notify("Signed out.","info");
+  };
 
   const handleLockIn=async listing=>{
     if(!user){setModal({type:"auth",mode:"login"});return;}
@@ -501,7 +514,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         onSignIn={()=>setModal({type:"auth",mode:"login"})}
       />
       {modal?.type==="auth"&&<AuthModal defaultMode={modal.mode} onClose={closeModal} onAuth={handleAuth} notify={notify}/>}
-      {modal?.type==="post"&&token&&<PostAdModal onClose={closeModal} token={token} notify={notify} linkedRequest={modal.linkedRequest||null} onSuccess={l=>{setListings(p=>[l,...p]);setTotal(t=>t+1);}}/>}
+      {modal?.type==="post"&&token&&<PostAdModal onClose={closeModal} token={token} notify={notify} linkedRequest={modal.linkedRequest||null} onSuccess={(l,isEdit)=>{if(isEdit){setPage("dashboard");if(typeof window!=='undefined')window.history.pushState({},"","/dashboard");}else{setListings(p=>[l,...p]);setTotal(t=>t+1);}}}/>}
       {toast&&<Toast key={toast.id} msg={toast.msg} type={toast.type} onClose={()=>setToast(null)}/>}
       {resetToken&&<ResetPasswordModal token={resetToken} notify={notify} onClose={()=>{setResetToken(null);}}/>}
     </>;
@@ -522,7 +535,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         newSinceLastVisit={newSinceLastVisit}
       />
       {modal?.type==="auth"&&<AuthModal defaultMode={modal.mode} onClose={closeModal} onAuth={handleAuth} notify={notify}/>}
-      {modal?.type==="post"&&token&&<PostAdModal onClose={closeModal} token={token} notify={notify} linkedRequest={modal.linkedRequest||null} onSuccess={l=>{setListings(p=>[l,...p]);setTotal(t=>t+1);}}/>}
+      {modal?.type==="post"&&token&&<PostAdModal onClose={closeModal} token={token} notify={notify} linkedRequest={modal.linkedRequest||null} onSuccess={(l,isEdit)=>{if(isEdit){setPage("dashboard");if(typeof window!=='undefined')window.history.pushState({},"","/dashboard");}else{setListings(p=>[l,...p]);setTotal(t=>t+1);}}}/>}
       {modal?.type==="detail"&&<DetailModal listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}
         onShare={()=>setModal({type:"share",listing:modal.listing})}
         onChat={()=>{if(!user){notify("Sign in to chat","warning");setModal({type:"auth",mode:"login"});return;}setModal({type:"chat",listing:modal.listing});}}

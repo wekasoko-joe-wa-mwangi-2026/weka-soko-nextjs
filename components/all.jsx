@@ -4147,7 +4147,7 @@ function MobileLayout({
     </>}
 
     {/* ── SWIPE OVERLAY — opened when user taps a listing card ── */}
-    {swipeFeedIdx!==null&&<div style={{position:"fixed",inset:0,zIndex:500}}>
+    {swipeFeedIdx!==null&&<div style={{position:"fixed",inset:0,zIndex:1000}}>
       <SwipeFeed
         user={user} token={token}
         onOpen={(l)=>{setSwipeFeedIdx(null);openListing(l);}}
@@ -4164,7 +4164,7 @@ function MobileLayout({
     </div>}
 
     {/* ── DISCOVER TAB — fixed full-screen so SwipeFeed touch events aren't blocked by mob-root ── */}
-    {mobileTab==="discover"&&<div style={{position:"fixed",inset:0,zIndex:200}}>
+    {mobileTab==="discover"&&<div style={{position:"fixed",inset:0,zIndex:1000}}>
       <SwipeFeed
         user={user} token={token}
         onOpen={openListing} onLockIn={handleLockIn}
