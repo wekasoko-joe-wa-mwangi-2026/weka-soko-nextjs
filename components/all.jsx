@@ -9,25 +9,25 @@ function WekaSokoLogo({ size = 32, iconOnly = false, light = false }) {
   const blue = light ? "#FFFFFF" : "#1428A0";
   const gold = "#C49A00";
   const textColor = light ? "#FFFFFF" : "#1428A0";
-  const iconW = size * 1.35;
+  const iconW = size * (140/90);
   const iconH = size;
-  const gap = size * 0.25;
+  const gap = size * 0.28;
 
   const Monogram = () => (
-    <svg width={iconW} height={iconH} viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg" style={{display: "block", flexShrink: 0}}>
-      {/* Stylized W */}
-      <path d="M5 25L20 65L35 25L50 65L65 25" stroke={blue} strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
-      {/* Stylized S */}
-      <path d="M95 25C85 25 75 28 75 35C75 48 95 48 95 61C95 68 85 71 75 71C65 71 55 68 55 61" stroke={blue} strokeWidth="12" strokeLinecap="round" />
-      {/* More Visible $ Sign (Vertical Stroke) */}
-      <path d="M75 14V76" stroke={gold} strokeWidth="10" strokeLinecap="round" />
+    <svg width={iconW} height={iconH} viewBox="0 0 140 90" fill="none" xmlns="http://www.w3.org/2000/svg" style={{display:"block",flexShrink:0}}>
+      {/* W — right peak meets the gold bar */}
+      <path d="M8 22 L26 68 L44 22 L62 68 L80 22" stroke={blue} strokeWidth="11" strokeLinecap="round" strokeLinejoin="round"/>
+      {/* S — interlocked, wrapping the W's right peak */}
+      <path d="M130 24 C105 16 82 26 82 40 C82 55 120 53 120 68 C120 80 102 85 80 84" stroke={blue} strokeWidth="11" strokeLinecap="round" fill="none"/>
+      {/* Gold bar — sits at the W/S intersection */}
+      <line x1="78" y1="10" x2="78" y2="84" stroke={gold} strokeWidth="11" strokeLinecap="round"/>
     </svg>
   );
 
   if (iconOnly) return <Monogram />;
 
   return (
-    <div style={{display: "flex", alignItems: "center", gap: gap, userSelect: "none"}}>
+    <div style={{display:"flex",alignItems:"center",gap:gap,userSelect:"none"}}>
       <Monogram />
       <span style={{
         fontSize: size * 0.72,
@@ -1664,7 +1664,6 @@ function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnl
       {user&&onSave&&<HeartBtn saved={isSaved} onToggle={onSave} size={15} bg="transparent" style={{boxShadow:"none",border:"1.5px solid #E0E0E0",borderRadius:8,width:"auto",height:"auto",padding:"6px 12px",gap:5,display:"flex",fontSize:13,fontWeight:700,color:"#636363"}}/>}
       {user&&!isSeller&&<button className="btn bs sm" onClick={onChat}>Chat with Seller</button>}
       {isSeller&&<button className="btn bs sm" onClick={onChat}>View Messages</button>}
-      {!isSeller&&l.status==="active"&&!l.locked_buyer_id&&user&&<button className="btn bg2 sm" onClick={onLockIn}>I'm Interested — Lock In</button>}
       {!isSeller&&l.status==="active"&&user&&<button className="btn bs sm" onClick={onEscrow}>Buy with Escrow</button>}
       {isSeller&&l.locked_buyer_id&&!l.is_unlocked&&<button className="btn bp" style={{flex:1}} onClick={onUnlock}>Pay KSh 250 to See Buyer Contact</button>}
       {!user&&<button className="btn bp" onClick={()=>onSignIn&&onSignIn()}>Sign In to Contact Seller</button>}
@@ -3964,7 +3963,7 @@ function MobileLayout({
       {/* Hero banner — only on home tab, hidden in search mode */}
       {mobileTab==="home"&&!filter.q&&!filter.cat&&pg===1 && (
         loading ? <div style={{margin:"10px 12px"}}><HeroSkeleton/></div> : (
-          <div className="depth-float" style={{overflow:"hidden",position:"relative",minHeight:360,margin:"10px 12px",display:"flex",flexDirection:"column", borderRadius: 24}}>
+          <div className="depth-float" style={{overflow:"hidden",position:"relative",minHeight:260,margin:"10px 12px",display:"flex",flexDirection:"column", borderRadius: 24}}>
             {[
               {
                 img: "https://images.unsplash.com/photo-1555421689-491a97ff2040?q=80&w=2070&auto=format&fit=crop",
@@ -4043,7 +4042,7 @@ function MobileLayout({
           <div style={{display:"flex", gap:14, overflowX:"auto", padding: "4px 4px 20px", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch"}}>
              {listings.slice(0, 5).map(l => (
                <div key={l.id} className="depth-float" onClick={() => setSwipeFeedIdx(listings.indexOf(l))} style={{
-                 flex: "0 0 280px", scrollSnapAlign: "start", background: "#fff", borderRadius: 24, overflow: "hidden", position: "relative"
+                 flex: "0 0 min(260px,75vw)", scrollSnapAlign: "start", background: "#fff", borderRadius: 24, overflow: "hidden", position: "relative"
                }}>
                  <img src={Array.isArray(l.photos)&&l.photos[0]?(typeof l.photos[0]==="string"?l.photos[0]:l.photos[0].url):CAT_PHOTOS[l.category]} alt={l.title} 
                    style={{width: "100%", height: 160, objectFit: "cover"}}/>
