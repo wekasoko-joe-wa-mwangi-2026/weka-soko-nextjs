@@ -543,6 +543,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         onUnlock={()=>setModal({type:"pay",payType:"unlock",listing:modal.listing})}
         onEscrow={()=>{if(!user){notify("Sign in first","warning");setModal({type:"auth",mode:"login"});return;}setModal({type:"pay",payType:"escrow",listing:modal.listing});}}
         isSaved={savedIds.has(modal.listing?.id)} onSave={user?()=>handleToggleSave(modal.listing):null}
+        onSignIn={()=>setModal({type:"auth",mode:"login"})}
       />}
       {modal?.type==="chat"&&user&&<ChatModal listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}/>}
       {modal?.type==="share"&&<ShareModal listing={modal.listing} onClose={closeModal}/>}
@@ -591,6 +592,8 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       onToggleSave={handleToggleSave}
       onPostAd={()=>{ if(!user){setModal({type:"auth",mode:"signup"});return;} setModal({type:"post"}); }}
       onSignIn={()=>setModal({type:"auth",mode:"login"})}
+      onLockIn={handleLockIn}
+      onChatListing={(l)=>{if(!user){setModal({type:"auth",mode:"login"});return;}setModal({type:"chat",listing:l});}}
       initialFilter={filter}
     />
     {modal?.type==="auth"&&<AuthModal defaultMode={modal.mode} onClose={closeModal} onAuth={handleAuth} notify={notify}/>}
@@ -612,6 +615,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       onUnlock={()=>setModal({type:"pay",payType:"unlock",listing:modal.listing})}
       onEscrow={()=>{if(!user){notify("Sign in first","warning");setModal({type:"auth",mode:"login"});return;}setModal({type:"pay",payType:"escrow",listing:modal.listing});}}
       isSaved={savedIds.has(modal.listing?.id)} onSave={user?()=>handleToggleSave(modal.listing):null}
+      onSignIn={()=>setModal({type:"auth",mode:"login"})}
     />}
     {modal?.type==="chat"&&user&&<ChatModal listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}/>}
     {modal?.type==="share"&&<ShareModal listing={modal.listing} onClose={closeModal}/>}
@@ -978,11 +982,11 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
             <span style={{fontWeight:800,fontSize:22,color:"#fff",letterSpacing:"-.02em"}}>WekaSoko</span>
             <p style={{fontSize:13,color:"rgba(255,255,255,.65)",margin:"6px 0 0",lineHeight:1.6}}>Kenya's marketplace. Free to list.<br/>Pay KSh 250 only when a buyer locks in.</p>
           </div>
-          <button className="btn" onClick={()=>setModal({type:"auth",mode:"register"})} style={{background:"#fff",color:"#1428A0",border:"none",padding:"13px 28px",fontSize:14,fontWeight:800,borderRadius:10,cursor:"pointer",fontFamily:"var(--fn)",boxShadow:"0 4px 16px rgba(0,0,0,.15)",whiteSpace:"nowrap"}}>Post an Ad for Free</button>
+          <button className="btn" onClick={()=>setModal({type:"auth",mode:"signup"})} style={{background:"#fff",color:"#1428A0",border:"none",padding:"13px 28px",fontSize:14,fontWeight:800,borderRadius:10,cursor:"pointer",fontFamily:"var(--fn)",boxShadow:"0 4px 16px rgba(0,0,0,.15)",whiteSpace:"nowrap"}}>Post an Ad for Free</button>
         </div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12,paddingTop:20,borderTop:"1px solid rgba(255,255,255,.15)"}}>
           <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
-            {[["Browse Listings",()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"})],["Post an Ad",()=>setModal({type:"auth",mode:"register"})],["Buyer Requests",()=>{setPage("requests");if(typeof window!=="undefined")window.history.pushState({},"","/requests");}],["Sold Items",()=>{setPage("sold");if(typeof window!=="undefined")window.history.pushState({},"","/sold");}]].map(([label,fn])=>(
+            {[["Browse Listings",()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"})],["Post an Ad",()=>setModal({type:"auth",mode:"signup"})],["Buyer Requests",()=>{setPage("requests");if(typeof window!=="undefined")window.history.pushState({},"","/requests");}],["Sold Items",()=>{setPage("sold");if(typeof window!=="undefined")window.history.pushState({},"","/sold");}]].map(([label,fn])=>(
               <button key={label} onClick={fn} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,fontWeight:500,color:"rgba(255,255,255,.7)",fontFamily:"var(--fn)",padding:0,transition:"color .15s"}}
                 onMouseEnter={e=>e.target.style.color="#fff"} onMouseLeave={e=>e.target.style.color="rgba(255,255,255,.7)"}>{label}</button>
             ))}
@@ -1015,6 +1019,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       onUnlock={()=>setModal({type:"pay",payType:"unlock",listing:modal.listing})}
       onEscrow={()=>{if(!user){notify("Sign in first","warning");setModal({type:"auth",mode:"login"});return;}setModal({type:"pay",payType:"escrow",listing:modal.listing});}}
       isSaved={savedIds.has(modal.listing?.id)} onSave={user?()=>handleToggleSave(modal.listing):null}
+      onSignIn={()=>setModal({type:"auth",mode:"login"})}
     />}
     {modal?.type==="chat"&&user&&<ChatModal listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}/>}
     {modal?.type==="share"&&<ShareModal listing={modal.listing} onClose={closeModal}/>}
