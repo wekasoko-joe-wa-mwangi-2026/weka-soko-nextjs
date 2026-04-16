@@ -873,7 +873,7 @@ function ShareModal({listing,onClose}){
 }
 
 // ── REAL M-PESA PAYMENT MODAL ─────────────────────────────────────────────────
-function PayModal({type,listingId,amount,purpose,token,user,onSuccess,onClose,notify,allowVoucher}){
+function PayModal({type,listingId,pitchId,amount,purpose,token,user,onSuccess,onClose,notify,allowVoucher}){
   const [phone,setPhone]=useState(user?.phone||"07");
   const [vcode,setVcode]=useState("");
   const [voucherInfo,setVoucherInfo]=useState(null);
@@ -902,8 +902,8 @@ function PayModal({type,listingId,amount,purpose,token,user,onSuccess,onClose,no
     if(finalAmt>0&&(!phone||phone.length<10)){notify("Enter a valid M-Pesa phone number.","warning");return;}
     setStep("pushing");
     try{
-      const endpoint=type==="unlock"?"/api/payments/unlock":"/api/payments/escrow";
-      const body={listing_id:listingId,phone:phone.trim()};
+      const endpoint=pitchId?`/api/pitches/${pitchId}/accept`:type==="unlock"?"/api/payments/unlock":"/api/payments/escrow";
+      const body=pitchId?{phone:phone.trim()}:{listing_id:listingId,phone:phone.trim()};
       if(voucherInfo)body.voucher_code=vcode.trim().toUpperCase();
       const result=await api(endpoint,{method:"POST",body:JSON.stringify(body)},token);
       if(result.unlocked){setStep("done");setTimeout(()=>onSuccess(result),600);return;}
@@ -922,6 +922,7 @@ function PayModal({type,listingId,amount,purpose,token,user,onSuccess,onClose,no
   };
 
   const verifyManual=async()=>{
+    if(pitchId){notify("Manual verification is not available for pitch payments. Please try again or contact support.","warning");return;}
     const code=manualCode.trim().toUpperCase();
     if(!code||code.length<8){notify("Enter a valid M-Pesa transaction code.","warning");return;}
     setVerifying(true);
@@ -943,7 +944,7 @@ function PayModal({type,listingId,amount,purpose,token,user,onSuccess,onClose,no
     <p style={{fontSize:11,color:"#CCCCCC",marginTop:5}}>We confirm the code was paid to Till 5673935 before unlocking.</p>
   </div>;
 
-  return <Modal title={type==="unlock"?"Reveal Buyer Contact — KSh 250":"Escrow Payment"} onClose={onClose}>
+  return <Modal title={pitchId?"Reveal Seller Contact — KSh 250":type==="unlock"?"Reveal Buyer Contact — KSh 250":"Escrow Payment"} onClose={onClose}>
     {step==="form"&&<>
       {/* Decoy: Show the 3 options with escrow as the clearly "best" choice */}
       {type==="unlock"&&<div style={{marginBottom:20}}>
@@ -2657,18 +2658,16 @@ function PitchesTab({token, notify, user}) {
 
     {/* Pay modal for accepting a pitch */}
     {paying && <PayModal
-      type="unlock"
-      listingId={paying.listing_id || paying.request_id}
+      pitchId={paying.id}
       amount={250}
       purpose={`Reveal seller contact for your request`}
       token={token} user={user} allowVoucher={true}
-      onSuccess={async () => {
-        try {
-          const res = await api(`/api/pitches/${paying.id}/accept`, { method: "POST" }, token);
-          if (res.seller_contact) {
-            notify(`Contact revealed! ${res.seller_contact.name} — ${res.seller_contact.phone || res.seller_contact.email}`, "success");
-          }
-        } catch(e) { notify(e.message, "error"); }
+      onSuccess={(result) => {
+        if (result?.seller_contact) {
+          notify(`Contact revealed! ${result.seller_contact.name} — ${result.seller_contact.phone || result.seller_contact.email}`, "success");
+        } else {
+          notify("Pitch accepted! Payment confirmed.", "success");
+        }
         setPaying(null);
         load();
       }}
