@@ -3153,7 +3153,14 @@ function MobileDashboard({
                     <div style={{fontWeight:700}}>All caught up!</div>
                   </div>
                 :notifs.map(n=>(
-                  <div key={n.id} onClick={()=>markRead(n.id)} style={{background:n.is_read?"#fff":"#F0F4FF",borderRadius:12,padding:"14px",marginBottom:8,border:`1px solid ${n.is_read?"#EBEBEB":"#C7D2FE"}`,cursor:"pointer"}}>
+                  <div key={n.id} onClick={()=>{
+                    markRead(n.id);
+                    if(n.type==="new_message"){
+                      const data=typeof n.data==="string"?JSON.parse(n.data||"{}"):n.data||{};
+                      const thread=threads.find(t=>String(t.listing_id)===String(data.listing_id));
+                      if(thread){setMobSection("notif");setInboxTab("chat");setSelectedListing({id:thread.listing_id,title:thread.title,seller_id:thread.seller_id,is_unlocked:thread.is_unlocked||false,locked_buyer_id:thread.locked_buyer_id});}
+                    }
+                  }} style={{background:n.is_read?"#fff":"#F0F4FF",borderRadius:12,padding:"14px",marginBottom:8,border:`1px solid ${n.is_read?"#EBEBEB":"#C7D2FE"}`,cursor:"pointer"}}>
                     <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
                       <span style={{flexShrink:0,display:"flex",alignItems:"center"}}>
                         {n.type==="buyer_locked_in"
@@ -3323,7 +3330,7 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
   // ── Mobile detection ────────────────────────────────────────────────────────
   const [isMobile, setIsMobile] = useState(()=>typeof window!=='undefined'?window.innerWidth<768:false);
   useEffect(()=>{const check=()=>setIsMobile(window.innerWidth<768);window.addEventListener('resize',check);return()=>window.removeEventListener('resize',check);},[]);
-  const [mobSection, setMobSection] = useState("home"); // home|ads|requests|notifications|settings
+  const [mobSection, setMobSection] = useState(()=>{const m=window.__initialMobSection||"home";window.__initialMobSection=null;return m;}); // home|ads|requests|notif|settings
 
   // ── MOBILE DASHBOARD ─────────────────────────────────────────────────────────
   if(isMobile) return <MobileDashboard
@@ -3509,7 +3516,14 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
       </div>}
       <div style={{maxWidth:680}}>
         {notifs.map((n,i)=>(
-          <div key={i} onClick={()=>markRead(n.id)} style={{display:"flex",gap:14,padding:"16px 0",borderBottom:"1px solid #F5F5F5",cursor:"pointer",opacity:n.is_read?.7:1,transition:"opacity .15s"}}
+          <div key={i} onClick={()=>{
+            markRead(n.id);
+            if(n.type==="new_message"){
+              const data=typeof n.data==="string"?JSON.parse(n.data||"{}"):n.data||{};
+              const thread=threads.find(t=>String(t.listing_id)===String(data.listing_id));
+              if(thread){setTab("messages");setSelectedListing({id:thread.listing_id,title:thread.title,seller_id:thread.seller_id,is_unlocked:thread.is_unlocked||false,locked_buyer_id:thread.locked_buyer_id});}
+            }
+          }} style={{display:"flex",gap:14,padding:"16px 0",borderBottom:"1px solid #F5F5F5",cursor:"pointer",opacity:n.is_read?.7:1,transition:"opacity .15s"}}
             onMouseOver={e=>e.currentTarget.style.paddingLeft="8px"}
             onMouseOut={e=>e.currentTarget.style.paddingLeft="0"}>
             <div style={{width:40,height:40,borderRadius:"50%",background:n.is_read?"#F5F5F5":"#E8E8E8",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
@@ -4200,28 +4214,6 @@ function MobileLayout({
       />
     </div>}
 
-    {/* ── DISCOVER TAB — fixed full-screen so SwipeFeed touch events aren't blocked by mob-root ── */}
-    {mobileTab==="discover"&&<div style={{position:"fixed",inset:0,zIndex:1000}}>
-      <SwipeFeed
-        user={user} token={token}
-        onOpen={openListing} onLockIn={handleLockIn}
-        onMessage={(l)=>{if(!user){setModal({type:"auth",mode:"login"});return;}setModal({type:"chat",listing:l});}}
-        savedIds={savedIds} onToggleSave={onToggleSave}
-        onSignIn={()=>setModal({type:"auth",mode:"login"})}
-        onClose={()=>setMobileTab("home")}
-        onPostAd={()=>{
-          if(!user){setModal({type:"auth",mode:"login"});return;}
-          if(user.role==="buyer"){
-            if(typeof window!=="undefined"&&window.confirm("Switch to Seller to post ads?"))
-              api("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token)
-                .then(()=>window.location.reload())
-                .catch(e=>notify(e.message,"error"));
-            return;
-          }
-          setModal({type:"post"});
-        }}
-      />
-    </div>}
     {/* ── REQUESTS TAB ── */}
     {mobileTab==="requests"&&<MobileRequestsTab
       user={user} token={token} notify={notify}
@@ -4233,7 +4225,7 @@ function MobileLayout({
     <div className="mob-bottombar">
       {[
         {id:"home", icon:Ic.home, label:"Home"},
-        {id:"discover", icon:Ic.search, label:"Browse"},
+        {id:"inbox", icon:Ic.inbox, label:"Inbox"},
         {id:"post", icon:Ic.plus, label:"Post Ad", isPost:true},
         {id:"dashboard", icon:Ic.user, label:"Account"},
         {id:"requests", icon:Ic.checklist, label:"Buyer Reqs"},
@@ -4245,6 +4237,7 @@ function MobileLayout({
             onClick={() => {
               if(t.isPost){ postAd(); return; }
               if(t.id==="dashboard"){ if(!user){setModal({type:"auth",mode:"login"});return;} setPage("dashboard"); window.history.pushState({},"","/dashboard"); }
+              else if(t.id==="inbox"){ if(!user){setModal({type:"auth",mode:"login"});return;} window.__initialMobSection="notif"; setPage("dashboard"); window.history.pushState({},"","/dashboard"); setMobileTab(t.id); return; }
               else if(t.id==="requests"){ setPage("home"); window.history.pushState({},"","/requests"); }
               else { setPage("home"); }
               setMobileTab(t.id);
