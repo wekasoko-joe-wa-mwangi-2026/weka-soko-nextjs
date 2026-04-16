@@ -1,14 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Background -->
+  <!-- Blue rounded square background -->
   <rect width="512" height="512" rx="112" fill="#1428A0"/>
-  <!-- Bag body -->
-  <rect x="112" y="220" width="288" height="210" rx="18" fill="#FFFFFF"/>
-  <!-- Bag shadow strip -->
-  <rect x="112" y="280" width="288" height="32" fill="#E0E0E0"/>
-  <!-- Bag handle -->
-  <path d="M192 220 Q192 130 256 130 Q320 130 320 220" fill="none" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round"/>
-  <!-- Lock dot outer -->
-  <circle cx="256" cy="375" r="30" fill="#1428A0" opacity="0.9"/>
-  <!-- Lock dot inner -->
-  <circle cx="256" cy="375" r="14" fill="#FFFFFF"/>
+  <!-- W letterform (white) -->
+  <path d="M55 130L120 355L190 195L256 355L320 130"
+        stroke="white" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- S letterform (white) -->
+  <path d="M435 175C414 148 360 148 344 180C328 212 370 232 386 258C404 286 390 318 358 330C325 344 274 330 258 305"
+        stroke="white" stroke-width="46" stroke-linecap="round" fill="none"/>
+  <!-- Gold vertical bar through S -->
+  <line x1="348" y1="115" x2="348" y2="388" stroke="#C49A00" stroke-width="34" stroke-linecap="round"/>
 </svg>

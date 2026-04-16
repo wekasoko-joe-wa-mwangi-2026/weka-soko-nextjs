@@ -8,36 +8,27 @@ import { fmtKES, ago, CATS, KENYA_COUNTIES, API, PER_PAGE, CAT_PHOTOS } from '@/
 function WekaSokoLogo({ size = 32, iconOnly = false, light = false }) {
   const blue = light ? "#FFFFFF" : "#1428A0";
   const gold = "#C49A00";
-  const textColor = light ? "#FFFFFF" : "#1428A0";
-  const iconW = size * 1.35;
+  const iconW = size * 1.5;
   const iconH = size;
-  const gap = size * 0.25;
 
   const Monogram = () => (
-    <svg width={iconW} height={iconH} viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg" style={{display: "block", flexShrink: 0}}>
-      {/* Stylized W */}
-      <path d="M5 25L20 65L35 25L50 65L65 25" stroke={blue} strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
-      {/* Stylized S */}
-      <path d="M95 25C85 25 75 28 75 35C75 48 95 48 95 61C95 68 85 71 75 71C65 71 55 68 55 61" stroke={blue} strokeWidth="12" strokeLinecap="round" />
-      {/* More Visible $ Sign (Vertical Stroke) */}
-      <path d="M75 14V76" stroke={gold} strokeWidth="10" strokeLinecap="round" />
+    <svg width={iconW} height={iconH} viewBox="0 0 90 60" fill="none" xmlns="http://www.w3.org/2000/svg" style={{display:"block",flexShrink:0}}>
+      {/* W — angular strokes matching the uploaded logo */}
+      <path d="M4 14L16 48L28 20L40 48L52 14" stroke={blue} strokeWidth="9" strokeLinecap="round" strokeLinejoin="round"/>
+      {/* S — circular S curve intertwining with W */}
+      <path d="M82 18C73 11 57 13 57 26C57 38 76 36 76 49C76 59 60 61 50 55" stroke={blue} strokeWidth="9" strokeLinecap="round"/>
+      {/* Gold vertical bar through the WS overlap */}
+      <line x1="64" y1="6" x2="64" y2="55" stroke={gold} strokeWidth="8" strokeLinecap="round"/>
     </svg>
   );
 
   if (iconOnly) return <Monogram />;
 
   return (
-    <div style={{display: "flex", alignItems: "center", gap: gap, userSelect: "none"}}>
+    <div style={{display:"flex",alignItems:"center",gap:size*0.22,userSelect:"none"}}>
       <Monogram />
-      <span style={{
-        fontSize: size * 0.72,
-        fontWeight: 800,
-        color: textColor,
-        letterSpacing: "-0.02em",
-        lineHeight: 1,
-        fontFamily: "var(--fn)"
-      }}>
-        WEKA <span style={{fontWeight: 400}}>SOKO</span>
+      <span style={{fontSize:size*0.7,fontWeight:800,color:light?"#fff":"#111",letterSpacing:"-0.025em",lineHeight:1,fontFamily:"var(--fn)"}}>
+        Weka<span style={{color:"#1428A0",fontWeight:800}}>Soko</span>
       </span>
     </div>
   );
@@ -1073,6 +1064,7 @@ function ChatModal({listing,user,token,onClose,notify}){
   const [loading,setLoading]=useState(true);
   const [connected,setConnected]=useState(false);
   const [typing,setTyping]=useState(false);
+  const playChime=useAudioNotification();
   const [otherPresence,setOtherPresence]=useState(null);
   const [otherUserId,setOtherUserId]=useState(null);
   const socketRef=useRef(null);
@@ -1129,6 +1121,8 @@ function ChatModal({listing,user,token,onClose,notify}){
       setTyping(false);
       setOtherUserId(msg.sender_id);
       setOtherPresence(p=>({...p,is_online:true}));
+      // Play notification sound for incoming message
+      playChime('message');
     });
 
     socket.on("user_typing",()=>{
