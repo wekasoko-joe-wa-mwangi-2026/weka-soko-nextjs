@@ -1765,7 +1765,7 @@ function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnl
           <span><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
           <div style={{flex:1}}>
             <div style={{fontWeight:600}}>{l.seller_anon||"Anonymous Seller"}</div>
-            <div style={{fontSize:12,color:"#888888"}}>Pay KSh 250 to reveal contact details</div>
+            <div style={{fontSize:12,color:"#888888"}}>{isSeller&&l.locked_buyer_id?"A buyer is interested — unlock their contact below":"Anonymous seller · chat to get in touch"}</div>
             <div style={{display:"flex",gap:6,marginTop:5,flexWrap:"wrap",alignItems:"center"}}>
               {l.seller_avg_rating>0&&<span style={{fontSize:11,background:"rgba(0,0,0,.05)",color:"#1428A0",padding:"2px 8px",borderRadius:80,fontWeight:700}}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle",marginRight:2}}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> {Number(l.seller_avg_rating).toFixed(1)} ({l.seller_review_count||0} review{l.seller_review_count!==1?"s":""})
@@ -2815,8 +2815,8 @@ function PasswordSection({user, token, notify}){
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
 
-  // Detect Google OAuth user — backend returns is_google_user from /api/auth/me
-  const isGoogleUser = !!user.is_google_user;
+  // has_native_password = user has a real password hash (not Google-only)
+  const hasNativePwd = !!user.has_native_password;
 
   const save = async()=>{
     if(f.newPwd.length < 8){notify("New password must be at least 8 characters","warning");return;}
@@ -2838,7 +2838,7 @@ function PasswordSection({user, token, notify}){
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
       <div>
         <div style={{fontWeight:700,fontSize:15,color:"#1A1A1A",marginBottom:2}}>Password</div>
-        <div style={{fontSize:13,color:"#888"}}>{isGoogleUser?"Signed in with Google":"••••••••"}</div>
+        <div style={{fontSize:13,color:"#888"}}>{hasNativePwd?"••••••••":"Signed in with Google"}</div>
       </div>
       <button className="btn bs sm" style={{borderRadius:8}} onClick={()=>setOpen(p=>!p)}>
         {open?"Cancel":"Change Password"}
@@ -2846,8 +2846,8 @@ function PasswordSection({user, token, notify}){
     </div>
 
     {open&&<div style={{marginTop:18,paddingTop:18,borderTop:"1px solid #F5F5F5",display:"flex",flexDirection:"column",gap:12}}>
-      {/* Current password — hidden for Google users */}
-      {!isGoogleUser&&<div>
+      {/* Current password — required when user has a native password hash */}
+      {hasNativePwd&&<div>
         <label style={{fontSize:12,fontWeight:600,color:"#888",marginBottom:6,display:"block",textTransform:"uppercase",letterSpacing:".05em"}}>Current Password</label>
         <div style={{position:"relative"}}>
           <input className="inp" type={showCurrent?"text":"password"} value={f.current} onChange={e=>setF(p=>({...p,current:e.target.value}))} placeholder="Enter current password" style={{paddingRight:44}}/>
@@ -2875,7 +2875,7 @@ function PasswordSection({user, token, notify}){
         </div>}
       </div>
 
-      <button className="btn bp" style={{borderRadius:10,marginTop:4}} onClick={save} disabled={saving||!f.newPwd||(!isGoogleUser&&!f.current)||f.newPwd!==f.confirm}>
+      <button className="btn bp" style={{borderRadius:10,marginTop:4}} onClick={save} disabled={saving||!f.newPwd||(hasNativePwd&&!f.current)||f.newPwd!==f.confirm}>
         {saving?<Spin/>:"Update Password"}
       </button>
     </div>}
@@ -4672,16 +4672,21 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
                     {isSaved?"Saved":"Save"}
                   </button>
                 </div>
-                {/* Contact info block */}
-                {l.is_unlocked?(
+                {/* Contact info block — only relevant when is_unlocked */}
+                {l.is_unlocked&&user?.id!==l.seller_id&&(
                   <div style={{background:"#F0FDF4",border:"1.5px solid #86EFAC",borderRadius:12,padding:"14px 16px",marginBottom:8}}>
-                    <div style={{fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#166534",marginBottom:10}}>Contact Info Revealed</div>
+                    <div style={{fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#166534",marginBottom:10}}>Seller Contact</div>
                     {l.seller_name&&<div style={{fontSize:14,fontWeight:700,color:"#1A1A1A",marginBottom:6}}>{l.seller_name}</div>}
                     {l.seller_phone&&<a href={`tel:${l.seller_phone}`} style={{display:"flex",alignItems:"center",gap:8,fontSize:14,color:"#1428A0",fontWeight:600,marginBottom:6,textDecoration:"none"}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.38 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.77a16 16 0 0 0 6.29 6.29l.87-.87a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>{l.seller_phone}</a>}
                     {l.seller_email&&<a href={`mailto:${l.seller_email}`} style={{display:"flex",alignItems:"center",gap:8,fontSize:13,color:"#555",textDecoration:"none"}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>{l.seller_email}</a>}
                   </div>
-                ):(
-                  user?.id!==l.seller_id&&<button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onLockIn&&onLockIn(l);}} style={{width:"100%",background:"#1428A0",color:"#fff",border:"none",padding:"14px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",marginBottom:8,boxShadow:"0 4px 14px rgba(20,40,160,.25)"}}>Reveal Contact Info — KSh 250</button>
+                )}
+                {/* Seller: reveal buyer contact button */}
+                {user?.id===l.seller_id&&l.locked_buyer_id&&!l.is_unlocked&&(
+                  <button onClick={e=>{e.stopPropagation();onLockIn&&onLockIn(l);}} style={{width:"100%",background:"#1428A0",color:"#fff",border:"none",padding:"14px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",marginBottom:8,boxShadow:"0 4px 14px rgba(20,40,160,.25)"}}>Reveal Buyer Contact — KSh 250</button>
+                )}
+                {user?.id===l.seller_id&&l.is_unlocked&&(
+                  <div style={{background:"#F0FDF4",border:"1.5px solid #86EFAC",borderRadius:12,padding:"12px 14px",marginBottom:8,fontSize:12,color:"#166534",fontWeight:600}}>Buyer contact has been revealed — check your dashboard.</div>
                 )}
                 <div style={{display:"flex",gap:8,marginBottom:18}}>
                   <button onClick={e=>{e.stopPropagation();setShareModal(l);}} style={{flex:1,background:"none",color:"#636363",border:"1.5px solid #EBEBEB",padding:"10px",fontSize:12,fontWeight:700,borderRadius:10,cursor:"pointer",fontFamily:"var(--fn)",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share</button>
@@ -4725,9 +4730,6 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
                       {l.response_rate!=null&&<span style={{fontSize:12,color:"#555",fontWeight:500}}>{Math.round(l.response_rate)}% response rate</span>}
                     </div>
                   </div>
-                </div>
-                <div style={{marginTop:10,padding:"10px 12px",background:"#FFF8E1",borderRadius:10,border:"1px solid #FFE082"}}>
-                  <div style={{fontSize:12,color:"#92400E",lineHeight:1.6}}>Pay <strong>KSh 250</strong> to unlock seller contact. Funds are only charged when a serious buyer locks in.</div>
                 </div>
               </div>
 
