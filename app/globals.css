@@ -233,14 +233,12 @@ select.inp{appearance:none;cursor:pointer;}
 .ov {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.42);
+  background: rgba(0,0,0,0.72);
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   animation: ov-in 0.2s ease;
 }
 

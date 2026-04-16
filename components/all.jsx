@@ -4767,7 +4767,7 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
             </div>
           </div>
           {/* Bottom action buttons */}
-          {user?.id!==l.seller_id&&<div style={{position:"absolute",bottom:0,left:0,right:0,padding:"12px 16px 24px",display:"flex",gap:8,zIndex:30,background:"linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 100%)"}}>
+          {user?.id!==l.seller_id&&<div style={{position:"absolute",bottom:0,left:0,right:0,padding:`12px 16px calc(env(safe-area-inset-bottom,0px) + 20px)`,display:"flex",gap:8,zIndex:30,background:"linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 100%)"}}>
             <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onMessage&&onMessage(l);}} style={{flex:1,background:"rgba(255,255,255,.15)",color:"#fff",border:"1.5px solid rgba(255,255,255,.4)",padding:"14px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",backdropFilter:"blur(8px)"}}>Message Seller</button>
           </div>}
         </>}
