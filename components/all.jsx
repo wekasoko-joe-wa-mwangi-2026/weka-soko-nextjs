@@ -4189,6 +4189,7 @@ function MobileLayout({
         onMessage={(l)=>{if(!user){setModal({type:"auth",mode:"login"});return;}setModal({type:"chat",listing:l});}}
         savedIds={savedIds} onToggleSave={onToggleSave}
         onSignIn={()=>setModal({type:"auth",mode:"login"})}
+        onClose={()=>setMobileTab("home")}
         onPostAd={()=>{
           if(!user){setModal({type:"auth",mode:"login"});return;}
           if(user.role==="buyer"){
