@@ -162,11 +162,16 @@ function checkContactInfo(text) {
   if (/\b(whatsapp|whats.?app|wa\.me|telegram|t\.me|signal|viber|snapchat|snap\b|instagram|insta\b|ig\b|facebook|fb\.com|twitter|x\.com|tiktok|dm me|call me|text me|reach me|my number|my phone|my email|my namba|nipa\s+call|nipigie)\b/i.test(t)) return true;
   // Add me / find me on ...
   if (/\b(add\s+me\s+(on|at)|find\s+me\s+(on|at)|follow\s+me\s+on|my\s+(ig|snap|insta|handle|username))\b/i.test(t)) return true;
-  // Digit sequence with SHORT separators only (max 2 chars, no spaces)
-  // Spaces are excluded so technical specs like "205hp ... 202Nm ... 6 speed" don't false-positive
-  if (/\d[.\-•/\\,]{0,2}\d[.\-•/\\,]{0,2}\d[.\-•/\\,]{0,2}\d[.\-•/\\,]{0,2}\d[.\-•/\\,]{0,2}\d[.\-•/\\,]{0,2}\d[.\-•/\\,]{0,2}\d[.\-•/\\,]{0,2}\d[.\-•/\\,]{0,2}\d/.test(t)) return true;
-  // Word-to-digit conversion then phone check
-  const norm = t.toLowerCase()
+  // Strip tech spec units so "256GB 8GB RAM 1080P 4K" doesn't trigger digit checks
+  const techStripped = t
+    .replace(/\b\d+(\.\d+)?\s*(gb|mb|tb|kb|ghz|mhz|hz|mp|fps|px|rpm|mah|wh|mm|cm|kg|nm|hp)\b/gi, '')
+    .replace(/\b(4k|8k|2k|1080p|720p|480p|2160p|4320p|1440p|960p)\b/gi, '')
+    .replace(/\b\d+\s*x\s*\d+\b/gi, '');  // resolution like 2560x1440
+  // Digit sequence: 10 consecutive digits with only short non-space separators
+  // Only flag when digits appear close together without letter/space barriers
+  if (/\d[.\-•/\\]{0,2}\d[.\-•/\\]{0,2}\d[.\-•/\\]{0,2}\d[.\-•/\\]{0,2}\d[.\-•/\\]{0,2}\d[.\-•/\\]{0,2}\d[.\-•/\\]{0,2}\d[.\-•/\\]{0,2}\d[.\-•/\\]{0,2}\d/.test(techStripped)) return true;
+  // Word-to-digit conversion then Kenyan phone check
+  const norm = techStripped.toLowerCase()
     .replace(/\bzero\b/g,"0").replace(/\bone\b/g,"1").replace(/\btwo\b/g,"2")
     .replace(/\bthree\b/g,"3").replace(/\bfour\b/g,"4").replace(/\bfive\b/g,"5")
     .replace(/\bsix\b/g,"6").replace(/\bseven\b/g,"7").replace(/\beight\b/g,"8")
@@ -178,11 +183,6 @@ function checkContactInfo(text) {
   if (/07\d{8}|01\d{8}|2547\d{8}|2541\d{8}/.test(digits)) return true;
   if (/0\d{9,}/.test(digits)) return true;
   if (/254\d{9}/.test(digits)) return true;
-  // After word-to-digit, check for 10-digit sequence with separators
-  // After word-to-digit: check for phone-like clusters (short separators only, no spaces)
-  // Removing spaces prevents "205hp 202Nm 6speed" → 10 scattered digits from false-firing
-  const normSep = norm.replace(/[^0-9.\-,]/g,"");
-  if (/\d[.\-,]{0,2}\d[.\-,]{0,2}\d[.\-,]{0,2}\d[.\-,]{0,2}\d[.\-,]{0,2}\d[.\-,]{0,2}\d[.\-,]{0,2}\d[.\-,]{0,2}\d[.\-,]{0,2}\d/.test(normSep)) return true;
   return false;
 }
 
@@ -4163,19 +4163,21 @@ function MobileLayout({
       />
     </div>}
 
-    {/* ── DISCOVER TAB ── */}
-    {mobileTab==="discover"&&<SwipeFeed
-      user={user} token={token}
-      onOpen={openListing} onLockIn={handleLockIn}
-      onMessage={(l)=>{if(!user){setModal({type:"auth",mode:"login"});return;}setModal({type:"chat",listing:l});}}
-      savedIds={savedIds} onToggleSave={onToggleSave}
-      onSignIn={()=>setModal({type:"auth",mode:"login"})}
-      onPostAd={()=>{
-        if(!user){setModal({type:"auth",mode:"signup"});return;}
-        if(user.role==="buyer"){if(typeof window!=="undefined"&&window.confirm("Switch to Seller to post ads?"))window.location.reload();return;}
-        setModal({type:"post"});
-      }}
-    />}
+    {/* ── DISCOVER TAB — fixed full-screen so SwipeFeed touch events aren't blocked by mob-root ── */}
+    {mobileTab==="discover"&&<div style={{position:"fixed",inset:0,zIndex:200}}>
+      <SwipeFeed
+        user={user} token={token}
+        onOpen={openListing} onLockIn={handleLockIn}
+        onMessage={(l)=>{if(!user){setModal({type:"auth",mode:"login"});return;}setModal({type:"chat",listing:l});}}
+        savedIds={savedIds} onToggleSave={onToggleSave}
+        onSignIn={()=>setModal({type:"auth",mode:"login"})}
+        onPostAd={()=>{
+          if(!user){setModal({type:"auth",mode:"signup"});return;}
+          if(user.role==="buyer"){if(typeof window!=="undefined"&&window.confirm("Switch to Seller to post ads?"))window.location.reload();return;}
+          setModal({type:"post"});
+        }}
+      />
+    </div>}
     {/* ── REQUESTS TAB ── */}
     {mobileTab==="requests"&&<MobileRequestsTab
       user={user} token={token} notify={notify}

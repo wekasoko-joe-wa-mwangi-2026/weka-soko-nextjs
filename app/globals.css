@@ -591,6 +591,23 @@ select.inp{appearance:none;cursor:pointer;}
 
 
 
+/* Post Ad button — flat circle, no TikTok pop-up */
+.mob-tab.post-btn { flex: 1; }
+.mob-tab.post-btn svg {
+  background: var(--a);
+  color: #fff;
+  padding: 10px;
+  border-radius: 50%;
+  box-sizing: content-box;
+  width: 20px; height: 20px;
+  transform: none !important;
+}
+.mob-tab.post-btn span {
+  opacity: 1 !important;
+  transform: translateY(14px) !important;
+  color: #636363;
+}
+
 .mob-drawer{position:fixed;inset:0;z-index:300;display:flex;flex-direction:column;justify-content:flex-end;}
 .mob-drawer-bg{position:absolute;inset:0;background:rgba(0,0,0,.5);}
 .mob-drawer-panel{position:relative;background:#fff;border-radius:22px 22px 0 0;max-height:88vh;overflow-y:auto;padding:24px 20px 44px;box-shadow:0 -4px 32px rgba(0,0,0,.14);}
@@ -654,8 +671,8 @@ select.inp{appearance:none;cursor:pointer;}
 
 @media(max-width:768px){
   .nav{padding:0 16px;height:54px;}
-  /* Modals slide up from bottom */
-  .ov{align-items:flex-end;padding:0;}
+  /* Modals slide up from bottom — reduce blur on mobile for performance & legibility */
+  .ov{align-items:flex-end;padding:0;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
   .mod{
     max-width:100%;border-radius:22px 22px 0 0;align-self:flex-end;
     max-height:96dvh;width:100%;
