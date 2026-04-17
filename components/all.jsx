@@ -350,10 +350,12 @@ function HeartBtn({saved,onToggle,size=20,bg="rgba(255,255,255,0.95)",style={}})
     onToggle && onToggle(e);
   };
 
-  return <button
-    className={`heart-btn btn${popping?" popping":""}`}
-    onClick={tap}
-    style={{
+return <button
+  className={`heart-btn btn${popping?" popping":""}`}
+  onClick={tap}
+  aria-label={optimistic ? "Unsave listing" : "Save listing"}
+  aria-pressed={optimistic}
+  style={{
       width:size*2.1,height:size*2.1,background:bg,
       boxShadow: "0 2px 10px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.02)",
       borderRadius: "50%", padding: 0, border: "none",
@@ -386,7 +388,7 @@ function Modal({title,onClose,children,footer,large,xl}){
     <div className={`mod${large?" lg":""}${xl?" xl":""}${closing?" closing":""}`}>
       <div className="mh">
         <h3 style={{fontSize:17,fontWeight:700,lineHeight:1.3}}>{title}</h3>
-        <button className="icon-btn" onClick={close} title="Close">{Ic.x(18)}</button>
+        <button className="icon-btn" onClick={close} title="Close" aria-label="Close modal">{Ic.x(18)}</button>
       </div>
       <div className="mb mod-stagger">{children}</div>
       {footer&&<div className="mf">{footer}</div>}
@@ -628,23 +630,22 @@ function Lightbox({photos,startIdx,onClose}){
     window.addEventListener("keydown",h);
     return()=>window.removeEventListener("keydown",h);
   },[]);
-  return <div style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,.96)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}
-    onClick={onClose}>
-    <button onClick={onClose} style={{position:"absolute",top:16,right:20,background:"rgba(255,255,255,.15)",border:"none",color:"#fff",width:44,height:44,borderRadius:"50%",cursor:"pointer",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.x(20,"#fff")}</button>
-    <div style={{position:"absolute",top:20,left:"50%",transform:"translateX(-50%)",color:"rgba(255,255,255,.7)",fontSize:13,zIndex:10}}>{idx+1} / {photos.length}</div>
-    <div onClick={e=>e.stopPropagation()} style={{display:"flex",alignItems:"center",justifyContent:"center",maxWidth:"92vw",maxHeight:"82vh"}}>
-      <WatermarkedImage src={photos[idx]} alt=""
-        style={{maxWidth:"92vw",maxHeight:"82vh",objectFit:"contain",borderRadius:8,boxShadow:"0 8px 40px rgba(0,0,0,.6)",display:"block"}}/>
-    </div>
-    {photos.length>1&&<>
-      <button onClick={e=>{e.stopPropagation();prev();}} style={{position:"absolute",left:16,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,.15)",border:"none",color:"#fff",width:50,height:50,borderRadius:"50%",cursor:"pointer",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.chevronLeft(28,"#fff")}</button>
-      <button onClick={e=>{e.stopPropagation();next();}} style={{position:"absolute",right:16,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,.15)",border:"none",color:"#fff",width:50,height:50,borderRadius:"50%",cursor:"pointer",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.chevronRight(28,"#fff")}</button>
-    </>}
-    {photos.length>1&&<div style={{position:"absolute",bottom:20,display:"flex",gap:8,overflowX:"auto",maxWidth:"90vw",padding:"0 8px",zIndex:10}}>
-      {photos.map((p,i)=><img key={i} src={p} alt="" onClick={e=>{e.stopPropagation();setIdx(i);}}
-        style={{width:56,height:44,objectFit:"cover",borderRadius:8,cursor:"pointer",opacity:i===idx?1:.45,border:i===idx?"2px solid #fff":"2px solid transparent",flexShrink:0,transition:"opacity .2s"}}/>)}
-    </div>}
-  </div>;
+return <div style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,.96)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}
+  onClick={onClose} role="dialog" aria-modal="true" aria-label="Image lightbox">
+  <button onClick={onClose} aria-label="Close lightbox" style={{position:"absolute",top:16,right:20,background:"rgba(255,255,255,.15)",border:"none",color:"#fff",width:44,height:44,borderRadius:"50%",cursor:"pointer",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.x(20,"#fff")}</button>
+  <div style={{position:"absolute",top:20,left:"50%",transform:"translateX(-50%)",color:"rgba(255,255,255,.7)",fontSize:13,zIndex:10}} aria-live="polite">{idx+1} / {photos.length}</div>
+  <div onClick={e=>e.stopPropagation()} style={{display:"flex",alignItems:"center",justifyContent:"center",maxWidth:"92vw",maxHeight:"82vh"}}>
+  <WatermarkedImage src={photos[idx]} alt={`Photo ${idx + 1} of ${photos.length}`}  style={{maxWidth:"92vw",maxHeight:"82vh",objectFit:"contain",borderRadius:8,boxShadow:"0 8px 40px rgba(0,0,0,.6)",display:"block"}}/>
+  </div>
+  {photos.length>1&&<>
+  <button onClick={e=>{e.stopPropagation();prev();}} aria-label="Previous photo" style={{position:"absolute",left:16,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,.15)",border:"none",color:"#fff",width:50,height:50,borderRadius:"50%",cursor:"pointer",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.chevronLeft(28,"#fff")}</button>
+  <button onClick={e=>{e.stopPropagation();next();}} aria-label="Next photo" style={{position:"absolute",right:16,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,.15)",border:"none",color:"#fff",width:50,height:50,borderRadius:"50%",cursor:"pointer",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.chevronRight(28,"#fff")}</button>
+  </>}
+  {photos.length>1&&<div style={{position:"absolute",bottom:20,display:"flex",gap:8,overflowX:"auto",maxWidth:"90vw",padding:"0 8px",zIndex:10}} role="list" aria-label="Photo thumbnails">
+  {photos.map((p,i)=><img key={i} src={p} alt="" role="listitem" onClick={e=>{e.stopPropagation();setIdx(i);}}
+  style={{width:56,height:44,objectFit:"cover",borderRadius:8,cursor:"pointer",opacity:i===idx?1:.45,border:i===idx?"2px solid #fff":"2px solid transparent",flexShrink:0,transition:"opacity .2s"}}/>)}
+  </div>}
+</div>;
 }
 
 // ── AUTH MODAL ────────────────────────────────────────────────────────────────
@@ -764,16 +765,16 @@ function AuthModal({defaultMode,onClose,onAuth,notify}){
       <span style={{fontSize:12,color:"#CCCCCC"}}>or with email</span>
       <div style={{flex:1,height:1,background:"#E8E8E8"}}/>
     </div>
-    {mode==="signup"&&<>
-      <FF label="Full Name" required><input className="inp" placeholder="Your full name" value={f.name} onChange={e=>sf("name",e.target.value)}/></FF>
-      <FF label="I am a">
-        <div style={{display:"flex",gap:8}}>
-          {["buyer","seller"].map(r=><button key={r} className={`btn ${f.role===r?"bp":"bs"}`} style={{flex:1}} onClick={()=>sf("role",r)}>{r==="buyer"?"Buyer":"Seller"}</button>)}
-        </div>
-      </FF>
-      <FF label="Phone (M-Pesa)" hint="Used for payment notifications"><input className="inp" placeholder="07XXXXXXXX" value={f.phone} onChange={e=>sf("phone",e.target.value)}/></FF>
-    </>}
-    <FF label="Email" required><input className="inp" type="email" placeholder="you@example.com" value={f.email} onChange={e=>sf("email",e.target.value)}/></FF>
+{mode==="signup"&&<>
+  <FF label="Full Name" required><input className="inp" placeholder="Your full name" value={f.name} onChange={e=>sf("name",e.target.value)} autoComplete="name"/></FF>
+  <FF label="I am a">
+  <div style={{display:"flex",gap:8}}>
+  {["buyer","seller"].map(r=><button key={r} className={`btn ${f.role===r?"bp":"bs"}`} style={{flex:1}} onClick={()=>sf("role",r)}>{r==="buyer"?"Buyer":"Seller"}</button>)}
+  </div>
+  </FF>
+  <FF label="Phone (M-Pesa)" hint="Used for payment notifications"><input className="inp" type="tel" placeholder="07XXXXXXXX" value={f.phone} onChange={e=>sf("phone",e.target.value)} autoComplete="tel"/></FF>
+  </>}
+  <FF label="Email" required><input className="inp" type="email" placeholder="you@example.com" value={f.email} onChange={e=>sf("email",e.target.value)} autoComplete="email"/></FF>
     <PasswordField
       label={mode==="signup"?"Password":"Password"}
       hint=""
@@ -1009,7 +1010,7 @@ function PayModal({type,listingId,pitchId,amount,purpose,token,user,onSuccess,on
           <FF label="Your M-Pesa Number" required>
             <div style={{display:"flex"}}>
               <div style={{background:"#F5F5F5",border:"1.5px solid #E0E0E0",borderRight:"none",borderRadius:6,padding:"10px 12px",fontSize:13,color:"#888888",whiteSpace:"nowrap"}}>KE +254</div>
-              <input className="inp" style={{borderRadius:6}} value={phone} onChange={e=>setPhone(e.target.value.replace(/[^0-9]/g,""))} placeholder="0712345678" maxLength={10}/>
+              <input className="inp" style={{borderRadius:6}} type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={e=>setPhone(e.target.value.replace(/[^0-9]/g,""))} placeholder="0712345678" maxLength={10}/>
             </div>
           </FF>
           {/* Escrow breakdown */}
@@ -1368,9 +1369,9 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
           {cat.sub.map(s=><option key={s}>{s}</option>)}
         </select>
       </FF>}
-      <FF label="Price (KSh)" required>
-        <input className="inp" type="number" placeholder="5000" value={f.price} onChange={e=>sf("price",e.target.value)} min={1}/>
-      </FF>
+<FF label="Price (KSh)" required>
+  <input className="inp" type="text" inputMode="decimal" placeholder="5000" value={f.price} onChange={e=>sf("price",e.target.value)}/>
+</FF>
       <FF label="Description" required hint="Condition, what's included, any defects...">
         <textarea className="inp" placeholder="Excellent condition, barely used..." value={f.description}
           onChange={e=>{sf("description",e.target.value);setFieldErrors(p=>({...p,description:undefined}));}}/>
@@ -1961,12 +1962,12 @@ function PostRequestModal({onClose,token,notify,onSuccess}){
       </FF>
     </div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
-      <FF label="Min Budget (KSh)" hint="Optional">
-        <input className="inp" type="number" placeholder="e.g. 5000" value={f.min_price} onChange={e=>sf("min_price",e.target.value)} min={0}/>
-      </FF>
-      <FF label="Max Budget (KSh)" hint="Optional">
-        <input className="inp" type="number" placeholder="e.g. 80000" value={f.budget} onChange={e=>sf("budget",e.target.value)} min={0}/>
-      </FF>
+<FF label="Min Budget (KSh)" hint="Optional">
+  <input className="inp" type="text" inputMode="decimal" placeholder="e.g. 5000" value={f.min_price} onChange={e=>sf("min_price",e.target.value)}/>
+</FF>
+<FF label="Max Budget (KSh)" hint="Optional">
+  <input className="inp" type="text" inputMode="decimal" placeholder="e.g. 80000" value={f.budget} onChange={e=>sf("budget",e.target.value)}/>
+</FF>
       <FF label="County" hint="Optional">
         <select className="inp" value={f.county} onChange={e=>sf("county",e.target.value)}>
           <option value="">Any county</option>
@@ -2215,24 +2216,22 @@ function WhatBuyersWant({user,token,notify,onSignIn,compact=false,onIHaveThis,on
           value={category} onChange={e=>{setCategory(e.target.value);setSubcat("");}}>
           <option value="">All Categories</option>
           {CATS.map(c=><option key={c.name} value={c.name}>{c.name}</option>)}
-        </select>
-        {filterCat&&<select style={{padding:"10px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",color:"#1D1D1D",flex:"1 1 120px"}}
-          value={subcat} onChange={e=>setSubcat(e.target.value)}>
-          <option value="">All Subcategories</option>
-          {filterCat.sub.map(s=><option key={s} value={s}>{s}</option>)}
-        </select>}
-        <select style={{padding:"10px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",color:"#1D1D1D",flex:"1 1 130px"}}
-          value={county} onChange={e=>setCounty(e.target.value)}>
-          <option value="">All Counties</option>
-          {KENYA_COUNTIES.map(c=><option key={c} value={c}>{c}</option>)}
-        </select>
-      </div>
-      <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap"}}>
-        <input style={{padding:"9px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",width:130}} type="number" placeholder="Min KSh" value={minPrice} onChange={e=>setMinPrice(e.target.value)}/>
-        <input style={{padding:"9px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",width:130}} type="number" placeholder="Max KSh" value={maxPrice} onChange={e=>setMaxPrice(e.target.value)}/>
-        <select style={{padding:"9px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",color:"#1D1D1D"}}
-          value={sort} onChange={e=>setSort(e.target.value)}>
-          <option value="newest">Newest First</option>
+</select>
+  </div>
+</div>
+
+{/* Secondary filter row */}
+<div style={{background:"#fff",borderBottom:"1px solid #EBEBEB",padding:"12px clamp(16px,4vw,48px)",display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+  <select style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",color:"#444"}}
+  value={county} onChange={e=>{setCounty(e.target.value);setPg(1);}}>
+  <option value="">All Counties</option>
+  {KENYA_COUNTIES.map(c=><option key={c} value={c}>{c}</option>)}
+  </select>
+  <input style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",width:120}} type="text" inputMode="decimal" placeholder="Min KSh" value={minPrice} onChange={e=>{setMinPrice(e.target.value);setPg(1);}}/>
+  <input style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",width:120}} type="text" inputMode="decimal" placeholder="Max KSh" value={maxPrice} onChange={e=>{setMaxPrice(e.target.value);setPg(1);}}/>
+  <select style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",color:"#444"}}
+  value={sort} onChange={e=>{setSort(e.target.value);setPg(1);}}>
+  <option value="newest">Newest First</option>
           <option value="oldest">Oldest First</option>
           <option value="budget_desc">Highest Budget</option>
           <option value="budget_asc">Lowest Budget</option>
@@ -2778,18 +2777,18 @@ function ProfileSection({user, token, notify, onUpdate}){
       {/* Phone */}
       <div>
         <div style={{fontSize:12,fontWeight:600,color:"#888",marginBottom:6,textTransform:"uppercase",letterSpacing:".05em"}}>Phone Number</div>
-        {editing
-          ?<input className="inp" value={f.phone} onChange={e=>setF(p=>({...p,phone:e.target.value}))} placeholder="e.g. 0712345678" type="tel"/>
-          :<div style={{fontSize:15,color:"#1A1A1A",fontWeight:500}}>{user.phone||<span style={{color:"#CCC"}}>Not set</span>}</div>}
+{editing
+  ?<input className="inp" value={f.phone} onChange={e=>setF(p=>({...p,phone:e.target.value}))} placeholder="e.g. 0712345678" type="tel" autoComplete="tel"/>
+  :<div style={{fontSize:15,color:"#1A1A1A",fontWeight:500}}>{user.phone||<span style={{color:"#CCC"}}>Not set</span>}</div>}
         {editing&&<div style={{fontSize:12,color:"#AAAAAA",marginTop:4}}>Used for M-Pesa payments — shared with buyers after KSh 250 unlock</div>}
       </div>
 
       {/* WhatsApp */}
       <div>
         <div style={{fontSize:12,fontWeight:600,color:"#888",marginBottom:6,textTransform:"uppercase",letterSpacing:".05em"}}>WhatsApp Number</div>
-        {editing
-          ?<input className="inp" value={f.whatsapp_phone} onChange={e=>setF(p=>({...p,whatsapp_phone:e.target.value}))} placeholder="e.g. 0712345678 (if different from phone)" type="tel"/>
-          :<div style={{fontSize:15,color:"#1A1A1A",fontWeight:500}}>{user.whatsapp_phone||<span style={{color:"#CCC",fontSize:13}}>Same as phone</span>}</div>}
+{editing
+  ?<input className="inp" value={f.whatsapp_phone} onChange={e=>setF(p=>({...p,whatsapp_phone:e.target.value}))} placeholder="e.g. 0712345678 (if different from phone)" type="tel" autoComplete="tel"/>
+  :<div style={{fontSize:15,color:"#1A1A1A",fontWeight:500}}>{user.whatsapp_phone||<span style={{color:"#CCC",fontSize:13}}>Same as phone</span>}</div>}
       </div>
 
       {/* Role — read-only display */}
@@ -3846,10 +3845,10 @@ function MobileRequestsTab({user, token, notify, setModal}){
           </select>
         </div>
         <div style={{display:"flex",gap:8}}>
-          <input type="number" placeholder="Min KSh" value={minPrice} onChange={e=>setMinPrice(e.target.value)}
-            style={{flex:1,padding:"9px 10px",border:"1.5px solid #E0E0E0",borderRadius:8,fontSize:12,fontFamily:"var(--fn)",outline:"none",background:"#FAFAFA"}}/>
-          <input type="number" placeholder="Max KSh" value={maxPrice} onChange={e=>setMaxPrice(e.target.value)}
-            style={{flex:1,padding:"9px 10px",border:"1.5px solid #E0E0E0",borderRadius:8,fontSize:12,fontFamily:"var(--fn)",outline:"none",background:"#FAFAFA"}}/>
+<input type="text" inputMode="decimal" placeholder="Min KSh" value={minPrice} onChange={e=>setMinPrice(e.target.value)}
+  style={{flex:1,padding:"9px 10px",border:"1.5px solid #E0E0E0",borderRadius:8,fontSize:12,fontFamily:"var(--fn)",outline:"none",background:"#FAFAFA"}}/>
+  <input type="text" inputMode="decimal" placeholder="Max KSh" value={maxPrice} onChange={e=>setMaxPrice(e.target.value)}
+  style={{flex:1,padding:"9px 10px",border:"1.5px solid #E0E0E0",borderRadius:8,fontSize:12,fontFamily:"var(--fn)",outline:"none",background:"#FAFAFA"}}/>
           {hasFilters&&<button onClick={()=>{setSearchInput("");setSearch("");setCounty("");setCategory("");setSubcat("");setMinPrice("");setMaxPrice("");setSort("newest");}}
             style={{padding:"9px 12px",background:"#fff",border:"1.5px solid #E0E0E0",borderRadius:8,cursor:"pointer",fontSize:12,fontFamily:"var(--fn)",color:"#636363",whiteSpace:"nowrap"}}>Clear</button>}
         </div>
@@ -4320,40 +4319,41 @@ function ReportListingModal({listing,token,onClose}){
       await apiCall(`/api/listings/${listing.id}/report`,{method:"POST",body:JSON.stringify({reason,details})},token);
       setDone(true);
     }catch(e){setSaving(false);}
-  };
-  return(
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",zIndex:9000,display:"flex",alignItems:"flex-end"}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-      <div style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",padding:"24px 20px 40px",maxHeight:"80vh",overflowY:"auto"}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
-          <div style={{fontWeight:800,fontSize:17}}>Report Listing</div>
-          <button onClick={onClose} style={{background:"none",border:"none",fontSize:22,cursor:"pointer",color:"#888",lineHeight:1}}>×</button>
-        </div>
-        {done?(
-          <div style={{textAlign:"center",padding:"20px 0"}}>
-            <div style={{fontSize:32,marginBottom:12}}>
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <div style={{fontWeight:700,fontSize:16,marginBottom:6}}>Report submitted</div>
-            <div style={{fontSize:13,color:"#888",marginBottom:20}}>Our team will review this listing.</div>
-            <button onClick={onClose} style={{background:"#1428A0",color:"#fff",border:"none",padding:"12px 32px",borderRadius:10,fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"var(--fn)"}}>Done</button>
-          </div>
-        ):(
-          <>
-            <div style={{fontSize:13,color:"#555",marginBottom:14}}>What's wrong with <strong>"{listing.title}"</strong>?</div>
-            <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
-              {reasons.map(r=>(
-                <button key={r} onClick={()=>setReason(r)} style={{background:reason===r?"#EEF2FF":"#F5F5F7",border:`1.5px solid ${reason===r?"#1428A0":"transparent"}`,borderRadius:10,padding:"11px 14px",fontSize:14,fontWeight:600,textAlign:"left",cursor:"pointer",fontFamily:"var(--fn)",color:reason===r?"#1428A0":"#333"}}>{r}</button>
-              ))}
-            </div>
-            <textarea placeholder="Additional details (optional)" value={details} onChange={e=>setDetails(e.target.value)} rows={3} style={{width:"100%",border:"1.5px solid #E0E0E0",borderRadius:10,padding:"10px 12px",fontSize:13,fontFamily:"var(--fn)",resize:"vertical",marginBottom:16,boxSizing:"border-box"}}/>
-            <button onClick={submit} disabled={!reason||saving} style={{width:"100%",background:reason?"#E8194B":"#CCC",color:"#fff",border:"none",padding:"14px",fontSize:14,fontWeight:700,borderRadius:12,cursor:reason?"pointer":"default",fontFamily:"var(--fn)"}}>
-              {saving?"Submitting...":"Submit Report"}
-            </button>
-          </>
-        )}
-      </div>
-    </div>
-  );
+};
+return(
+  <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",zIndex:9000,display:"flex",alignItems:"flex-end"}} onClick={e=>{if(e.target===e.currentTarget)onClose();}} role="dialog" aria-modal="true" aria-label="Report listing">
+  <div style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",padding:"24px 20px 40px",maxHeight:"80vh",overflowY:"auto"}}>
+  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+  <div style={{fontWeight:800,fontSize:17}}>Report Listing</div>
+  <button onClick={onClose} aria-label="Close report dialog" style={{background:"none",border:"none",fontSize:22,cursor:"pointer",color:"#888",lineHeight:1}}>×</button>
+  </div>
+  {done?(
+  <div style={{textAlign:"center",padding:"20px 0"}}>
+  <div style={{fontSize:32,marginBottom:12}}>
+  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  </div>
+  <div style={{fontWeight:700,fontSize:16,marginBottom:6}}>Report submitted</div>
+  <div style={{fontSize:13,color:"#888",marginBottom:20}}>Our team will review this listing.</div>
+  <button onClick={onClose} style={{background:"#1428A0",color:"#fff",border:"none",padding:"12px 32px",borderRadius:10,fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"var(--fn)"}}>Done</button>
+  </div>
+  ):(
+  <>
+  <div style={{fontSize:13,color:"#555",marginBottom:14}}>What's wrong with <strong>"{listing.title}"</strong>?</div>
+  <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}} role="radiogroup" aria-label="Report reasons">
+  {reasons.map(r=>(
+  <button key={r} onClick={()=>setReason(r)} role="radio" aria-checked={reason===r} style={{background:reason===r?"#EEF2FF":"#F5F5F7",border:`1.5px solid ${reason===r?"#1428A0":"transparent"}`,borderRadius:10,padding:"11px 14px",fontSize:14,fontWeight:600,textAlign:"left",cursor:"pointer",fontFamily:"var(--fn)",color:reason===r?"#1428A0":"#333"}}>{r}</button>
+  ))}
+  </div>
+  <label style={{display:"block",fontSize:11,fontWeight:700,color:"#636363",letterSpacing:".1em",textTransform:"uppercase",marginBottom:7,lineHeight:1.4}}>Additional Details (optional)</label>
+  <textarea aria-label="Additional details for report" placeholder="Additional details (optional)" value={details} onChange={e=>setDetails(e.target.value)} rows={3} style={{width:"100%",border:"1.5px solid #E0E0E0",borderRadius:10,padding:"10px 12px",fontSize:13,fontFamily:"var(--fn)",resize:"vertical",marginBottom:16,boxSizing:"border-box"}}/>
+  <button onClick={submit} disabled={!reason||saving} style={{width:"100%",background:reason?"#E8194B":"#CCC",color:"#fff",border:"none",padding:"14px",fontSize:14,fontWeight:700,borderRadius:12,cursor:reason?"pointer":"default",fontFamily:"var(--fn)"}}>
+  {saving?"Submitting...":"Submit Report"}
+  </button>
+  </>
+  )}
+  </div>
+  </div>
+);
 }
 
 // ── SWIPE FEED — vertical scroll between ads, tap edges to browse photos ──────
@@ -4989,18 +4989,18 @@ function AllListingsPage({user,token,notify,onBack,onOpenListing,onToggleSave,sa
         </select>}
       </div>
     </div>
-    {/* Secondary filters */}
-    <div style={{background:"#fff",borderBottom:"1px solid #EBEBEB",padding:"12px clamp(16px,4vw,48px)",display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
-      <select style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",color:"#444"}}
-        value={county} onChange={e=>{setCounty(e.target.value);setPg(1);}}>
-        <option value="">All Counties</option>
-        {KENYA_COUNTIES.map(c=><option key={c} value={c}>{c}</option>)}
-      </select>
-      <input style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",width:120}} type="number" placeholder="Min KSh" value={minPrice} onChange={e=>{setMinPrice(e.target.value);setPg(1);}}/>
-      <input style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",width:120}} type="number" placeholder="Max KSh" value={maxPrice} onChange={e=>{setMaxPrice(e.target.value);setPg(1);}}/>
-      <select style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",color:"#444"}}
-        value={sort} onChange={e=>{setSort(e.target.value);setPg(1);}}>
-        <option value="newest">Newest First</option>
+{/* Secondary filters */}
+<div style={{background:"#fff",borderBottom:"1px solid #EBEBEB",padding:"12px clamp(16px,4vw,48px)",display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+  <select style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",color:"#444"}}
+  value={county} onChange={e=>{setCounty(e.target.value);setPg(1);}}>
+  <option value="">All Counties</option>
+  {KENYA_COUNTIES.map(c=><option key={c} value={c}>{c}</option>)}
+  </select>
+  <input style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",width:120}} type="text" inputMode="decimal" placeholder="Min KSh" value={minPrice} onChange={e=>{setMinPrice(e.target.value);setPg(1);}}/>
+  <input style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",width:120}} type="text" inputMode="decimal" placeholder="Max KSh" value={maxPrice} onChange={e=>{setMaxPrice(e.target.value);setPg(1);}}/>
+  <select style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",color:"#444"}}
+  value={sort} onChange={e=>{setSort(e.target.value);setPg(1);}}>
+  <option value="newest">Newest First</option>
         <option value="oldest">Oldest First</option>
         <option value="price_asc">Price: Low → High</option>
         <option value="price_desc">Price: High → Low</option>
@@ -5205,22 +5205,22 @@ function BuyersWantPage({user,token,notify,onBack,onIHaveThis,onSignIn}){
       </div>
     </div>
 
-    {/* Secondary filter row */}
-    <div style={{background:"#fff",borderBottom:"1px solid #EBEBEB",padding:"12px clamp(16px,4vw,48px)",display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
-      <select style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",color:"#444"}}
-        value={county} onChange={e=>{setCounty(e.target.value);setPg(1);}}>
-        <option value="">All Counties</option>
-        {KENYA_COUNTIES.map(c=><option key={c} value={c}>{c}</option>)}
-      </select>
-      <input style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",width:120}} type="number" placeholder="Min KSh" value={minPrice} onChange={e=>{setMinPrice(e.target.value);setPg(1);}}/>
-      <input style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",width:120}} type="number" placeholder="Max KSh" value={maxPrice} onChange={e=>{setMaxPrice(e.target.value);setPg(1);}}/>
-      <select style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",color:"#444"}}
-        value={sort} onChange={e=>{setSort(e.target.value);setPg(1);}}>
-        <option value="newest">Newest First</option>
-        <option value="oldest">Oldest First</option>
-        <option value="budget_desc">Highest Budget</option>
-        <option value="budget_asc">Lowest Budget</option>
-      </select>
+{/* Secondary filter row */}
+<div style={{background:"#fff",borderBottom:"1px solid #EBEBEB",padding:"12px clamp(16px,4vw,48px)",display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+  <select style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",color:"#444"}}
+  value={county} onChange={e=>{setCounty(e.target.value);setPg(1);}}>
+  <option value="">All Counties</option>
+  {KENYA_COUNTIES.map(c=><option key={c} value={c}>{c}</option>)}
+  </select>
+  <input style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",width:120}} type="text" inputMode="decimal" placeholder="Min KSh" value={minPrice} onChange={e=>{setMinPrice(e.target.value);setPg(1);}}/>
+  <input style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",width:120}} type="text" inputMode="decimal" placeholder="Max KSh" value={maxPrice} onChange={e=>{setMaxPrice(e.target.value);setPg(1);}}/>
+  <select style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",color:"#444"}}
+  value={sort} onChange={e=>{setSort(e.target.value);setPg(1);}}>
+  <option value="newest">Newest First</option>
+  <option value="oldest">Oldest First</option>
+  <option value="budget_desc">Highest Budget</option>
+  <option value="budget_asc">Lowest Budget</option>
+  </select>
       {hasFilters&&<button style={{padding:"8px 14px",border:"1px solid #E0E0E0",borderRadius:8,background:"#fff",cursor:"pointer",fontSize:12,fontFamily:"var(--fn)",color:"#636363"}} onClick={clearFilters}>Clear All</button>}
     </div>
 

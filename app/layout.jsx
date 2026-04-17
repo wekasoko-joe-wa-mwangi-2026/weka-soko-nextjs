@@ -63,7 +63,7 @@ const websiteLd = JSON.stringify({
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en-KE">
       <head>
         <meta name="geo.region" content="KE" />
         <meta name="geo.placename" content="Kenya" />

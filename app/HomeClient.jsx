@@ -849,11 +849,11 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
               </div>
               <div>
                 <label style={{display:"block",fontSize:13,fontWeight:600,color:"#636363",marginBottom:6}}>Min Price (KSh)</label>
-                <input className="inp" placeholder="e.g. 500" type="number" value={filter.minPrice} onChange={e=>{setFilter(p=>({...p,minPrice:e.target.value}));setPg(1);}}/>
-              </div>
-              <div>
-                <label style={{display:"block",fontSize:13,fontWeight:600,color:"#636363",marginBottom:6}}>Max Price (KSh)</label>
-                <input className="inp" placeholder="e.g. 50000" type="number" value={filter.maxPrice} onChange={e=>{setFilter(p=>({...p,maxPrice:e.target.value}));setPg(1);}}/>
+<input className="inp" placeholder="e.g. 500" type="text" inputMode="decimal" value={filter.minPrice} onChange={e=>{setFilter(p=>({...p,minPrice:e.target.value}));setPg(1);}}/>
+</div>
+<div>
+  <label style={{display:"block",fontSize:13,fontWeight:600,color:"#636363",marginBottom:6}}>Max Price (KSh)</label>
+  <input className="inp" placeholder="e.g. 50000" type="text" inputMode="decimal" value={filter.maxPrice} onChange={e=>{setFilter(p=>({...p,maxPrice:e.target.value}));setPg(1);}}/>
               </div>
             </div>
             {filter.cat&&<select className="inp" value={filter.subcat} onChange={e=>{setFilter(p=>({...p,subcat:e.target.value}));setPg(1);}}>

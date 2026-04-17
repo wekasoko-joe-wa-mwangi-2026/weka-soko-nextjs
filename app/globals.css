@@ -51,6 +51,16 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* ── PREMIUM ANIMATIONS ─────────────────────── */
 @keyframes spring-in {
   0% { opacity: 0; transform: scale(0.92) translateY(10px); }
@@ -74,14 +84,14 @@ body {
 .depth-float {
   background: #fff;
   border-radius: var(--r);
-  box-shadow: var(--depth-shadow);
-  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+  box-shadow: var(--shadow-float);
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease, border-color 0.2s ease;
   border: 1px solid rgba(0,0,0,0.03);
 }
 
 .depth-float:hover {
   transform: translateY(-8px) scale(1.01);
-  box-shadow: var(--depth-hover);
+  box-shadow: var(--shadow-hover-float);
 }
 
 .mob-root{overflow-x:hidden;}
@@ -119,7 +129,7 @@ body {
   font-weight: 800;
   cursor: pointer;
   border: none;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), filter 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
   white-space: nowrap;
   font-family: var(--fn);
   letter-spacing: -0.01em;
@@ -253,7 +263,7 @@ select.inp{appearance:none;cursor:pointer;}
   max-height: 94vh;
   overflow-y: auto;
   animation: spring-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
-  box-shadow: var(--depth-hover);
+  box-shadow: var(--shadow-hover-float);
 }
 
 .mod.closing { animation: mod-exit 0.22s ease-in both; }
