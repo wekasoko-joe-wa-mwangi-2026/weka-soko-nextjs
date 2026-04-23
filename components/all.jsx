@@ -2196,7 +2196,7 @@ function WhatBuyersWant({user,token,notify,onSignIn,compact=false,onIHaveThis,on
     </div>
 
     {showModal&&<PostRequestModal token={token} notify={notify} onClose={()=>setShowModal(false)} onSuccess={r=>{setRequests(p=>[r,...p]);setTotal(t=>t+1);}}/>}
-  </div>;
+  </div>
 }
 
 // Shared sold item card — used in SoldSection and SoldPage
