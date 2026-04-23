@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { fmtKES, ago, CATS, KENYA_COUNTIES, KENYA_TOWNS, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
-import { Modal, Ic } from '@/components/ui/primitives';
+import { Ic } from '@/components/ui/primitives';
+import { Modal } from '@/components/ui/core';
 
 function ShareModal({listing,onClose}){
   const url=`https://weka-soko-nextjs.vercel.app/listings/${listing.id}`;

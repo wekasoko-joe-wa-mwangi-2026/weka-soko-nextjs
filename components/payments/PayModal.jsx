@@ -1,9 +1,9 @@
 'use client';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { fmtKES, ago, CATS, KENYA_COUNTIES, KENYA_TOWNS, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
-import { api } from '@/components/ui/primitives';
-import { Spin, Modal, Ic } from '@/components/ui/primitives';
-import { FF } from '@/components/ui/core';
+import { api, Spin, Ic } from '@/components/ui/primitives';
+import { FF, Modal } from '@/components/ui/core';
+
 
 function PayModal({type,listingId,pitchId,amount,purpose,token,user,onSuccess,onClose,notify,allowVoucher}){
   const [phone,setPhone]=useState(user?.phone||"07");
