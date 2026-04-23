@@ -1,9 +1,15 @@
 'use client';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { fmtKES, ago, CATS, KENYA_COUNTIES, KENYA_TOWNS, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
+import { api } from '@/components/ui/primitives';
 import { Spin, Ic, WekaSokoLogo, useRipple } from '@/components/ui/primitives';
 import { Modal, FF, ImageUploader, compressImage } from '@/components/ui/core';
-import { StarPicker } from '@/components/dashboard/ReviewsSection';
+import { StarPicker, ReviewsSection } from '@/components/dashboard/ReviewsSection';
+import { ChatModal } from '@/components/chat/ChatModal';
+import { PayModal } from '@/components/payments/PayModal';
+import { PostAdModal, MarkSoldModal } from '@/components/listings/ListingComponents';
+import { RoleSwitcher, PostRequestModal } from '@/components/requests/RequestComponents';
+import { SoldSection } from '@/components/sold/SoldComponents';
 
 function MyRequestsTab({token,notify,user}){
   const [requests,setRequests]=useState([]);
