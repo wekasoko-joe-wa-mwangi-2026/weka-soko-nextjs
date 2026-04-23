@@ -1,8 +1,7 @@
 'use client';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { fmtKES, ago, CATS, KENYA_COUNTIES, KENYA_TOWNS, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
-import { api } from '@/components/ui/primitives';
-import { Spin, Ic, useRipple, WekaSokoLogo, Lightbox, WatermarkedImage } from '@/components/ui/primitives';
+import { api, Spin, Ic, useRipple, WekaSokoLogo } from '@/components/ui/primitives';
 import { Modal, FF } from '@/components/ui/core';
 import { Toast, ImageUploader } from '@/components/ui/core';
 

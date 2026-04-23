@@ -2,7 +2,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { fmtKES, ago, CATS, KENYA_COUNTIES, KENYA_TOWNS, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
 import { api } from '@/components/ui/primitives';
-import { Spin, Ic, HeartBtn, WatermarkedImage, Lightbox, useRipple, SkeletonCard } from '@/components/ui/primitives';
+import { Spin, Ic, HeartBtn, useRipple, SkeletonCard } from '@/components/ui/primitives';
+import { WatermarkedImage, Lightbox } from '@/components/auth/AuthModal';
 import { Modal, FF, ImageUploader, compressImage } from '@/components/ui/core';
 import { ShareModal } from '@/components/listings/ShareModal';
 import { PayModal } from '@/components/payments/PayModal';

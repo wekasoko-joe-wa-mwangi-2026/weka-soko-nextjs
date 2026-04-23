@@ -145,14 +145,6 @@ export const Ic = {
   card:     (s=16,c="currentColor")=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>,
 };
 
-async function api(path, opts={}, token=null) {
-  const isForm = opts.body instanceof FormData;
-  const headers = {...(token?{Authorization:`Bearer ${token}`}:{}), ...(!isForm?{"Content-Type":"application/json"}:{}), ...(opts.headers||{})};
-  const res = await fetch(`${API}${path}`, {...opts, headers});
-  const data = await res.json().catch(()=>({}));
-  if (!res.ok) throw new Error(data.error||data.message||"Request failed");
-  return data;
-}
 
 // ── CONTACT INFO DETECTION (client-side mirror of backend moderation) ─────────
 function checkContactInfo(text) {
