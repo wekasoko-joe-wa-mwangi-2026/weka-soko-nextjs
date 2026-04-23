@@ -2185,74 +2185,8 @@ function WhatBuyersWant({user,token,notify,onSignIn,compact=false,onIHaveThis,on
       </div>
     </div>
     {showModal&&<PostRequestModal token={token} notify={notify} onClose={()=>setShowModal(false)} onSuccess={r=>{setRequests(p=>[r,...p]);setTotal(t=>t+1);}}/>}
-  </div>;
-
-  return <div style={{background:"#FFFFFF",padding:"48px 40px",margin:"0 -48px",borderTop:"1px solid #EBEBEB",borderBottom:"1px solid #EBEBEB"}}>
-    <div>
-      {/* Header */}
-      <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-between",marginBottom:20,flexWrap:"wrap",gap:12}}>
-        <div>
-          <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"#767676",marginBottom:8}}>Community</div>
-          <h2 style={{fontSize:"clamp(24px,3vw,36px)",fontWeight:500,letterSpacing:"-.01em",color:"#1D1D1D",fontFamily:"var(--fn)",lineHeight:1.1}}>What Buyers Want</h2>
-          <p style={{fontSize:13,color:"#767676",marginTop:6}}>{total} active request{total!==1?"s":""} from buyers looking for items</p>
-        </div>
-        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-          {onViewAll&&total>12&&<button style={{background:"transparent",color:"#1428A0",border:"1.5px solid #1428A0",padding:"10px 20px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:8}} onClick={onViewAll}>View All Requests →</button>}
-          <button style={{background:"#1D1D1D",color:"#fff",border:"none",padding:"12px 24px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:8,whiteSpace:"nowrap"}}
-            onClick={()=>{if(!user){onSignIn();return;}setShowModal(true);}}>+ Post a Request</button>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
-        <div style={{display:"flex",flex:"2 1 260px",gap:0,border:"1px solid #E0E0E0",borderRadius:8,overflow:"hidden",background:"#fff",minWidth:0}}>
-          <input style={{flex:1,padding:"10px 14px",border:"none",outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",color:"#1D1D1D",minWidth:0}}
-            placeholder="Search requests..." value={searchInput}
-            onChange={e=>setSearchInput(e.target.value)}
-            onKeyDown={e=>{if(e.key==="Enter")setSearch(searchInput);}}/>
-          <button onClick={()=>setSearch(searchInput)} style={{background:"#1428A0",color:"#fff",border:"none",padding:"0 16px",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"var(--fn)",flexShrink:0}}>Search</button>
-        </div>
-        <select style={{padding:"10px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",color:"#1D1D1D",flex:"1 1 140px"}}
-          value={category} onChange={e=>{setCategory(e.target.value);setSubcat("");}}>
-          <option value="">All Categories</option>
-          {CATS.map(c=><option key={c.name} value={c.name}>{c.name}</option>)}
-</select>
   </div>
-</div>
-
-{/* Secondary filter row */}
-<div style={{background:"#fff",borderBottom:"1px solid #EBEBEB",padding:"12px clamp(16px,4vw,48px)",display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
-  <select style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",color:"#444"}}
-  value={county} onChange={e=>{setCounty(e.target.value);setPg(1);}}>
-  <option value="">All Counties</option>
-  {KENYA_COUNTIES.map(c=><option key={c} value={c}>{c}</option>)}
-  </select>
-  <input style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",width:120}} type="text" inputMode="decimal" placeholder="Min KSh" value={minPrice} onChange={e=>{setMinPrice(e.target.value);setPg(1);}}/>
-  <input style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",width:120}} type="text" inputMode="decimal" placeholder="Max KSh" value={maxPrice} onChange={e=>{setMaxPrice(e.target.value);setPg(1);}}/>
-  <select style={{padding:"8px 12px",border:"1px solid #E0E0E0",borderRadius:8,outline:"none",fontSize:13,fontFamily:"var(--fn)",background:"#fff",cursor:"pointer",color:"#444"}}
-  value={sort} onChange={e=>{setSort(e.target.value);setPg(1);}}>
-  <option value="newest">Newest First</option>
-          <option value="oldest">Oldest First</option>
-          <option value="budget_desc">Highest Budget</option>
-          <option value="budget_asc">Lowest Budget</option>
-        </select>
-        {hasFilters&&<button style={{padding:"9px 14px",border:"1px solid #E0E0E0",borderRadius:8,background:"#fff",cursor:"pointer",fontSize:12,fontFamily:"var(--fn)",color:"#636363"}} onClick={clearFilters}>Clear All</button>}
-      </div>
-
-      {/* Requests grid */}
-      {loading?<div style={{textAlign:"center",padding:40}}><Spin s="32px"/></div>
-        :requests.length===0?<div style={{textAlign:"center",padding:"40px 20px",color:"#767676"}}>
-            <div style={{marginBottom:12,opacity:.3,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
-            <div style={{fontWeight:700,fontSize:16,marginBottom:6}}>No requests found</div>
-            <div style={{fontSize:13}}>{hasFilters?"Try different filters":"Be the first to post what you're looking for"}</div>
-            {hasFilters&&<button className="btn bp" style={{marginTop:14}} onClick={clearFilters}>Clear Filters</button>}
-          </div>
-        :<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:12}}>
-          {requests.map(r=><RequestCard key={r.id} r={r} user={user} token={token} notify={notify}
-            onIHaveThis={handleIHaveThis}
-            onDelete={id=>{setRequests(p=>p.filter(x=>x.id!==id));setTotal(t=>t-1);}}/>)}
-        </div>
-      }
+}
 
       {total>12&&<div style={{textAlign:"center",marginTop:24}}>
         <button style={{background:"transparent",border:"1.5px solid #1D1D1D",color:"#1D1D1D",padding:"10px 28px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:8}} onClick={onViewAll}>
