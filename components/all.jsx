@@ -2532,7 +2532,7 @@ function PitchesTab({token, notify, user}) {
     <p style={{fontSize:13,color:"var(--mut)"}}>Post a buyer request to start receiving pitches from sellers</p>
   </div>;
 
-  return <div style={{display:"flex",flexDirection:"column",gap:16}}>
+  return return <div style={{display:"flex",flexDirection:"column",gap:16}}>
     {requests.map(r => {
       const rPitches = pitches[r.id] || [];
       const pendingCount = rPitches.filter(p => p.status === "pending").length;
