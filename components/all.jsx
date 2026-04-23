@@ -2184,6 +2184,8 @@ function WhatBuyersWant({user,token,notify,onSignIn,compact=false,onIHaveThis,on
           onClick={()=>{if(!user){onSignIn();return;}setShowModal(true);}}>+ Post Request</button>
       </div>
     </div>
+  </div>;
+
   return <div style={{display:"flex",flexDirection:"column",gap:16}}>
     {loading ? <Spin/> : requests.length===0 ? (
       <div style={{textAlign:"center",padding:"20px 0",color:"#AAAAAA",fontSize:13}}>
