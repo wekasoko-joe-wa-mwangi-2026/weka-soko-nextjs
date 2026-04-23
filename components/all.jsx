@@ -2188,7 +2188,7 @@ function WhatBuyersWant({user,token,notify,onSignIn,compact=false,onIHaveThis,on
   </div>
 }
 
-      {total>12&&<div style={{textAlign:"center",marginTop:24}}>
+      {total>12 && <div style={{textAlign:"center",marginTop:24}}>
         <button style={{background:"transparent",border:"1.5px solid #1D1D1D",color:"#1D1D1D",padding:"10px 28px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:8}} onClick={onViewAll}>
           View all {total} requests >
         </button>
