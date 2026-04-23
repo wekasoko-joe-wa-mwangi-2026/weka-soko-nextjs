@@ -2184,18 +2184,37 @@ function WhatBuyersWant({user,token,notify,onSignIn,compact=false,onIHaveThis,on
           onClick={()=>{if(!user){onSignIn();return;}setShowModal(true);}}>+ Post Request</button>
       </div>
     </div>
-    {showModal&&<PostRequestModal token={token} notify={notify} onClose={()=>setShowModal(false)} onSuccess={r=>{setRequests(p=>[r,...p]);setTotal(t=>t+1);}}/>}
-  </div>
-}
-
-      {total>12&&<div style={{textAlign:"center",marginTop:24}}>
+  return <div style={{display:"flex",flexDirection:"column",gap:16}}>
+    {loading ? <Spin/> : requests.length===0 ? (
+      <div style={{textAlign:"center",padding:"20px 0",color:"#AAAAAA",fontSize:13}}>
+        <div style={{marginBottom:8,opacity:.3,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        </div>
+        No requests yet
+      </div>
+    ) : (
+      requests.map(r => (
+        <div key={r.id} style={{padding:"12px 0",borderBottom:"1px solid #F0F0F0"}}>
+          <div style={{display:"flex",gap:4,flexWrap:"wrap",marginBottom:3}}>
+            {r.category && <span style={{background:"#EEF2FF",color:"#1428A0",padding:"1px 6px",fontSize:10,fontWeight:600,borderRadius:3}}>{r.category}</span>}
+          </div>
+          <div style={{fontWeight:700,fontSize:13,marginBottom:3,color:"#1A1A1A",lineHeight:1.3}}>{r.title}</div>
+          <div style={{fontSize:12,color:"#777",lineHeight:1.5,marginBottom:6}}>{r.description?.slice(0,60)}{r.description?.length>60?"...":""}</div>
+          <div style={{display:"flex",gap:6,alignItems:"center",justifyContent:"space-between"}}>
+            {r.budget && <span style={{fontSize:11,fontWeight:600,color:"#1428A0"}}>KSh {Number(r.budget).toLocaleString()}</span>}
+            <button className="btn bp sm" style={{fontSize:11,padding:"4px 10px",borderRadius:6}} onClick={()=>handleIHaveThis(r)}>I Have This</button>
+          </div>
+        </div>
+      ))
+    )}
+    {total>12 && (
+      <div style={{textAlign:"center",marginTop:24}}>
         <button style={{background:"transparent",border:"1.5px solid #1D1D1D",color:"#1D1D1D",padding:"10px 28px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:8}} onClick={onViewAll}>
           View all {total} requests &gt;
         </button>
-      </div>}
-    </div>
-
-    {showModal&&<PostRequestModal token={token} notify={notify} onClose={()=>setShowModal(false)} onSuccess={r=>{setRequests(p=>[r,...p]);setTotal(t=>t+1);}}/>}
+      </div>
+    )}
+    {showModal && <PostRequestModal token={token} notify={notify} onClose={()=>setShowModal(false)} onSuccess={r=>{setRequests(p=>[r,...p]);setTotal(t=>t+1);}} />}
   </div>;
 }
 
