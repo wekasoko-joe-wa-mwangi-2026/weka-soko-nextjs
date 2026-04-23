@@ -584,4 +584,56 @@ function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnl
 // ── MARK AS SOLD MODAL ────────────────────────────────────────────────────────
 
 
+function MarkSoldModal({listing, token, notify, onClose, onSuccess}) {
+  const [loading, setLoading] = useState(false);
+
+  const confirm = async (channel) => {
+    setLoading(true);
+    try {
+      await api(`/api/listings/${listing.id}/mark-sold`, {
+        method: "POST",
+        body: JSON.stringify({ channel })
+      }, token);
+      notify(
+        channel === "platform"
+          ? "Marked as sold via Weka Soko!"
+          : "Marked as sold outside platform.",
+        "success"
+      );
+      onSuccess(listing.id, channel);
+      onClose();
+    } catch(e) { notify(e.message, "error"); }
+    finally { setLoading(false); }
+  };
+
+  return <Modal title="Mark as Sold" onClose={onClose}>
+    <div style={{textAlign:"center", padding:"8px 0 16px"}}>
+      <div style={{marginBottom:12,display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></div>
+      <div style={{fontWeight:700, fontSize:16, marginBottom:6}}>{listing.title}</div>
+      <div style={{fontSize:13, color:"#888888", marginBottom:24}}>
+        How did this item sell? This helps us improve Weka Soko.
+      </div>
+
+      <div style={{display:"flex", flexDirection:"column", gap:12}}>
+        <button className="btn bp" style={{width:"100%", padding:"16px", flexDirection:"column", gap:4, height:"auto"}}
+          onClick={()=>confirm("platform")} disabled={loading}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
+          <div style={{fontWeight:700, fontSize:14}}>Sold via Weka Soko</div>
+          <div style={{fontSize:12, opacity:.8, fontWeight:400}}>Buyer found me through this platform</div>
+        </button>
+
+        <button className="btn bs" style={{width:"100%", padding:"16px", flexDirection:"column", gap:4, height:"auto"}}
+          onClick={()=>confirm("outside")} disabled={loading}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <div style={{fontWeight:700, fontSize:14}}>Sold Outside Platform</div>
+          <div style={{fontSize:12, color:"#888888", fontWeight:400}}>I found the buyer elsewhere</div>
+        </button>
+      </div>
+
+      {loading && <div style={{marginTop:16}}><Spin/></div>}
+    </div>
+  </Modal>;
+}
+
+
 export { PostAdModal, ListingCardSkeleton, HeroSkeleton, ListingCard, LeaveReviewBtn, ReportListingBtn, DetailModal, MarkSoldModal };
