@@ -2188,7 +2188,7 @@ function WhatBuyersWant({user,token,notify,onSignIn,compact=false,onIHaveThis,on
   </div>
 }
 
-      {total>12 && <div style={{textAlign:"center",marginTop:24}}>
+      {total>12&&<div style={{textAlign:"center",marginTop:24}}>
         <button style={{background:"transparent",border:"1.5px solid #1D1D1D",color:"#1D1D1D",padding:"10px 28px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)",borderRadius:8}} onClick={onViewAll}>
           View all {total} requests &gt;
         </button>
@@ -2532,7 +2532,7 @@ function PitchesTab({token, notify, user}) {
     <p style={{fontSize:13,color:"var(--mut)"}}>Post a buyer request to start receiving pitches from sellers</p>
   </div>;
 
-  return return <div style={{display:"flex",flexDirection:"column",gap:16}}>
+  return <div style={{display:"flex",flexDirection:"column",gap:16}}>
     {requests.map(r => {
       const rPitches = pitches[r.id] || [];
       const pendingCount = rPitches.filter(p => p.status === "pending").length;
@@ -4110,7 +4110,7 @@ function MobileLayout({
                   </div>
                   {onToggleSave&&<HeartBtn saved={savedIds?.has(l.id)} onToggle={e=>{if(e&&e.stopPropagation)e.stopPropagation();onToggleSave&&onToggleSave(l);}} size={14} style={{position:"absolute",top:12,right:12,width:32,height:32,boxShadow:"0 1px 4px rgba(0,0,0,.15)"}}/>}
                   {l.locked_buyer_id&&!l.is_unlocked&&<div style={{position:"absolute",top:12,right:12,width:8,height:8,background:"#1428A0",borderRadius:"50%"}}/>}
-                </div>;
+  </div>
               })}
             </div>}
         {/* Pagination */}
