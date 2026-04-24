@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { fmtKES, ago, CATS, KENYA_COUNTIES, KENYA_TOWNS, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
-import { api } from '@/components/ui/primitives';
+import { api, checkContactInfo } from '@/components/ui/primitives';
 import { Spin, Ic } from '@/components/ui/primitives';
 import { Lightbox } from '@/components/auth/AuthModal';
 import { Modal, FF } from '@/components/ui/core';
