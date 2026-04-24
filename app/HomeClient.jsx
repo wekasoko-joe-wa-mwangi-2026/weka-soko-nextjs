@@ -528,6 +528,15 @@ useEffect(()=>{
     }catch(err){notify(err.message,"error");}
   };
 
+  const handleMarkSold=async(listingId)=>{
+    if(!user||!token){setModal({type:"auth",mode:"login"});return;}
+    try{
+      await apiCall(`/api/listings/${listingId}/mark-sold`,{method:"PATCH"},token);
+      setListings(p=>p.map(l=>l.id===listingId?{...l,status:"sold"}:l));
+      notify("Listing marked as sold!","success");
+    }catch(err){notify(err.message,"error");}
+  };
+
   const openListing=async l=>{
     if (isMobile) {
       const idx = listings.findIndex(x => x.id === l.id);
@@ -590,7 +599,7 @@ useEffect(()=>{
     maintenanceMsg={maintenanceMsg}
     mobileFiltersOpen={mobileFiltersOpen} setMobileFiltersOpen={setMobileFiltersOpen}
     mobileTab={mobileTab} setMobileTab={setMobileTab}
-    openListing={openListing} handleLockIn={handleLockIn}
+          openListing={openListing} handleLockIn={handleLockIn} handleMarkSold={handleMarkSold}
     savedIds={savedIds} onToggleSave={handleToggleSave}
     newSinceLastVisit={newSinceLastVisit}
   />

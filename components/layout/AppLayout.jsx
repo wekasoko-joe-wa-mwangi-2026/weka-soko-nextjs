@@ -28,7 +28,8 @@ function MobileRequestsTab({user, token, notify, setModal}){
   const [expanded, setExpanded] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const filterCat = CATS.find(c=>c.name===category);
-  const hasFilters = search||county||category||subcat||minPrice||maxPrice||sort!=="newest";
+  const activeFilterCount = [search,county,category,subcat,minPrice,maxPrice].filter(Boolean).length + (sort!=="newest"?1:0);
+  const hasFilters = activeFilterCount > 0;
 
   useEffect(()=>{
     setLoading(true);
@@ -80,11 +81,12 @@ function MobileRequestsTab({user, token, notify, setModal}){
           <div style={{fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:2}}>Community</div>
           <div style={{fontSize:19,fontWeight:800,color:"#1A1A1A",letterSpacing:"-.01em"}}>What Buyers Want <span style={{fontSize:13,fontWeight:500,color:"#AAAAAA"}}>({total})</span></div>
         </div>
-        <button
-          style={{background:"#1428A0",color:"#fff",border:"none",padding:"10px 14px",borderRadius:10,fontSize:13,fontWeight:700,fontFamily:"var(--fn)",cursor:"pointer",whiteSpace:"nowrap"}}
-          onClick={()=>{if(!user){setModal({type:"auth",mode:"login"});return;}setShowPostModal(true);}}>
-          + Post
-        </button>
+            <button
+              type="button"
+              style={{background:"#1428A0",color:"#fff",border:"none",padding:"10px 14px",borderRadius:10,fontSize:13,fontWeight:700,fontFamily:"var(--fn)",cursor:"pointer",whiteSpace:"nowrap"}}
+              onClick={()=>{if(!user){setModal({type:"auth",mode:"login"});return;}setShowPostModal(true);}}>
+              + Post
+            </button>
       </div>
       {/* Search row */}
       <div style={{display:"flex",gap:8,marginBottom:8}}>
@@ -99,7 +101,7 @@ function MobileRequestsTab({user, token, notify, setModal}){
           </button>
         </div>
         <button onClick={()=>setShowFilters(f=>!f)} style={{background:hasFilters?"#1428A0":"#fff",color:hasFilters?"#fff":"#555",border:"1.5px solid",borderColor:hasFilters?"#1428A0":"#E0E0E0",borderRadius:8,padding:"9px 12px",cursor:"pointer",fontFamily:"var(--fn)",fontSize:13,fontWeight:600,whiteSpace:"nowrap"}}>
-          Filters{hasFilters?" ✓":""}
+            Filters{activeFilterCount>0?` (${activeFilterCount})`:""}
         </button>
       </div>
       {/* Expanded filters */}
@@ -178,7 +180,7 @@ function MobileLayout({
   listings,total,loading,filter,setFilter,pg,setPg,
   stats,counties,modal,setModal,notifCount,
   mobileFiltersOpen,setMobileFiltersOpen,mobileTab,setMobileTab,
-  openListing,handleLockIn,savedIds,onToggleSave,newSinceLastVisit,maintenanceMsg
+  openListing,handleLockIn,handleMarkSold,savedIds,onToggleSave,newSinceLastVisit,maintenanceMsg
 }){
   const photoMap={
     Electronics:"https://images.unsplash.com/photo-1498049794561-7780e7231661?w=140&h=140&fit=crop",
@@ -441,11 +443,11 @@ function MobileLayout({
                   <div className="mob-lcard-img" style={{position:"relative"}}>
                     {photo?<img src={photo} alt={l.title}/>:<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",background:"#F2F2F7",opacity:.6}}>{Ic.image(24,"#CCCCCC")}</div>}
                     {isNew&&<div style={{position:"absolute",bottom:4,left:4,background:"#10b981",color:"#fff",fontSize:8,fontWeight:800,padding:"2px 6px",borderRadius:4,letterSpacing:".04em"}}>NEW</div>}
-                    {/* Swipe browse button — bottom right of image */}
-                    <button onClick={e=>{e.stopPropagation();setSwipeFeedIdx(listings.findIndex(x=>x.id===l.id));}} style={{position:"absolute",bottom:6,right:6,background:"rgba(0,0,0,.55)",color:"#fff",border:"none",borderRadius:6,padding:"4px 8px",fontSize:10,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontFamily:"var(--fn)"}}>
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                      Browse
-                    </button>
+  {/* Swipe view button — bottom right of image */}
+  <button onClick={e=>{e.stopPropagation();setSwipeFeedIdx(listings.findIndex(x=>x.id===l.id));}} style={{position:"absolute",bottom:6,right:6,background:"rgba(0,0,0,.55)",color:"#fff",border:"none",borderRadius:6,padding:"4px 8px",fontSize:10,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontFamily:"var(--fn)"}}>
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  View
+  </button>
                   </div>
                   <div className="mob-lcard-body">
                     <div className="mob-lcard-cat">{l.category}</div>
@@ -484,19 +486,20 @@ function MobileLayout({
 
     {/* ── SWIPE OVERLAY — opened when user taps a listing card ── */}
     {swipeFeedIdx!==null&&<div style={{position:"fixed",inset:0,zIndex:1000}}>
-      <SwipeFeed
-        user={user} token={token}
-        onOpen={(l)=>{setSwipeFeedIdx(null);openListing(l);}}
-        onLockIn={handleLockIn}
-        onMessage={(l)=>{if(!user){setModal({type:"auth",mode:"login"});return;}setModal({type:"chat",listing:l});}}
-        savedIds={savedIds} onToggleSave={onToggleSave}
-        onSignIn={()=>setModal({type:"auth",mode:"login"})}
-        onPostAd={()=>{setSwipeFeedIdx(null);postAd();}}
-        initialListings={listings}
-        startIndex={swipeFeedIdx}
-        onClose={()=>setSwipeFeedIdx(null)}
-        filter={filter}
-      />
+          <SwipeFeed
+            user={user} token={token}
+            onOpen={(l)=>{setSwipeFeedIdx(null);openListing(l);}}
+            onLockIn={handleLockIn}
+            onMessage={(l)=>{if(!user){setModal({type:"auth",mode:"login"});return;}setModal({type:"chat",listing:l});}}
+            savedIds={savedIds} onToggleSave={onToggleSave}
+            onSignIn={()=>setModal({type:"auth",mode:"login"})}
+            onPostAd={()=>{setSwipeFeedIdx(null);postAd();}}
+            onMarkSold={(l)=>{handleMarkSold&&handleMarkSold(l.id);}}
+            initialListings={listings}
+            startIndex={swipeFeedIdx}
+            onClose={()=>setSwipeFeedIdx(null)}
+            filter={filter}
+          />
     </div>}
 
     {/* ── REQUESTS TAB ── */}
@@ -643,7 +646,7 @@ return(
 }
 
 // ── SWIPE FEED — vertical scroll between ads, tap edges to browse photos ──────
-function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,onSignIn,onPostAd,initialListings,startIndex,onClose,filter}){
+function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,onSignIn,onPostAd,onMarkSold,initialListings,startIndex,onClose,filter}){
 const [listings,setListings]=useState(initialListings&&initialListings.length?[...initialListings]:[]);
 const [total,setTotal]=useState(0);
 const [loading,setLoading]=useState(!(initialListings&&initialListings.length));
@@ -959,15 +962,21 @@ const getViewers = (listingId) => {
                   {isExpiring&&<span style={{background:"#f59e0b",color:"#fff",fontSize:12,fontWeight:700,padding:"5px 12px",borderRadius:20}}>Expiring soon</span>}
                 </div>
 
-                {/* CTA buttons */}
-                <div style={{display:"flex",gap:8,marginBottom:8}}>
-                  {user?.id!==l.seller_id&&<button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onMessage&&onMessage(l);}} style={{flex:1,background:"#1428A0",color:"#fff",border:"none",padding:"14px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",boxShadow:"0 4px 14px rgba(20,40,160,.35)"}}>Message Seller</button>}
-                  {user?.id===l.seller_id&&<div style={{flex:1,background:"#F0F0F0",borderRadius:12,padding:"14px",fontSize:13,fontWeight:600,color:"#888",textAlign:"center"}}>Your Listing</div>}
-                  <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onToggleSave&&onToggleSave(l);}} style={{background:isSaved?"#E8194B":"#F5F5F5",color:isSaved?"#fff":"#1A1A1A",border:"none",padding:"14px 18px",fontSize:13,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",display:"flex",alignItems:"center",gap:6}}>
+              {/* CTA buttons — seller actions or save */}
+              <div style={{display:"flex",gap:8,marginBottom:8}}>
+                {user?.id===l.seller_id?(
+                  <>
+                    <button onClick={e=>{e.stopPropagation();onOpen&&onOpen(l);}} style={{flex:1,background:"#1428A0",color:"#fff",border:"none",padding:"14px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",boxShadow:"0 4px 14px rgba(20,40,160,.35)"}}>Edit Listing</button>
+                    <button onClick={e=>{e.stopPropagation();if(confirm("Mark this listing as sold?")){onMarkSold&&onMarkSold(l);}}} style={{flex:1,background:"#10b981",color:"#fff",border:"none",padding:"14px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)"}}>Mark Sold</button>
+                  </>
+                ):null}
+                {user?.id!==l.seller_id&&(
+                  <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onToggleSave&&onToggleSave(l);}} style={{flex:1,background:isSaved?"#E8194B":"#F5F5F5",color:isSaved?"#fff":"#1A1A1A",border:"none",padding:"14px 18px",fontSize:13,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill={isSaved?"#fff":"none"} stroke={isSaved?"#fff":"currentColor"} strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                     {isSaved?"Saved":"Save"}
                   </button>
-                </div>
+                )}
+              </div>
                 {/* Contact info block — only relevant when is_unlocked */}
                 {l.is_unlocked&&user?.id!==l.seller_id&&(
                   <div style={{background:"#F0FDF4",border:"1.5px solid #86EFAC",borderRadius:12,padding:"14px 16px",marginBottom:8}}>
@@ -1053,18 +1062,18 @@ const getViewers = (listingId) => {
       {/* Like button */}
       <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
       <button
+      type="button"
       onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onToggleSave&&onToggleSave(l);}}
+      className="fab-btn"
       style={{
       width:52,height:52,borderRadius:"50%",border:"none",
       background:isSaved?"#E8194B":"rgba(255,255,255,.95)",
       color:isSaved?"#fff":"#1A1A1A",
       display:"flex",alignItems:"center",justifyContent:"center",
       boxShadow:"0 4px 20px rgba(0,0,0,.2)",cursor:"pointer",
-      transition:"transform .2s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+      transition:"transform .2s cubic-bezier(0.175, 0.885, 0.32, 1.275), background .2s",
       transform:isSaved?"scale(1.1)":"scale(1)",
       }}
-      onTouchStart={e=>e.currentTarget.style.transform="scale(0.9)"}
-      onTouchEnd={e=>e.currentTarget.style.transform=isSaved?"scale(1.1)":"scale(1)"}
       >
       <svg width="24" height="24" viewBox="0 0 24 24" fill={isSaved?"#fff":"none"} stroke={isSaved?"#fff":"currentColor"} strokeWidth="2">
       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
@@ -1076,16 +1085,16 @@ const getViewers = (listingId) => {
       {/* Chat button */}
       <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
       <button
+      type="button"
       onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onMessage&&onMessage(l);}}
+      className="fab-btn"
       style={{
       width:52,height:52,borderRadius:"50%",border:"none",
       background:"rgba(255,255,255,.95)",color:"#1A1A1A",
       display:"flex",alignItems:"center",justifyContent:"center",
       boxShadow:"0 4px 20px rgba(0,0,0,.2)",cursor:"pointer",
-      transition:"transform .2s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+      transition:"transform .2s cubic-bezier(0.175, 0.885, 0.32, 1.275), background .2s",
       }}
-      onTouchStart={e=>e.currentTarget.style.transform="scale(0.9)"}
-      onTouchEnd={e=>e.currentTarget.style.transform="scale(1)"}
       >
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7A8.38 8.38 0 0 1 4 11.5a8.5 8.5 0 0 1 8.5-8.5 8.38 8.38 0 0 1 3.8.9"/>
@@ -1097,16 +1106,16 @@ const getViewers = (listingId) => {
       {/* Share button */}
       <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
       <button
+      type="button"
       onClick={e=>{e.stopPropagation();setShareModal(l);}}
+      className="fab-btn"
       style={{
       width:52,height:52,borderRadius:"50%",border:"none",
       background:"rgba(255,255,255,.95)",color:"#1A1A1A",
       display:"flex",alignItems:"center",justifyContent:"center",
       boxShadow:"0 4px 20px rgba(0,0,0,.2)",cursor:"pointer",
-      transition:"transform .2s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+      transition:"transform .2s cubic-bezier(0.175, 0.885, 0.32, 1.275), background .2s",
       }}
-      onTouchStart={e=>e.currentTarget.style.transform="scale(0.9)"}
-      onTouchEnd={e=>e.currentTarget.style.transform="scale(1)"}
       >
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
@@ -1116,15 +1125,15 @@ const getViewers = (listingId) => {
       <span style={{color:"#fff",fontSize:11,fontWeight:700,textShadow:"0 1px 4px rgba(0,0,0,.8)"}}>Share</span>
       </div>
 
-      {/* Views count */}
-      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-      <div style={{width:52,height:52,borderRadius:"50%",background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid rgba(255,255,255,.2)",backdropFilter:"blur(6px)"}}>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-      </svg>
-      </div>
-      <span style={{color:"#fff",fontSize:11,fontWeight:700,textShadow:"0 1px 4px rgba(0,0,0,.8)"}}>{l.view_count||0}</span>
-      </div>
+              {/* Views count - clearly non-clickable badge */}
+              <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,pointerEvents:"none"}}>
+                <div style={{width:52,height:52,borderRadius:"50%",background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid rgba(255,255,255,.2)",backdropFilter:"blur(6px)"}}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </div>
+                <span style={{color:"#fff",fontSize:11,fontWeight:700,textShadow:"0 1px 4px rgba(0,0,0,.8)"}}>{l.view_count||0}</span>
+              </div>
       </div>
 
       {/* Bottom action button */}
@@ -1278,7 +1287,7 @@ function HotRightNow({onOpen,savedIds,onToggleSave,user,onOpenInFeed}){
       <SwipeFeed user={user} token={null} initialListings={items} startIndex={feedIdx}
         onOpen={l=>{setFeedIdx(null);onOpen&&onOpen(l);}}
         onLockIn={()=>{}} onMessage={()=>{}} savedIds={savedIds} onToggleSave={onToggleSave}
-        onSignIn={()=>{}} onPostAd={()=>{}} onClose={()=>setFeedIdx(null)}/>
+        onSignIn={()=>{}} onPostAd={()=>{}} onMarkSold={()=>{}} onClose={()=>setFeedIdx(null)}/>
     </div>}
   </>;
 }
@@ -1424,7 +1433,7 @@ function AllListingsPage({user,token,notify,onBack,onOpenListing,onToggleSave,sa
       <SwipeFeed user={user} token={token} initialListings={listings} startIndex={feedIdx}
         onOpen={l=>{setFeedIdx(null);onOpenListing&&onOpenListing(l);}}
         onLockIn={onLockIn||((l)=>{})} onMessage={l=>{setFeedIdx(null);onChatListing&&onChatListing(l);}} savedIds={savedIds} onToggleSave={onToggleSave}
-        onSignIn={onSignIn} onPostAd={onPostAd} onClose={()=>setFeedIdx(null)}/>
+        onSignIn={onSignIn} onPostAd={onPostAd} onMarkSold={()=>{}} onClose={()=>setFeedIdx(null)}/>
     </div>}
   </div>;
 }

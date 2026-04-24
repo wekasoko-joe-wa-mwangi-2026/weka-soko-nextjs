@@ -255,6 +255,24 @@ body {
   animation: pulse-soft 2s ease-in-out infinite;
 }
 
+/* Floating Action Button animations */
+.fab-btn {
+  transition: transform 0.2s var(--ease-spring), background 0.2s;
+}
+
+.fab-btn:hover {
+  transform: scale(1.1) !important;
+}
+
+.fab-btn:active {
+  transform: scale(0.95) !important;
+}
+
+.fab-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(20, 40, 160, 0.3);
+}
+
 .mob-root{overflow-x:hidden;}
 ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-thumb{background:#CCCCCC;}::-webkit-scrollbar-thumb:hover{background:#AAAAAA;}
 

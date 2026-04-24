@@ -151,7 +151,8 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
         {existingPhotos.length>0&&<div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8}}>
           {existingPhotos.map((p,i)=><div key={p.id||i} style={{position:"relative",width:70,height:55,borderRadius:6,overflow:"hidden",flexShrink:0}}>
             <img src={p.url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-            <button onClick={()=>{
+            <button onClick={e=>{
+              e.stopPropagation();
               if(listing&&p.id&&!p.id.startsWith("ep-"))
                 api(`/api/listings/${listing.id}/photos/${p.id}`,{method:"DELETE"},token).catch(()=>{});
               setExistingPhotos(prev=>prev.filter((_,j)=>j!==i));

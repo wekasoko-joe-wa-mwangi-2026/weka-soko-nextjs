@@ -167,7 +167,7 @@ function ChatModal({listing,user,token,onClose,notify}){
           value={text} onChange={onType}
           onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&(e.preventDefault(),send())}
           disabled={!connected}/>
-        <button className="btn bp sm" onClick={send} disabled={!text.trim()||!connected}>Send </button>
+        <button className="btn bp sm" onClick={send} disabled={!text.trim()||!connected}>Send</button>
       </div>
     </div>
     {!listing.is_unlocked&&<div className="alert ay" style={{marginTop:12,fontSize:12,display:"flex",alignItems:"center",gap:6}}>{Ic.lock(14,"#888")} Contact info hidden until unlocked. Phone/email in chat will be auto-blocked.</div>}

@@ -337,20 +337,20 @@ function AuthModal({defaultMode,onClose,onAuth,notify}){
         </div>
       </div>;
     })()}
-    {mode==="login"&&<div style={{textAlign:"right",marginTop:-8,marginBottom:8}}>
-      <button className="btn bgh" style={{display:"inline",padding:"0 3px",color:"#111111",fontSize:12}} onClick={()=>setMode("forgot")}>Forgot password?</button>
-    </div>}
-    {mode==="forgot"&&<ForgotPasswordPanel onBack={()=>setMode("login")} notify={notify}/>}
-    {mode==="signup"&&<div style={{background:"#F5F5F5",borderRadius:6,padding:"12px 14px"}}>
+{mode==="login"&&<div style={{textAlign:"right",marginTop:-8,marginBottom:8}}>
+      <button type="button" className="btn bgh" style={{display:"inline",padding:"0 3px",color:"#111111",fontSize:12}} onClick={()=>setMode("forgot")}>Forgot password?</button>
+      </div>}
+      {mode==="forgot"&&<ForgotPasswordPanel onBack={()=>setMode("login")} notify={notify}/>}
+      {mode==="signup"&&<div style={{background:"#F5F5F5",borderRadius:6,padding:"12px 14px"}}>
       <label style={{display:"flex",alignItems:"flex-start",gap:9,cursor:"pointer",fontSize:13,color:"#888888"}}>
-        <input type="checkbox" checked={agreed} onChange={e=>setAgreed(e.target.checked)} style={{marginTop:3,width:15,height:15}}/>
-        <span>I have read and accept the <button className="btn bgh" style={{display:"inline",padding:"0 2px",color:"#1428A0",fontWeight:700,fontSize:13}} onClick={()=>setShowTerms(true)}>Terms & Conditions</button></span>
+      <input type="checkbox" checked={agreed} onChange={e=>setAgreed(e.target.checked)} style={{marginTop:3,width:15,height:15}}/>
+      <span>I have read and accept the <button type="button" className="btn bgh" style={{display:"inline",padding:"0 2px",color:"#1428A0",fontWeight:700,fontSize:13}} onClick={()=>setShowTerms(true)}>Terms & Conditions</button></span>
       </label>
-    </div>}
-    <p style={{textAlign:"center",marginTop:14,fontSize:13,color:"#888888"}}>
+      </div>}
+      <p style={{textAlign:"center",marginTop:14,fontSize:13,color:"#888888"}}>
       {mode==="login"?"No account? ":"Already have one? "}
-      <button className="btn bgh" style={{display:"inline",padding:"0 3px",color:"#1428A0",fontWeight:700,fontSize:13}} onClick={()=>setMode(m=>m==="login"?"signup":"login")}>{mode==="login"?"Sign up free →":"Sign in"}</button>
-    </p>
+      <button type="button" className="btn bgh" style={{display:"inline",padding:"0 3px",color:"#1428A0",fontWeight:700,fontSize:13}} onClick={()=>setMode(m=>m==="login"?"signup":"login")}>{mode==="login"?"Sign up free →":"Sign in"}</button>
+      </p>
   </Modal>;
 }
 
