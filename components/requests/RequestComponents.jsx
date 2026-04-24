@@ -269,7 +269,7 @@ No requests yet
 <div style={{display:"flex",gap:8,marginTop:12}}>
 {total>4&&<button style={{flex:1,padding:"9px",background:"transparent",color:"#1428A0",border:"1.5px solid #1428A0",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"var(--fn)"}}
 onClick={onViewAll}>View All ({total})</button>}
-<button style={{flex:1,padding:"9px",background:"#1428A0",color:"#fff",border:"none",borderRadius:8,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"var(--fn)"}}
+<button style={{flex:1,padding:"9px 12px",background:"#1428A0",color:"#fff",border:"none",borderRadius:8,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"var(--fn)",whiteSpace:"nowrap"}}
 onClick={()=>{if(!user){onSignIn();return;}setShowModal(true);}}>+ Post Request</button>
 </div>
 </div>
