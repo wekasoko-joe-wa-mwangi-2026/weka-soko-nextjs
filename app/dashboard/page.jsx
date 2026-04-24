@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Dashboard, Toast } from '@/components/all';
+import dynamic from 'next/dynamic';
+import { Toast } from '@/components/all';
+const Dashboard = dynamic(() => import('@/components/dashboard/Dashboard').then(m => ({ default: m.Dashboard })), { ssr: false, loading: () => null });
 
 export default function DashboardPage() {
   const router = useRouter();

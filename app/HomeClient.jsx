@@ -1,9 +1,34 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { io } from 'socket.io-client';
+import dynamic from 'next/dynamic';
 import { apiCall, fmtKES, ago, CATS, KENYA_COUNTIES, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
-import { WekaSokoLogo, Spin, Toast, Modal, FF, Counter, ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal, WatermarkedImage, Lightbox, AuthModal, ShareModal, PayModal, ChatModal, PostAdModal, ListingCard, LeaveReviewBtn, ReportListingBtn, VerificationBanner, DetailModal, MarkSoldModal, RoleSwitcher, PostRequestModal, WhatBuyersWant, SoldSection, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab, ProfileSection, PasswordSection, VerificationSection, MobileDashboard, Dashboard, PWABanner, Pager, MobileRequestsTab, MobileLayout, BuyersWantPage, AllListingsPage, SoldPage, HotRightNow } from '@/components/all';
+
+// ── LIGHTWEIGHT — loaded immediately (needed for first paint) ─────────────────
+import { Ic, urlBase64ToUint8Array, WekaSokoLogo, Spin, Toast, Modal, FF, Counter, useAudioNotification } from '@/components/all';
+import { ListingCard, ListingCardSkeleton, HeroSkeleton, HotRightNow } from '@/components/all';
+import { WhatBuyersWant, MobileLayout, MobileRequestsTab } from '@/components/all';
+import { AllListingsPage, SoldPage, BuyersWantPage, SwipeFeed } from '@/components/all';
+import { SoldSection, Pager, RoleSwitcher } from '@/components/all';
+
+// ── HEAVY — lazy loaded only when needed (modals, dashboard, auth) ─────────────
+const AuthModal      = dynamic(() => import('@/components/auth/AuthModal').then(m => ({ default: m.AuthModal })), { ssr: false });
+const PostAdModal    = dynamic(() => import('@/components/listings/ListingComponents').then(m => ({ default: m.PostAdModal })), { ssr: false });
+const DetailModal    = dynamic(() => import('@/components/listings/ListingComponents').then(m => ({ default: m.DetailModal })), { ssr: false });
+const MarkSoldModal  = dynamic(() => import('@/components/listings/ListingComponents').then(m => ({ default: m.MarkSoldModal })), { ssr: false });
+const LeaveReviewBtn = dynamic(() => import('@/components/listings/ListingComponents').then(m => ({ default: m.LeaveReviewBtn })), { ssr: false });
+const ReportListingBtn = dynamic(() => import('@/components/listings/ListingComponents').then(m => ({ default: m.ReportListingBtn })), { ssr: false });
+const ChatModal      = dynamic(() => import('@/components/chat/ChatModal').then(m => ({ default: m.ChatModal })), { ssr: false });
+const PayModal       = dynamic(() => import('@/components/payments/PayModal').then(m => ({ default: m.PayModal })), { ssr: false });
+const ShareModal     = dynamic(() => import('@/components/listings/ShareModal').then(m => ({ default: m.ShareModal })), { ssr: false });
+const Dashboard      = dynamic(() => import('@/components/dashboard/Dashboard').then(m => ({ default: m.Dashboard })), { ssr: false });
+const PostRequestModal = dynamic(() => import('@/components/requests/RequestComponents').then(m => ({ default: m.PostRequestModal })), { ssr: false });
+
+// ── UNUSED IN HomeClient — kept for completeness but not imported ──────────────
+// ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal
+// WatermarkedImage, Lightbox, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab
+// ProfileSection, PasswordSection, VerificationSection, MobileDashboard
+
 
 export default function HomeClient({ initialListings, initialTotal, initialStats, initialCounties, initialFilter, initialPage }) {
   const [user,setUser]=useState(null);
@@ -20,15 +45,25 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
   const [vm,setVm]=useState("grid");
   const [toast,setToast]=useState(null);
   const [modal,setModal]=useState(null);
-  const [showPWA,setShowPWA]=useState(true);
+
   const [maintenanceMsg,setMaintenanceMsg]=useState(null);
   const [notifCount,setNotifCount]=useState(0);
   const socketRef=useRef(null);
   const [resetToken,setResetToken]=useState(null);
   const [savedIds,setSavedIds]=useState(new Set());
   const [newSinceLastVisit,setNewSinceLastVisit]=useState(0);
+  const [feedContext,setFeedContext]=useState(null);
+  const [heroIdx, setHeroIdx] = useState(0);
+
+  // Auto-slide hero
+  useEffect(() => {
+    const iv = setInterval(() => setHeroIdx(i => (i + 1) % 3), 6000);
+    return () => clearInterval(iv);
+  }, []);
+
 
   const notify=useCallback((msg,type="info")=>setToast({msg,type,id:Date.now()}),[]);
+  const playChime = useAudioNotification();
 
   // <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="20 6 9 17 4 12"/></svg> FIX: Initialize isMobile as false, set on client-side only
   const [isMobile,setIsMobile]=useState(false);
@@ -156,7 +191,13 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       const listingId = params.get('listing');
       if (listingId) {
         apiCall(`/api/listings/${listingId}`, {}, null).then(l => {
-          if (l && l.id) setModal({ type: 'detail', listing: l });
+          if (l && l.id) {
+            if (window.innerWidth < 768) {
+              setFeedContext({ items: [l], index: 0 });
+            } else {
+              setModal({ type: 'detail', listing: l });
+            }
+          }
         }).catch(() => {});
       }
     }
@@ -195,7 +236,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     // Don't overwrite URL if auth/reset tokens are present
     if (typeof window !== 'undefined') {
       const _s = window.location.search;
-      if (_s.includes('reset_token=') || _s.includes('auth_token=') || _s.includes('verify_email=')) return;
+      if (_s.includes('reset_token=') || _s.includes('auth_token=') || _s.includes('verify_email=') || _s.includes('listing=')) return;
     }
     const p = new URLSearchParams();
     if (filter.cat) p.set('cat', filter.cat);
@@ -255,13 +296,13 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     notify(newSaved?"Saved!":"Removed from saved","success");
   },[user,token,savedIds,notify]);
 
-  // Stats — fetch on load + poll every 30s
-  useEffect(()=>{
-    const fetchStats=()=>apiCall("/api/stats").then(setStats).catch(()=>{});
-    fetchStats();
-    const iv=setInterval(fetchStats,30000);
-    return()=>clearInterval(iv);
-  },[]);
+// Stats — fetch on load + poll every 60s (reduced frequency for better performance)
+useEffect(()=>{
+  const fetchStats=()=>apiCall("/api/stats").then(setStats).catch(()=>{});
+  fetchStats();
+  const iv=setInterval(fetchStats,60000);
+  return()=>clearInterval(iv);
+},[]);
 
   // Listings — fetch on filter/page change + silent background refresh every 60s
   const listingsFilterRef=useRef(filter);
@@ -285,48 +326,80 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         setTotal(data.total||0);
         setMaintenanceMsg(null);
       }catch(e){
-        if(e.maintenance){setMaintenanceMsg(e.maintenance);if(!silent)setListings([]);}
+        if(e.maintenance){setMaintenanceMsg(e.maintenance);}  // keep existing listings visible during maintenance
         else if(!silent)setListings([]);
       }
       finally{if(!silent)setLoading(false);}
     };
     load(false);
-    const iv=setInterval(()=>load(true),60000);
+    const iv=setInterval(()=>load(true),120000);
     return()=>clearInterval(iv);
   },[pg,filter]);
 
-  // Real-time notifications for logged-in user
+  // Real-time notifications for logged-in user — socket.io loaded lazily
   useEffect(()=>{
     if(!token||!user)return;
-    const s=io(API,{auth:{token},transports:["websocket","polling"]});
-    socketRef.current=s;
+    let s;
+    import('socket.io-client').then(({ io }) => {
+      s=io(API,{auth:{token},transports:["websocket","polling"]});
+      socketRef.current=s;
     s.on("notification",(n)=>{
       setNotifCount(c=>c+1);
       if(n.type==="listing_match"){
+        playChime('success');
         setNotifCount(c=>c+1);
         return;
       }
       if(n.type==="request_match"){
+        playChime('success');
         notify(n.body||n.title,"success");
         setNotifCount(c=>c+1);
         return;
       }
       if(n.type==="listing_approved"){
+        playChime('success');
         notify("Your ad is now live on Weka Soko! "+(n.body||""),"success");
         setNotifCount(c=>c+1);
         return;
       }
+      if(n.type==="listing_unlocked"){
+        playChime('success');
+        notify(n.body||n.title,"success");
+        setNotifCount(c=>c+1);
+        return;
+      }
+      if(n.type==="escrow_released"){
+        playChime('success');
+        notify(n.body||n.title,"success");
+        setNotifCount(c=>c+1);
+        return;
+      }
       if(n.type==="seller_pitch"){
+        playChime('message');
         notify(n.body||n.title,"success");
         setNotifCount(c=>c+1);
         return;
       }
       if(n.type==="pitch_accepted"){
+        playChime('success');
         notify(n.body||n.title,"success");
         setNotifCount(c=>c+1);
         return;
       }
+      if(n.type==="chat_opened"){
+        playChime('message');
+        notify(n.body||n.title,"info");
+        setNotifCount(c=>c+1);
+        return;
+      }
+      if(n.type==="new_message"){
+        playChime('message');
+        notify(n.body||n.title,"info");
+        setNotifCount(c=>c+1);
+        return;
+      }
       if(n.type==="warning"||n.type==="suspension"){
+        playChime('error');
         notify(n.title+(n.body?" — "+n.body:""),"error");
         apiCall("/api/auth/me",{},token).then(fresh=>{
           setUser(fresh);localStorage.setItem("ws_user",JSON.stringify(fresh));
@@ -340,15 +413,42 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
           }
         }).catch(()=>{});
       } else if(n.type==="admin_edit"){
+        playChime('message');
         notify("Admin has updated your listing: "+(n.body||""),"info");
       } else {
+        playChime('message');
         notify(n.body||n.title,"info");
       }
     });
     s.on("new_message_inbox",(msg)=>{
+      playChime('message');
       setNotifCount(c=>c+1);
     });
+
+    // Live feed: new listing approved → prepend if it matches current filters
+    s.on("new_listing",(listing)=>{
+      const f=listingsFilterRef.current;
+      const catOk=!f.cat||listing.category===f.cat;
+      const subcatOk=!f.subcat||(listing.subcat||"").toLowerCase()===(f.subcat||"").toLowerCase();
+      const countyOk=!f.county||(listing.county||"").toLowerCase()===(f.county||"").toLowerCase();
+      const searchOk=!f.q; // can't verify text match client-side
+      if(catOk&&subcatOk&&countyOk&&searchOk&&(!f.sort||f.sort==="newest")){
+        setListings(p=>{
+          if(p.some(l=>l.id===listing.id))return p;
+          return[listing,...p];
+        });
+        setTotal(t=>t+1);
+      }
+    });
+
+    // Live feed: listing sold/deleted/flagged → remove card immediately
+    s.on("listing_removed",({id})=>{
+      setListings(p=>p.filter(l=>l.id!==id));
+      setTotal(t=>Math.max(0,t-1));
+    });
+
     return()=>s.disconnect();
+    }); // close import().then()
   },[token,user,notify]);
 
   // Fetch unread count on login + poll every 20s silently
@@ -358,7 +458,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       if(Array.isArray(ns))setNotifCount(ns.filter(n=>!n.is_read).length);
     }).catch(()=>{});
     fetchUnread();
-    const iv=setInterval(fetchUnread,20000);
+    const iv=setInterval(fetchUnread,60000);
     return()=>clearInterval(iv);
   },[token]);
 
@@ -393,8 +493,30 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     return ()=>clearTimeout(t);
   },[token,user]);
 
-  const handleAuth=(u,t)=>{setUser(u);setToken(t);setNotifCount(0);setPage("dashboard");if(typeof window !== 'undefined') window.history.pushState({},"","/dashboard");};
-  const logout=()=>{setUser(null);setToken(null);setNotifCount(0);if(typeof window !== 'undefined') localStorage.removeItem("ws_token");if(typeof window !== 'undefined') localStorage.removeItem("ws_user");notify("Signed out.","info");};
+  const handleAuth=(u,t)=>{
+    setUser(u);setToken(t);setNotifCount(0);
+    setPage("dashboard");
+    if(typeof window !== 'undefined') window.history.pushState({},"","/dashboard");
+    // Fetch full profile in background so phone, whatsapp_phone, created_at, is_google_user etc. are populated
+    apiCall("/api/auth/me",{},t).then(fresh=>{
+      setUser(fresh);
+      if(typeof window!=='undefined') localStorage.setItem("ws_user",JSON.stringify(fresh));
+    }).catch(()=>{});
+  };
+  const logout=()=>{
+    // Unsubscribe push notifications before clearing token
+    if(typeof window!=='undefined'&&'serviceWorker' in navigator){
+      navigator.serviceWorker.ready.then(reg=>reg.pushManager.getSubscription()).then(sub=>{
+        if(sub&&token){
+          apiCall("/api/push/unsubscribe",{method:"DELETE",body:JSON.stringify({endpoint:sub.endpoint})},token).catch(()=>{});
+          sub.unsubscribe().catch(()=>{});
+        }
+      }).catch(()=>{});
+    }
+    setUser(null);setToken(null);setNotifCount(0);
+    if(typeof window!=='undefined'){localStorage.removeItem("ws_token");localStorage.removeItem("ws_user");}
+    notify("Signed out.","info");
+  };
 
   const handleLockIn=async listing=>{
     if(!user){setModal({type:"auth",mode:"login"});return;}
@@ -407,8 +529,13 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
   };
 
   const openListing=async l=>{
+    if (isMobile) {
+      const idx = listings.findIndex(x => x.id === l.id);
+      setFeedContext({ items: idx >= 0 ? listings : [l], index: Math.max(0, idx) });
+      return;
+    }
     setModal({type:"detail",listing:l});
-    if(typeof window !== 'undefined') window.history.pushState({},'',`/?listing=${l.id}`);
+    if(typeof window !== 'undefined') window.history.pushState({},'',`/listings/${l.id}`);
     try{
       const fresh=await apiCall(`/api/listings/${l.id}`,{},token);
       setModal({type:"detail",listing:fresh});
@@ -446,28 +573,29 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         onSignIn={()=>setModal({type:"auth",mode:"login"})}
       />
       {modal?.type==="auth"&&<AuthModal defaultMode={modal.mode} onClose={closeModal} onAuth={handleAuth} notify={notify}/>}
-      {modal?.type==="post"&&token&&<PostAdModal onClose={closeModal} token={token} notify={notify} linkedRequest={modal.linkedRequest||null} onSuccess={l=>{setListings(p=>[l,...p]);setTotal(t=>t+1);}}/>}
+      {modal?.type==="post"&&token&&<PostAdModal onClose={closeModal} token={token} notify={notify} linkedRequest={modal.linkedRequest||null} onSuccess={(l,isEdit)=>{if(isEdit){setPage("dashboard");if(typeof window!=='undefined')window.history.pushState({},"","/dashboard");}else{setListings(p=>[l,...p]);setTotal(t=>t+1);}}}/>}
       {toast&&<Toast key={toast.id} msg={toast.msg} type={toast.type} onClose={()=>setToast(null)}/>}
       {resetToken&&<ResetPasswordModal token={resetToken} notify={notify} onClose={()=>{setResetToken(null);}}/>}
     </>;
-    // Mobile home/requests/search
-    return <>
-      <MobileLayout
-        user={user} token={token} notify={notify}
-        page={page} setPage={setPage}
-        listings={listings} total={total} loading={loading}
-        filter={filter} setFilter={setFilter} pg={pg} setPg={setPg}
-        stats={stats} counties={counties}
-        modal={modal} setModal={setModal}
-        notifCount={notifCount}
-        mobileFiltersOpen={mobileFiltersOpen} setMobileFiltersOpen={setMobileFiltersOpen}
-        mobileTab={mobileTab} setMobileTab={setMobileTab}
-        openListing={openListing} handleLockIn={handleLockIn}
-        savedIds={savedIds} onToggleSave={handleToggleSave}
-        newSinceLastVisit={newSinceLastVisit}
-      />
+  // Mobile home/requests/search
+  return <>
+  <MobileLayout
+    user={user} token={token} notify={notify}
+    page={page} setPage={setPage}
+    listings={listings} total={total} loading={loading}
+    filter={filter} setFilter={setFilter} pg={pg} setPg={setPg}
+    stats={stats} counties={counties}
+    modal={modal} setModal={setModal}
+    notifCount={notifCount}
+    maintenanceMsg={maintenanceMsg}
+    mobileFiltersOpen={mobileFiltersOpen} setMobileFiltersOpen={setMobileFiltersOpen}
+    mobileTab={mobileTab} setMobileTab={setMobileTab}
+    openListing={openListing} handleLockIn={handleLockIn}
+    savedIds={savedIds} onToggleSave={handleToggleSave}
+    newSinceLastVisit={newSinceLastVisit}
+  />
       {modal?.type==="auth"&&<AuthModal defaultMode={modal.mode} onClose={closeModal} onAuth={handleAuth} notify={notify}/>}
-      {modal?.type==="post"&&token&&<PostAdModal onClose={closeModal} token={token} notify={notify} linkedRequest={modal.linkedRequest||null} onSuccess={l=>{setListings(p=>[l,...p]);setTotal(t=>t+1);}}/>}
+      {modal?.type==="post"&&token&&<PostAdModal onClose={closeModal} token={token} notify={notify} linkedRequest={modal.linkedRequest||null} onSuccess={(l,isEdit)=>{if(isEdit){setPage("dashboard");if(typeof window!=='undefined')window.history.pushState({},"","/dashboard");}else{setListings(p=>[l,...p]);setTotal(t=>t+1);}}}/>}
       {modal?.type==="detail"&&<DetailModal listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}
         onShare={()=>setModal({type:"share",listing:modal.listing})}
         onChat={()=>{if(!user){notify("Sign in to chat","warning");setModal({type:"auth",mode:"login"});return;}setModal({type:"chat",listing:modal.listing});}}
@@ -475,6 +603,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         onUnlock={()=>setModal({type:"pay",payType:"unlock",listing:modal.listing})}
         onEscrow={()=>{if(!user){notify("Sign in first","warning");setModal({type:"auth",mode:"login"});return;}setModal({type:"pay",payType:"escrow",listing:modal.listing});}}
         isSaved={savedIds.has(modal.listing?.id)} onSave={user?()=>handleToggleSave(modal.listing):null}
+        onSignIn={()=>setModal({type:"auth",mode:"login"})}
       />}
       {modal?.type==="chat"&&user&&<ChatModal listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}/>}
       {modal?.type==="share"&&<ShareModal listing={modal.listing} onClose={closeModal}/>}
@@ -490,6 +619,21 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         onClose={closeModal} notify={notify}/>}
       {toast&&<Toast key={toast.id} msg={toast.msg} type={toast.type} onClose={()=>setToast(null)}/>}
       {resetToken&&<ResetPasswordModal token={resetToken} notify={notify} onClose={()=>{setResetToken(null);setModal({type:"auth",mode:"login"});}}/>}
+      {feedContext && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 9999 }}>
+          <SwipeFeed
+            user={user} token={token}
+            initialListings={feedContext.items} startIndex={feedContext.index}
+            onOpen={l => { setFeedContext(null); setModal({type:"detail",listing:l}); }}
+            onLockIn={handleLockIn}
+            onMessage={l => { if(!user) { notify("Sign in to chat","warning"); setModal({type:"auth",mode:"login"}); } else { setModal({type:"chat",listing:l}); } }}
+            savedIds={savedIds} onToggleSave={handleToggleSave}
+            onSignIn={() => setModal({type:"auth",mode:"login"})}
+            onPostAd={() => { setFeedContext(null); setModal({type:"post"}); }}
+            onClose={() => setFeedContext(null)}
+          />
+        </div>
+      )}
     </>;
   }
 
@@ -508,10 +652,22 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       onToggleSave={handleToggleSave}
       onPostAd={()=>{ if(!user){setModal({type:"auth",mode:"signup"});return;} setModal({type:"post"}); }}
       onSignIn={()=>setModal({type:"auth",mode:"login"})}
+      onLockIn={handleLockIn}
+      onChatListing={(l)=>{if(!user){setModal({type:"auth",mode:"login"});return;}setModal({type:"chat",listing:l});}}
       initialFilter={filter}
     />
     {modal?.type==="auth"&&<AuthModal defaultMode={modal.mode} onClose={closeModal} onAuth={handleAuth} notify={notify}/>}
-    {modal?.type==="post"&&token&&<PostAdModal onClose={closeModal} token={token} notify={notify} onSuccess={l=>{setListings(p=>[l,...p]);setTotal(t=>t+1);}}/>}
+    {modal?.type==="post"&&token&&<PostAdModal onClose={closeModal} token={token} notify={notify} onSuccess={(l, isEdit)=>{
+      if (isEdit) {
+        setPage("dashboard");
+        if(typeof window !== 'undefined') window.history.pushState({}, "", "/dashboard");
+        notify("Listing updated and sent for review", "success");
+      } else {
+        setListings(p=>[l,...p]);
+        setTotal(t=>t+1);
+      }
+    }}/>}
+
     {modal?.type==="detail"&&<DetailModal listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}
       onShare={()=>setModal({type:"share",listing:modal.listing})}
       onChat={()=>{if(!user){notify("Sign in to chat","warning");setModal({type:"auth",mode:"login"});return;}setModal({type:"chat",listing:modal.listing});}}
@@ -519,6 +675,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       onUnlock={()=>setModal({type:"pay",payType:"unlock",listing:modal.listing})}
       onEscrow={()=>{if(!user){notify("Sign in first","warning");setModal({type:"auth",mode:"login"});return;}setModal({type:"pay",payType:"escrow",listing:modal.listing});}}
       isSaved={savedIds.has(modal.listing?.id)} onSave={user?()=>handleToggleSave(modal.listing):null}
+      onSignIn={()=>setModal({type:"auth",mode:"login"})}
     />}
     {modal?.type==="chat"&&user&&<ChatModal listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}/>}
     {modal?.type==="share"&&<ShareModal listing={modal.listing} onClose={closeModal}/>}
@@ -571,72 +728,124 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       <span>{newSinceLastVisit} new listing{newSinceLastVisit!==1?"s":""} added since your last visit</span>
     </div>}
 
+
+
     {page!=="dashboard"&&page!=="sold"&&page!=="requests"&&page!=="listings"&&<main style={{padding:"clamp(20px,4vw,40px) clamp(16px,4vw,48px) 80px"}}>
 
       {/* ── TOP PANEL: Left = Hero+Cats+Filters | Right = What Buyers Want ── */}
       <div style={{display:"flex",gap:28,alignItems:"flex-start",marginBottom:48,flexWrap:"wrap"}}>
 
         {/* LEFT: hero + categories + filters */}
-        <div style={{flex:"1 1 380px",minWidth:0,display:"flex",flexDirection:"column",gap:20}}>
+        <div style={{flex:"1 1 380px",minWidth:0,display:"flex",flexDirection:"column",gap:28}}>
 
-          {/* Hero + Categories — split card */}
-          <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:20,boxShadow:"0 1px 3px rgba(0,0,0,.06),0 6px 24px rgba(0,0,0,.07)",display:"flex",overflow:"hidden",minHeight:320}}>
+          {/* Premium Hero with Real Carousel Content */}
+          {loading ? <HeroSkeleton/> : (
+            <div className="depth-float" style={{overflow:"hidden",position:"relative",minHeight:420,display:"flex",flexDirection:"column", borderRadius: 28}}>
+              {[
+                {
+                  img: "https://images.unsplash.com/photo-1555421689-491a97ff2040?q=80&w=2070&auto=format&fit=crop",
+                  title: <>The Smart Way to <br/><span style={{color:"var(--a)"}}>Buy, Sell & Request</span></>,
+                  label: "KENYA'S LARGEST DIGITAL CLASSIFIEDS"
+                },
+                {
+                  img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2015&auto=format&fit=crop",
+                  title: <>List Items for <br/><span style={{color:"#0d9488"}}>Free in 2 Minutes</span></>,
+                  label: "ZERO UPFRONT COST"
+                },
+                {
+                  img: "https://images.unsplash.com/photo-1556742044-3c52d6e88c62?q=80&w=2070&auto=format&fit=crop",
+                  title: <>Secure Deals with <br/><span style={{color:"#7c3aed"}}>M-Pesa Escrow</span></>,
+                  label: "100% PEACE OF MIND"
+                }
+              ].map((slide, i) => (
+                <div key={i} style={{
+                  position: i === 0 ? "relative" : "absolute", 
+                  inset: 0, 
+                  opacity: i === heroIdx ? 1 : 0,
+                  visibility: i === heroIdx ? "visible" : "hidden",
+                  transition: "opacity 1s ease, transform 1.2s ease",
+                  transform: i === heroIdx ? "scale(1)" : "scale(1.05)",
+                  zIndex: i === heroIdx ? 1 : 0
+                }}>
+                  <div style={{position:"absolute",inset:0,background:`url(${slide.img}) center/cover no-repeat`}} />
+                  <div style={{position:"absolute",inset:0,background:"linear-gradient(to right, #fff 40%, rgba(255,255,255,0.7) 60%, transparent 100%)"}} />
+                  
+                  <div style={{position:"relative",zIndex:2,padding:"clamp(30px,5vw,60px)",display:"flex",flexDirection:"column",justifyContent:"center",height:"100%",maxWidth:600}}>
+                    <div className="glass" style={{display:"inline-flex",alignSelf:"flex-start",padding:"6px 14px",borderRadius:30,fontSize:10,fontWeight:800,color:i===1?"#0d9488":i===2?"#7c3aed":"var(--a)",letterSpacing:".14em",textTransform:"uppercase",marginBottom:20}}>
+                      {slide.label}
+                    </div>
+                    <h1 style={{fontSize:"clamp(28px,3.8vw,52px)",fontWeight:900,letterSpacing:"-0.03em",lineHeight:1.05,marginBottom:20,color:"#111",fontFamily:"var(--fn)"}}>
+                      {slide.title}
+                    </h1>
+                    <p style={{fontSize:16,color:"#4B4B5B",lineHeight:1.7,marginBottom:28,fontWeight:500,maxWidth:460}}>
+                      Join thousands of Kenyans turning pre-owned items into cash and finding the best deals in the country.
+                    </p>
+                    <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+                      <button className="btn bp" style={{padding:"12px 24px",fontSize:14,borderRadius:10}}
+                        onClick={()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"})}>
+                        Browse Listings
+                      </button>
+                      {!user
+                        ?<button className="btn bs" style={{padding:"12px 24px",fontSize:14,borderRadius:10}}
+                            onClick={()=>setModal({type:"auth",mode:"signup"})}>
+                            Join Free
+                          </button>
+                        :<button className="btn bs" style={{padding:"12px 24px",fontSize:14,borderRadius:10}}
+                            onClick={()=>{
+                              if(user.role==="buyer"){if(typeof window!=="undefined"&&window.confirm("Switch to Seller to post ads?"))apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token).then(d=>{const u={...user,...d.user};setUser(u);localStorage.setItem("ws_user",JSON.stringify(u));notify("Switched to Seller!","success");setModal({type:"post"});}).catch(e=>notify(e.message,"error"));return;}
+                              setModal({type:"post"});
+                            }}>
+                            + Post Ad Free
+                          </button>
+                      }
+                    </div>
 
-            {/* Left half — hero text */}
-            <div style={{flex:"1 1 0",minWidth:0,padding:"clamp(24px,3vw,40px) clamp(20px,3vw,36px)",display:"flex",flexDirection:"column",justifyContent:"center",borderRight:"1px solid #EBEBEB"}}>
-              <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",marginBottom:12,color:"#1428A0"}}>Kenya's Resell Platform</div>
-              <h1 style={{fontSize:"clamp(22px,2.4vw,38px)",fontWeight:800,letterSpacing:"-.02em",lineHeight:1.15,marginBottom:14,color:"#1A1A1A",fontFamily:"var(--fn)"}}>
-                Post Free.<br/>
-                <span style={{color:"#1428A0"}}>Pay Only When</span><br/>
-                You Get a Buyer.
-              </h1>
-              <p style={{fontSize:13,color:"#636363",lineHeight:1.8,marginBottom:22,fontWeight:400}}>
-                List items in minutes with photos. Pay KSh 250 only when a serious buyer locks in.
-              </p>
-              <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:18}}>
-                <button className="btn bp" style={{padding:"11px 22px",fontSize:13,borderRadius:10,boxShadow:"0 4px 14px rgba(20,40,160,.28)"}}
-                  onClick={()=>{
-                    if(!user){setModal({type:"auth",mode:"signup"});return;}
-                    if(user.role==="buyer"){
-                      if(typeof window!=="undefined"&&window.confirm("You're currently a Buyer. Switch to Seller to post ads?"))
-                        apiCall("/api/auth/role",{method:"PATCH",body:JSON.stringify({role:"seller"})},token).then(d=>{const upd={...user,...d.user};setUser(upd);localStorage.setItem("ws_user",JSON.stringify(upd));notify("Switched to Seller!","success");setModal({type:"post"});}).catch(e=>notify(e.message,"error"));
-                      return;
-                    }
-                    setModal({type:"post"});
-                  }}>+ Post an Ad</button>
-                <button className="btn bs" style={{padding:"11px 18px",fontSize:13,borderRadius:10}}
-                  onClick={()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"})}>Browse</button>
-              </div>
-              <div style={{display:"flex",gap:14,fontSize:12,color:"#888",fontWeight:500,flexWrap:"wrap"}}>
-                {["Free to post","Anonymous chat","M-Pesa escrow"].map(t=>(
-                  <span key={t} style={{display:"flex",alignItems:"center",gap:5}}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1428A0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>{t}
-                  </span>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Carousel Indicators */}
+              <div style={{position:"absolute", bottom:24, left: "clamp(30px, 5vw, 60px)", display:"flex", gap:8, zIndex: 10}}>
+                {[0,1,2].map(i => (
+                  <div key={i} onClick={() => setHeroIdx(i)} style={{
+                    width: i === heroIdx ? 24 : 8, height: 8, borderRadius: 10,
+                    background: i === heroIdx ? "var(--a)" : "rgba(0,0,0,0.1)",
+                    cursor: "pointer", transition: "all 0.3s ease"
+                  }} />
                 ))}
               </div>
             </div>
+          )}
 
-            {/* Right half — categories */}
-            <div style={{flex:"1 1 0",minWidth:0,padding:"clamp(20px,3vw,32px) clamp(16px,3vw,28px)",background:"#FAFAFA",overflowY:"auto"}}>
-              <div style={{fontSize:10,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:3}}>Browse by Category</div>
-              <div style={{fontSize:15,fontWeight:700,color:"#1A1A1A",marginBottom:14,letterSpacing:"-.01em"}}>What are you looking for?</div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:6}}>
-                {CATS.map(c=>{
-                  const active=filter.cat===c.name;
-                  return <div key={c.name}
-                    onClick={()=>{setFilter(p=>({...p,cat:p.cat===c.name?"":c.name}));setPg(1);setTimeout(()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"}),100);}}
-                    style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:"8px 4px",cursor:"pointer",borderRadius:12,background:active?"#EEF2FF":"transparent",border:`1.5px solid ${active?"#1428A0":"transparent"}`,transition:"all .16s cubic-bezier(.34,1.56,.64,1)",boxShadow:active?"0 0 0 2px rgba(20,40,160,.1)":"none"}}
-                    onMouseEnter={e=>{if(!active){e.currentTarget.style.background="#F0F4FF";e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 3px 10px rgba(0,0,0,.09)";}}}
-                    onMouseLeave={e=>{if(!active){e.currentTarget.style.background="transparent";e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";}}}>
-                    <div style={{width:50,height:50,borderRadius:"50%",overflow:"hidden",flexShrink:0,border:`2px solid ${active?"#1428A0":"#E5E5E5"}`,boxShadow:"0 2px 6px rgba(0,0,0,.08)",transition:"border-color .15s"}}>
-                      <img src={CAT_PHOTOS[c.name]||CAT_PHOTOS.Other} alt={c.name} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
-                    </div>
-                    <div style={{fontSize:10,fontWeight:600,color:active?"#1428A0":"#444",textAlign:"center",lineHeight:1.3,wordBreak:"break-word"}}>{c.name}</div>
-                  </div>;
-                })}
-              </div>
+          {/* High-Visibility Categories Bar */}
+          <div style={{display:"flex",flexDirection:"column",gap:20, marginTop: 10}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <h3 style={{fontSize:18,fontWeight:900,letterSpacing:"-0.02em"}}>Premium Categories</h3>
+
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(110px, 1fr))",gap:16}}>
+              {CATS.slice(0, 8).map(c => {
+                const active = filter.cat === c.name;
+                return <div key={c.name}
+                  onClick={()=>{setFilter(p=>({...p,cat:p.cat===c.name?"":c.name}));setPg(1);setTimeout(()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"}),100);}}
+                  className={active ? "depth-float" : "glass"}
+                  style={{
+                    display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12,padding:"20px 10px",cursor:"pointer",borderRadius:24,
+                    border: active ? "2px solid var(--a)" : "1px solid rgba(0,0,0,0.04)",
+                    transition: "all 0.4s cubic-bezier(0.23, 1, 0.32, 1)",
+                    transform: active ? "scale(1.08) translateY(-4px)" : "scale(1)",
+                    boxShadow: active ? "var(--shadow-hover-float)" : "none"
+                  }}>
+                  <div style={{width:54,height:54,borderRadius:"50%",overflow:"hidden",boxShadow:"0 6px 14px rgba(0,0,0,0.08)", border: "2px solid #fff"}}>
+                    <img src={CAT_PHOTOS[c.name]||CAT_PHOTOS.Other} alt={c.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                  </div>
+                  <div style={{fontSize:11,fontWeight:800,color:active?"var(--a)":"#111",textAlign:"center",letterSpacing: "-0.01em"}}>{c.name}</div>
+                </div>;
+              })}
             </div>
           </div>
+
+
 
           {/* Search & Filters */}
           <div style={{background:"#fff",border:"1px solid #EBEBEB",borderRadius:20,padding:"24px 22px",boxShadow:"0 1px 3px rgba(0,0,0,.06),0 6px 24px rgba(0,0,0,.07)",display:"flex",flexDirection:"column",gap:14}}>
@@ -667,11 +876,11 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
               </div>
               <div>
                 <label style={{display:"block",fontSize:13,fontWeight:600,color:"#636363",marginBottom:6}}>Min Price (KSh)</label>
-                <input className="inp" placeholder="e.g. 500" type="number" value={filter.minPrice} onChange={e=>{setFilter(p=>({...p,minPrice:e.target.value}));setPg(1);}}/>
-              </div>
-              <div>
-                <label style={{display:"block",fontSize:13,fontWeight:600,color:"#636363",marginBottom:6}}>Max Price (KSh)</label>
-                <input className="inp" placeholder="e.g. 50000" type="number" value={filter.maxPrice} onChange={e=>{setFilter(p=>({...p,maxPrice:e.target.value}));setPg(1);}}/>
+<input className="inp" placeholder="e.g. 500" type="text" inputMode="decimal" value={filter.minPrice} onChange={e=>{setFilter(p=>({...p,minPrice:e.target.value}));setPg(1);}}/>
+</div>
+<div>
+  <label style={{display:"block",fontSize:13,fontWeight:600,color:"#636363",marginBottom:6}}>Max Price (KSh)</label>
+  <input className="inp" placeholder="e.g. 50000" type="text" inputMode="decimal" value={filter.maxPrice} onChange={e=>{setFilter(p=>({...p,maxPrice:e.target.value}));setPg(1);}}/>
               </div>
             </div>
             {filter.cat&&<select className="inp" value={filter.subcat} onChange={e=>{setFilter(p=>({...p,subcat:e.target.value}));setPg(1);}}>
@@ -734,16 +943,23 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
           </div>
         </div>
 
-        {loading?<div style={{textAlign:"center",padding:"80px 0"}}><Spin s="40px"/></div>
-          :listings.length===0?<div className="empty"><h3 style={{fontWeight:700,fontSize:20,marginBottom:8}}>No listings found</h3><p style={{color:"#767676"}}>Try a different search or filter</p></div>
-          :<div className={vm==="grid"?"g3":"lvc"}>{listings.map(l=><ListingCard key={l.id} listing={l} onClick={()=>openListing(l)} listView={vm==="list"} isSaved={savedIds.has(l.id)} onSave={user?()=>handleToggleSave(l):null}/>)}</div>}
+        {loading ? (
+          <div className={vm==="grid"?"g3":"lvc"}>
+            {Array.from({length: isMobile?12:24}).map((_, i) => <ListingCardSkeleton key={i} listView={vm==="list"}/>)}
+          </div>
+        ) : listings.length===0 ? (
+          <div className="empty glass" style={{padding:"120px 20px", borderRadius: 24}}><h3 style={{fontWeight:900,fontSize:24,marginBottom:12}}>No listings found</h3><p style={{color:"#767676", fontSize: 16}}>Try adjusting your search or category filters.</p></div>
+        ) : (
+          <div className={vm==="grid"?"g3":"lvc"}>{listings.map(l=><ListingCard key={l.id} listing={l} onClick={()=>openListing(l)} listView={vm==="list"} isSaved={savedIds.has(l.id)} onSave={user?()=>handleToggleSave(l):null}/>)}</div>
+        )}
 
-        {!loading&&total>0&&<div style={{textAlign:"center",marginTop:24}}>
-          <button className="btn bp" style={{padding:"13px 32px",fontSize:14,borderRadius:9}}
+        {!loading&&total>0&&<div style={{textAlign:"center",marginTop:40}}>
+          <button className="btn bp lg" style={{padding:"16px 48px", borderRadius: 14, boxShadow: "0 10px 30px rgba(20,40,160,0.2)"}}
             onClick={()=>{setPage("listings");if(typeof window!=='undefined')window.history.pushState({},"","/listings");}}>
-            View All Listings ({total}) →
+            Explore All {total} Listings {Ic.chevronRight(18)}
           </button>
         </div>}
+
       </div>
 
       {/* RECENTLY SOLD */}
@@ -768,12 +984,44 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
           ))}
         </div>
 
-        {/* Section heading */}
-        <div style={{marginBottom:36,textAlign:"center"}}>
-          <div style={{fontSize:11,fontWeight:700,letterSpacing:".12em",textTransform:"uppercase",color:"#1428A0",marginBottom:8}}>How It Works</div>
-          <h2 style={{fontSize:"clamp(22px,3vw,34px)",fontWeight:800,letterSpacing:"-.03em",color:"#111111",lineHeight:1.15,margin:"0 0 10px"}}>Simple. Safe. Built for Kenya.</h2>
-          <p style={{fontSize:14,color:"#636363",lineHeight:1.7,margin:"0 auto",maxWidth:480}}>No middlemen. No hidden fees. Just buyers and sellers who get things done.</p>
+        {/* ── EDUCATIONAL PILLARS: Sell, Buy, Request ── */}
+        <div style={{marginBottom:60,textAlign:"center"}}>
+          <div style={{fontSize:11,fontWeight:800,letterSpacing:".2em",textTransform:"uppercase",color:"var(--a)",marginBottom:12}}>How It Works</div>
+          <h2 style={{fontSize:"clamp(24px,3vw,38px)",fontWeight:900,letterSpacing:"-0.03em",color:"#111",lineHeight:1.1,marginBottom:12}}>Kenya's Most Versatile Marketplace</h2>
+          <p style={{fontSize:15,color:"#6B6B7B",lineHeight:1.8,margin:"0 auto",maxWidth:540}}>Weka Soko isn't just a grid of photos. It's an ecosystem built for intentional buying and selling.</p>
         </div>
+
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(300px, 1fr))",gap:24,marginBottom:80}}>
+          {[
+            {
+              title: "Sell & Dispose",
+              desc: "The fastest way to turn your pre-owned items into cash. List for free and only pay when we find you a locked-in buyer.",
+              icon: Ic.fire(24, "var(--a)"),
+              color: "#EEF2FF"
+            },
+            {
+              title: "Buy Smart",
+              desc: "Access high-quality items at unbeatable prices. Chat anonymously and use our Escrow service for total peace of mind.",
+              icon: Ic.creditCard(24, "#0d9488"),
+              color: "#F0FDF4"
+            },
+            {
+              title: "Request Anything",
+              desc: "Can't find what you're looking for? Post a request and let the network of sellers find it for you.",
+              icon: Ic.search(24, "#B07F10"),
+              color: "#FFFBEB"
+            }
+          ].map((card, i) => (
+            <div key={i} className="depth-float" style={{padding:40,display:"flex",flexDirection:"column",gap:20,background:card.color}}>
+              <div style={{width:60,height:60,borderRadius:16,background:"#fff",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 12px rgba(0,0,0,0.05)"}}>
+                {card.icon}
+              </div>
+              <h3 style={{fontSize:22,fontWeight:900,color:"#111"}}>{card.title}</h3>
+              <p style={{fontSize:15,color:"#4B4B5B",lineHeight:1.8}}>{card.desc}</p>
+            </div>
+          ))}
+        </div>
+
 
         <div style={{display:"flex",flexWrap:"nowrap",justifyContent:"center",gap:16,overflowX:"auto",paddingBottom:4}}>
           {[
@@ -812,11 +1060,11 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
             <span style={{fontWeight:800,fontSize:22,color:"#fff",letterSpacing:"-.02em"}}>WekaSoko</span>
             <p style={{fontSize:13,color:"rgba(255,255,255,.65)",margin:"6px 0 0",lineHeight:1.6}}>Kenya's marketplace. Free to list.<br/>Pay KSh 250 only when a buyer locks in.</p>
           </div>
-          <button className="btn" onClick={()=>setModal({type:"auth",mode:"register"})} style={{background:"#fff",color:"#1428A0",border:"none",padding:"13px 28px",fontSize:14,fontWeight:800,borderRadius:10,cursor:"pointer",fontFamily:"var(--fn)",boxShadow:"0 4px 16px rgba(0,0,0,.15)",whiteSpace:"nowrap"}}>Post an Ad for Free</button>
+          <button className="btn" onClick={()=>setModal({type:"auth",mode:"signup"})} style={{background:"#fff",color:"#1428A0",border:"none",padding:"13px 28px",fontSize:14,fontWeight:800,borderRadius:10,cursor:"pointer",fontFamily:"var(--fn)",boxShadow:"0 4px 16px rgba(0,0,0,.15)",whiteSpace:"nowrap"}}>Post an Ad for Free</button>
         </div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12,paddingTop:20,borderTop:"1px solid rgba(255,255,255,.15)"}}>
           <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
-            {[["Browse Listings",()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"})],["Post an Ad",()=>setModal({type:"auth",mode:"register"})],["Buyer Requests",()=>{setPage("requests");if(typeof window!=="undefined")window.history.pushState({},"","/requests");}],["Sold Items",()=>{setPage("sold");if(typeof window!=="undefined")window.history.pushState({},"","/sold");}]].map(([label,fn])=>(
+            {[["Browse Listings",()=>document.getElementById("listings-section")?.scrollIntoView({behavior:"smooth"})],["Post an Ad",()=>setModal({type:"auth",mode:"signup"})],["Buyer Requests",()=>{setPage("requests");if(typeof window!=="undefined")window.history.pushState({},"","/requests");}],["Sold Items",()=>{setPage("sold");if(typeof window!=="undefined")window.history.pushState({},"","/sold");}]].map(([label,fn])=>(
               <button key={label} onClick={fn} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,fontWeight:500,color:"rgba(255,255,255,.7)",fontFamily:"var(--fn)",padding:0,transition:"color .15s"}}
                 onMouseEnter={e=>e.target.style.color="#fff"} onMouseLeave={e=>e.target.style.color="rgba(255,255,255,.7)"}>{label}</button>
             ))}
@@ -830,7 +1078,17 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
 
     {/* MODALS */}
     {modal?.type==="auth"&&<AuthModal defaultMode={modal.mode} onClose={closeModal} onAuth={handleAuth} notify={notify}/>}
-    {modal?.type==="post"&&token&&<PostAdModal onClose={closeModal} token={token} notify={notify} linkedRequest={modal.linkedRequest||null} onSuccess={l=>{setListings(p=>[l,...p]);setTotal(t=>t+1);}}/>}
+    {modal?.type==="post"&&token&&<PostAdModal onClose={closeModal} token={token} notify={notify} linkedRequest={modal.linkedRequest||null} onSuccess={(l, isEdit)=>{
+      if (isEdit) {
+        setPage("dashboard");
+        if(typeof window !== 'undefined') window.history.pushState({}, "", "/dashboard");
+        notify("Listing updated and sent for review", "success");
+      } else {
+        setListings(p=>[l,...p]);
+        setTotal(t=>t+1);
+      }
+    }}/>}
+
     {modal?.type==="detail"&&<DetailModal
       listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}
       onShare={()=>setModal({type:"share",listing:modal.listing})}
@@ -839,6 +1097,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       onUnlock={()=>setModal({type:"pay",payType:"unlock",listing:modal.listing})}
       onEscrow={()=>{if(!user){notify("Sign in first","warning");setModal({type:"auth",mode:"login"});return;}setModal({type:"pay",payType:"escrow",listing:modal.listing});}}
       isSaved={savedIds.has(modal.listing?.id)} onSave={user?()=>handleToggleSave(modal.listing):null}
+      onSignIn={()=>setModal({type:"auth",mode:"login"})}
     />}
     {modal?.type==="chat"&&user&&<ChatModal listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}/>}
     {modal?.type==="share"&&<ShareModal listing={modal.listing} onClose={closeModal}/>}
@@ -895,9 +1154,9 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       }}
       onSignIn={()=>setModal({type:"auth",mode:"login"})}
     />}
-    {user&&!user.is_verified&&page==="home"&&<div style={{position:"sticky",top:60,zIndex:99,padding:"0 16px"}}><VerificationBanner user={user} token={token} notify={notify}/></div>}
+
     {page==="dashboard"&&user&&<Dashboard user={user} token={token} notify={notify} onPostAd={()=>{setPage("home");if(typeof window !== 'undefined') window.history.pushState({},"","/");setModal({type:"post"});}} onClose={()=>{setPage("home");if(typeof window !== 'undefined') window.history.pushState({},"","/");}} onUserUpdate={updated=>{const m={...user,...updated};setUser(m);localStorage.setItem("ws_user",JSON.stringify(m));}} initialTab={typeof window !== 'undefined' && window.location.pathname.startsWith("/dashboard/")?window.location.pathname.split("/dashboard/")[1]:undefined}/>}
     {toast&&<Toast key={toast.id} msg={toast.msg} type={toast.type} onClose={()=>setToast(null)}/>}
-    {showPWA&&typeof window !== 'undefined' && !localStorage.getItem("pwa-dismissed")&&<PWABanner onDismiss={()=>{setShowPWA(false);localStorage.setItem("pwa-dismissed","1");}}/>}
+
   </>;
 }

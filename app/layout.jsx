@@ -1,4 +1,5 @@
 import './globals.css';
+import { Analytics } from '@vercel/analytics/react';
 
 const BASE = 'https://weka-soko-nextjs.vercel.app';
 
@@ -31,6 +32,13 @@ export const metadata = {
   },
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#1428A0',
+};
+
 // Safe JSON-LD: these are static objects we define, not user content
 const orgLd = JSON.stringify({
   '@context': 'https://schema.org',
@@ -56,10 +64,8 @@ const websiteLd = JSON.stringify({
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en-KE">
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-        <meta name="theme-color" content="#1428A0" />
         <meta name="geo.region" content="KE" />
         <meta name="geo.placename" content="Kenya" />
 
@@ -75,7 +81,7 @@ export default function RootLayout({ children }) {
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: orgLd }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: websiteLd }} />
       </head>
-      <body>{children}</body>
+      <body>{children}<Analytics /></body>
     </html>
   );
 }
