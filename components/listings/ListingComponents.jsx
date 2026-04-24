@@ -260,16 +260,17 @@ function ListingCard({listing:l,onClick,listView,isSaved,onSave}){
   const photoCount=photos.length;
   const isNew=Date.now()-new Date(l.created_at)<12*3600000&&l.status!=="sold";
   const ripple=useRipple();
+  // Fake viewers count for social proof (can be replaced with real data later)
+  const viewers = Math.floor(Math.random() * 15) + 2;
 
-  return <div className={`lcard depth-float${listView?" lcard-list":""}`} 
+  return <div className={`lcard product-card${listView?" lcard-list":""}`}
     onClick={e=>{ripple(e);onClick&&onClick();}}
     style={{
-      borderRadius: 18,
-      background: "#fff",
-      border: "1px solid rgba(0,0,0,0.04)",
-      overflow: "hidden",
-      position: "relative",
-      transition: "all 0.5s cubic-bezier(0.23, 1, 0.32, 1)"
+      borderRadius: 'var(--r)',
+      background: 'var(--surf)',
+      overflow: 'hidden',
+      position: 'relative',
+      cursor: 'pointer',
     }}>
 
     <div className="lthumb">
@@ -286,9 +287,21 @@ function ListingCard({listing:l,onClick,listView,isSaved,onSave}){
               <span style={{fontSize:11,fontWeight:700,letterSpacing:".06em",textTransform:"uppercase",color:"#AAAAAA"}}>{l.category||"No Photo"}</span>
             </div>
       }
+      {/* Viewers badge - social proof */}
+      <div className="viewers-badge" style={{position:'absolute',top:12,left:12,zIndex:10}}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{display:'inline',verticalAlign:'middle',marginRight:4}}>
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+        {viewers} viewing
+      </div>
       {l.status==="sold"&&<div className="sold-badge">SOLD</div>}
-      {isNew&&<div style={{position:"absolute",top:12,left:12,background:"#10b981",color:"#fff",fontSize:9,fontWeight:900,padding:"4px 10px",borderRadius:6,letterSpacing:".08em",textTransform:"uppercase",boxShadow:"0 4px 12px rgba(16,185,129,0.3)"}}>NEW</div>}
-      {onSave&&<HeartBtn saved={isSaved} onToggle={onSave} size={16} style={{position: 'absolute', top: 10, right: 10}}/>}
+      {isNew&&<div style={{position:"absolute",top:12,right:12,background:"#10b981",color:"#fff",fontSize:9,fontWeight:900,padding:"4px 10px",borderRadius:6,letterSpacing:".08em",textTransform:"uppercase",boxShadow:"0 4px 12px rgba(16,185,129,0.3)",zIndex:10}}>NEW</div>}
+      {onSave&&<div style={{position:'absolute',top:'50%',right:12,transform:'translateY(-50%)',display:'flex',flexDirection:'column',gap:12,zIndex:10}}>
+        <div className="floating-action" style={{padding:10}}>
+          <HeartBtn saved={isSaved} onToggle={onSave} size={18} />
+        </div>
+      </div>}
     </div>
     <div style={{padding: '20px 22px', flex: 1, display: 'flex', flexDirection: 'column', gap: 8}}>
       <div style={{fontSize: 10, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase', color: '#AEAEB2', marginBottom: 2}}>{l.category}</div>
