@@ -314,19 +314,19 @@ useEffect(()=>{
     const load=async(silent=false)=>{
       if(!silent)setLoading(true);
       try{
-        const p=new URLSearchParams({page:1,limit:48,sort:filter.sort||"newest"});
+        const p=new URLSearchParams({page:pg,limit:48,sort:filter.sort||"newest"});
         if(filter.cat)p.set("category",filter.cat);
         if(filter.subcat)p.set("subcat",filter.subcat);
         if(filter.q)p.set("search",filter.q);
         if(filter.county)p.set("county",filter.county);
-        if(filter.minPrice)p.set("minPrice",filter.minPrice);
-        if(filter.maxPrice)p.set("maxPrice",filter.maxPrice);
+        if(filter.minPrice)p.set("min_price",filter.minPrice);
+        if(filter.maxPrice)p.set("max_price",filter.maxPrice);
         const data=await apiCall(`/api/listings?${p}`);
         setListings(data.listings||[]);
         setTotal(data.total||0);
         setMaintenanceMsg(null);
       }catch(e){
-        if(e.maintenance){setMaintenanceMsg(e.maintenance);}  // keep existing listings visible during maintenance
+        if(e.maintenance){setMaintenanceMsg(e.maintenance);} // keep existing listings visible during maintenance
         else if(!silent)setListings([]);
       }
       finally{if(!silent)setLoading(false);}
