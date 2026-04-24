@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { fmtKES, ago, CATS, KENYA_COUNTIES, KENYA_TOWNS, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
-import { api } from '@/components/ui/primitives';
+import { api, Ic } from '@/components/ui/primitives';
 
 function Toast({msg,type,onClose}){
 

@@ -1,8 +1,9 @@
 'use client';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { Ic, Spin, WekaSokoLogo, api, useRipple } from '@/components/ui/primitives';
 import { fmtKES, ago, CATS, KENYA_COUNTIES, KENYA_TOWNS, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
-import { api } from '@/components/ui/primitives';
-import { Spin, Ic, WekaSokoLogo, useRipple } from '@/components/ui/primitives';
+
+
 import { Modal, FF, ImageUploader, compressImage } from '@/components/ui/core';
 import { StarPicker, ReviewsSection } from '@/components/dashboard/ReviewsSection';
 import { ChatModal } from '@/components/chat/ChatModal';

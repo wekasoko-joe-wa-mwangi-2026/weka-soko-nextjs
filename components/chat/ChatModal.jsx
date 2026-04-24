@@ -2,8 +2,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { io } from 'socket.io-client';
 import { fmtKES, ago, CATS, KENYA_COUNTIES, KENYA_TOWNS, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
-import { api, lastSeen } from '@/components/ui/primitives';
-import { Spin, Ic } from '@/components/ui/primitives';
+import { api, Spin, Ic, lastSeen, useAudioNotification } from '@/components/ui/primitives';
 import { WatermarkedImage, Lightbox } from '@/components/auth/AuthModal';
 import { Modal } from '@/components/ui/core';
 

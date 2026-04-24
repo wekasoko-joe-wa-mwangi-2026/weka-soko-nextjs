@@ -1,8 +1,9 @@
 'use client';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { HeartBtn, Ic, SkeletonCard, Spin, api, checkContactInfo, timeLeft, useRipple } from '@/components/ui/primitives';
 import { fmtKES, ago, CATS, KENYA_COUNTIES, KENYA_TOWNS, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
-import { api, timeLeft, checkContactInfo } from '@/components/ui/primitives';
-import { Spin, Ic, HeartBtn, useRipple, SkeletonCard } from '@/components/ui/primitives';
+
+
 import { WatermarkedImage, Lightbox } from '@/components/auth/AuthModal';
 import { Modal, FF, ImageUploader, compressImage } from '@/components/ui/core';
 import { ShareModal } from '@/components/listings/ShareModal';
