@@ -43,36 +43,9 @@ function WekaSokoLogo({ size = 32, iconOnly = false, light = false }) {
 
 
 // ── CATEGORIES ────────────────────────────────────────────────────────────────
-const TERMS = `WEKA SOKO — TERMS & CONDITIONS  (February 2026)
-
-1. ACCEPTANCE
-By using Weka Soko you agree to these Terms.
-
-2. PLATFORM ROLE
-Weka Soko is a classified advertising platform only. We are NOT party to any transaction. ALL transactions are solely between buyer and seller. Weka Soko shall NOT be liable for item quality, fraud, loss, or damage. Users transact at their own risk.
-
-3. ESCROW SERVICE
-Escrow is a convenience feature. Weka Soko is not a licensed financial institution. The 5.5% platform fee is non-refundable once payment is accepted. Dispute decisions by Weka Soko are final.
-
-4. FEES
-Contact unlock fee: KSh 250 (non-refundable). Escrow fee: 5.5% of item price. All payments to Till Number 5673935.
-
-5. PROHIBITED CONTENT
-No stolen goods, counterfeit items, illegal drugs, weapons, or adult content. Violators will be permanently banned.
-
-6. CONTENT POLICY
-No contact info in chat before unlock. Photos must not contain nudity or contact details.
-
-7. ACCOUNT RESPONSIBILITY
-You are responsible for all activity on your account.
-
-8. GOVERNING LAW
-These Terms are governed by the laws of Kenya. Contact: support@wekasoko.co.ke`;
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 // Time remaining until a future date
-const timeLeft = ts => { if(!ts)return""; const d=new Date(ts).getTime()-Date.now(); if(d<=0)return"Expired"; if(d<3600000)return Math.floor(d/60000)+"m left"; if(d<86400000)return Math.floor(d/3600000)+"h left"; if(d<604800000)return Math.floor(d/86400000)+"d left"; const weeks=Math.floor(d/604800000); return weeks+(weeks===1?" week left":" weeks left"); };
-const lastSeen = ts => { if(!ts)return""; const d=Date.now()-new Date(ts).getTime(); if(d<30000)return"online"; if(d<60000)return"last seen just now"; if(d<3600000)return"last seen "+Math.floor(d/60000)+"m ago"; if(d<86400000)return"last seen "+Math.floor(d/3600000)+"h ago"; if(d<172800000)return"last seen yesterday"; return"last seen "+new Date(ts).toLocaleDateString("en-KE",{day:"numeric",month:"short"}); };
 
 // ── TERMS ─────────────────────────────────────────────────────────────────────
 export const TERMS = `WEKA SOKO — TERMS & CONDITIONS  (February 2026)
@@ -208,41 +181,6 @@ export const Ic = {
 
 
 // ── CONTACT INFO DETECTION (client-side mirror of backend moderation) ─────────
-function checkContactInfo(text) {
-  if (!text) return false;
-  const t = String(text);
-  // Raw email / @ handle / URL
-  if (/[a-z0-9._%+\-]+[@＠][a-z0-9.\-]+\.[a-z]{2,}/i.test(t)) return true;
-  if (/\b\w{2,}\s+at\s+\w{2,}\s+dot\s+\w{2,}\b/i.test(t)) return true;
-  if (/@[a-z0-9_.]{3,}/i.test(t)) return true;
-  if (/https?:\/\/|www\.[a-z0-9]+\.[a-z]{2,}/i.test(t)) return true;
-  // Social media / messaging / contact hints
-  if (/\b(whatsapp|whats.?app|wa\.me|telegram|t\.me|signal|viber|snapchat|snap\b|instagram|insta\b|ig\b|facebook|fb\.com|twitter|x\.com|tiktok|dm me|call me|text me|reach me|my number|my phone|my email|my namba|nipa\s+call|nipigie)\b/i.test(t)) return true;
-  // Add me / find me on ...
-  if (/\b(add\s+me\s+(on|at)|find\s+me\s+(on|at)|follow\s+me\s+on|my\s+(ig|snap|insta|handle|username))\b/i.test(t)) return true;
-  // Strip tech spec units so "256GB 8GB RAM 1080P 4K" doesn't trigger digit checks
-  const techStripped = t
-    .replace(/\b\d+(\.\d+)?\s*(gb|mb|tb|kb|ghz|mhz|hz|mp|fps|px|rpm|mah|wh|mm|cm|kg|nm|hp)\b/gi, '')
-    .replace(/\b(4k|8k|2k|1080p|720p|480p|2160p|4320p|1440p|960p)\b/gi, '')
-    .replace(/\b\d+\s*x\s*\d+\b/gi, '');  // resolution like 2560x1440
-  // Digit sequence: 10 consecutive digits with only short non-space separators
-  // Only flag when digits appear close together without letter/space barriers
-  if (/\d[.\-•/\\]{0,2}\d[.\-•/\\]{0,2}\d[.\-•/\\]{0,2}\d[.\-•/\\]{0,2}\d[.\-•/\\]{0,2}\d[.\-•/\\]{0,2}\d[.\-•/\\]{0,2}\d[.\-•/\\]{0,2}\d[.\-•/\\]{0,2}\d/.test(techStripped)) return true;
-  // Word-to-digit conversion then Kenyan phone check
-  const norm = techStripped.toLowerCase()
-    .replace(/\bzero\b/g,"0").replace(/\bone\b/g,"1").replace(/\btwo\b/g,"2")
-    .replace(/\bthree\b/g,"3").replace(/\bfour\b/g,"4").replace(/\bfive\b/g,"5")
-    .replace(/\bsix\b/g,"6").replace(/\bseven\b/g,"7").replace(/\beight\b/g,"8")
-    .replace(/\bnine\b/g,"9")
-    .replace(/\bsita\b/g,"6").replace(/\bsaba\b/g,"7").replace(/\bnane\b/g,"8")
-    .replace(/\btisa\b/g,"9").replace(/\bmoja\b/g,"1").replace(/\bmbili\b/g,"2")
-    .replace(/\btatu\b/g,"3").replace(/\btano\b/g,"5").replace(/\bne\b/g,"4");
-  const digits = norm.replace(/[^0-9]/g,"");
-  if (/07\d{8}|01\d{8}|2547\d{8}|2541\d{8}/.test(digits)) return true;
-  if (/0\d{9,}/.test(digits)) return true;
-  if (/254\d{9}/.test(digits)) return true;
-  return false;
-}
 
 // Convert VAPID base64 key to Uint8Array for PushManager.subscribe
 export function urlBase64ToUint8Array(base64String) {
