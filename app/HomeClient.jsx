@@ -1,9 +1,33 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { io } from 'socket.io-client';
+import dynamic from 'next/dynamic';
 import { apiCall, fmtKES, ago, CATS, KENYA_COUNTIES, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
-import { Ic, urlBase64ToUint8Array, WekaSokoLogo, Spin, Toast, Modal, FF, Counter, ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal, WatermarkedImage, Lightbox, AuthModal, ShareModal, PayModal, ChatModal, PostAdModal, ListingCard, ListingCardSkeleton, HeroSkeleton, LeaveReviewBtn, ReportListingBtn, DetailModal, MarkSoldModal, RoleSwitcher, PostRequestModal, WhatBuyersWant, SoldSection, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab, ProfileSection, PasswordSection, VerificationSection, MobileDashboard, Dashboard, Pager, MobileRequestsTab, MobileLayout, BuyersWantPage, AllListingsPage, SoldPage, HotRightNow, SwipeFeed, useAudioNotification } from '@/components/all';
+
+// ── LIGHTWEIGHT — loaded immediately (needed for first paint) ─────────────────
+import { Ic, urlBase64ToUint8Array, WekaSokoLogo, Spin, Toast, Modal, FF, Counter, useAudioNotification } from '@/components/all';
+import { ListingCard, ListingCardSkeleton, HeroSkeleton, HotRightNow } from '@/components/all';
+import { WhatBuyersWant, MobileLayout, MobileRequestsTab } from '@/components/all';
+import { AllListingsPage, SoldPage, BuyersWantPage, SwipeFeed } from '@/components/all';
+import { SoldSection, Pager, RoleSwitcher } from '@/components/all';
+
+// ── HEAVY — lazy loaded only when needed (modals, dashboard, auth) ─────────────
+const AuthModal      = dynamic(() => import('@/components/auth/AuthModal').then(m => ({ default: m.AuthModal })), { ssr: false });
+const PostAdModal    = dynamic(() => import('@/components/listings/ListingComponents').then(m => ({ default: m.PostAdModal })), { ssr: false });
+const DetailModal    = dynamic(() => import('@/components/listings/ListingComponents').then(m => ({ default: m.DetailModal })), { ssr: false });
+const MarkSoldModal  = dynamic(() => import('@/components/listings/ListingComponents').then(m => ({ default: m.MarkSoldModal })), { ssr: false });
+const LeaveReviewBtn = dynamic(() => import('@/components/listings/ListingComponents').then(m => ({ default: m.LeaveReviewBtn })), { ssr: false });
+const ReportListingBtn = dynamic(() => import('@/components/listings/ListingComponents').then(m => ({ default: m.ReportListingBtn })), { ssr: false });
+const ChatModal      = dynamic(() => import('@/components/chat/ChatModal').then(m => ({ default: m.ChatModal })), { ssr: false });
+const PayModal       = dynamic(() => import('@/components/payments/PayModal').then(m => ({ default: m.PayModal })), { ssr: false });
+const ShareModal     = dynamic(() => import('@/components/listings/ShareModal').then(m => ({ default: m.ShareModal })), { ssr: false });
+const Dashboard      = dynamic(() => import('@/components/dashboard/Dashboard').then(m => ({ default: m.Dashboard })), { ssr: false });
+const PostRequestModal = dynamic(() => import('@/components/requests/RequestComponents').then(m => ({ default: m.PostRequestModal })), { ssr: false });
+
+// ── UNUSED IN HomeClient — kept for completeness but not imported ──────────────
+// ImageUploader, TermsModal, PasswordField, ForgotPasswordPanel, ResetPasswordModal
+// WatermarkedImage, Lightbox, StarPicker, ReviewsSection, MyRequestsTab, PitchesTab
+// ProfileSection, PasswordSection, VerificationSection, MobileDashboard
 
 
 export default function HomeClient({ initialListings, initialTotal, initialStats, initialCounties, initialFilter, initialPage }) {
@@ -312,11 +336,13 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     return()=>clearInterval(iv);
   },[pg,filter]);
 
-  // Real-time notifications for logged-in user
+  // Real-time notifications for logged-in user — socket.io loaded lazily
   useEffect(()=>{
     if(!token||!user)return;
-    const s=io(API,{auth:{token},transports:["websocket","polling"]});
-    socketRef.current=s;
+    let s;
+    import('socket.io-client').then(({ io }) => {
+      s=io(API,{auth:{token},transports:["websocket","polling"]});
+      socketRef.current=s;
     s.on("notification",(n)=>{
       setNotifCount(c=>c+1);
       if(n.type==="listing_match"){
@@ -422,6 +448,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     });
 
     return()=>s.disconnect();
+    }); // close import().then()
   },[token,user,notify]);
 
   // Fetch unread count on login + poll every 20s silently
