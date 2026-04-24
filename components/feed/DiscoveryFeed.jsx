@@ -95,27 +95,71 @@ export default function DiscoveryFeed({ listings, onListingClick, onLike, onChat
 // Individual feed card
 function FeedCard({ listing, index, isActive, isLiked, onLike, onChat, onShare, onClick }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const cardRef = useRef(null);
   const photo = listing.photos?.[0]?.url || listing.photos?.[0] || null;
   const isNew = Date.now() - new Date(listing.created_at) < 12 * 3600000;
   const viewers = Math.floor(Math.random() * 15) + 2;
 
+  // Staggered entrance animation
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, index * 100); // 100ms stagger
+    return () => clearTimeout(timer);
+  }, [index]);
+
+  // Determine badge type
+  const getBadge = () => {
+    if (listing.view_count > 50) return { text: '🔥 Trending', color: '#ef4444' };
+    if (listing.interest_count > 5) return { text: '⚡ Fast Moving', color: '#f59e0b' };
+    if (isNew) return { text: '✨ New', color: '#10b981' };
+    return null;
+  };
+  const badge = getBadge();
+
   return (
     <div
+      ref={cardRef}
       className="feed-card"
       data-index={index}
-      style={styles.card}
+      style={{
+        ...styles.card,
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
+        transition: 'opacity 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+      }}
       onClick={onClick}
     >
-      {/* Background Image */}
+      {/* Background Image with blur-to-clear effect */}
       <div style={styles.imageContainer}>
         {photo ? (
-          <Image
-            src={photo}
-            alt={listing.title}
-            fill
-            style={{ objectFit: 'cover' }}
-            priority={index < 3}
-          />
+          <>
+            {/* Blurred placeholder */}
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'linear-gradient(135deg, #1428A0 0%, #0F1F8A 100%)',
+                filter: imageLoaded ? 'blur(0px)' : 'blur(20px)',
+                opacity: imageLoaded ? 0 : 1,
+                transition: 'opacity 0.5s ease, filter 0.5s ease',
+              }}
+            />
+            <Image
+              src={photo}
+              alt={listing.title}
+              fill
+              style={{
+                objectFit: 'cover',
+                opacity: imageLoaded ? 1 : 0,
+                transition: 'opacity 0.5s ease',
+              }}
+              priority={index < 3}
+              onLoad={() => setImageLoaded(true)}
+            />
+          </>
         ) : (
           <div style={styles.noImage}>
             <span style={styles.noImageText}>{listing.category}</span>
@@ -125,7 +169,7 @@ function FeedCard({ listing, index, isActive, isLiked, onLike, onChat, onShare, 
         <div style={styles.gradient} />
       </div>
 
-      {/* Top overlay - Viewers badge */}
+      {/* Top overlay - Viewers badge and dynamic badges */}
       <div style={styles.topOverlay}>
         <div className="viewers-badge" style={styles.viewersBadge}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 4 }}>
@@ -134,8 +178,13 @@ function FeedCard({ listing, index, isActive, isLiked, onLike, onChat, onShare, 
           </svg>
           {viewers} viewing
         </div>
-        {isNew && (
-          <div style={styles.newBadge}>NEW</div>
+        {badge && (
+          <div style={{
+            ...styles.statusBadge,
+            background: badge.color,
+          }}>
+            {badge.text}
+          </div>
         )}
       </div>
 
@@ -344,6 +393,16 @@ const styles = {
     letterSpacing: '0.05em',
     textTransform: 'uppercase',
     boxShadow: '0 4px 12px rgba(16,185,129,0.3)',
+  },
+  statusBadge: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: 700,
+    padding: '6px 12px',
+    borderRadius: 20,
+    letterSpacing: '0.02em',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+    animation: 'pulse-soft 2s ease-in-out infinite',
   },
   floatingActions: {
     position: 'absolute',

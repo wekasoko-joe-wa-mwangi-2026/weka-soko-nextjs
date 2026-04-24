@@ -254,14 +254,28 @@ function HeroSkeleton(){
 
 // ── LISTING CARD ──────────────────────────────────────────────────────────────
 
-function ListingCard({listing:l,onClick,listView,isSaved,onSave}){
-  const photos=Array.isArray(l.photos)?l.photos.map(p=>typeof p==="string"?p:p?.url).filter(Boolean):[];
-  const photo=photos[0]||null;
-  const photoCount=photos.length;
-  const isNew=Date.now()-new Date(l.created_at)<12*3600000&&l.status!=="sold";
-  const ripple=useRipple();
-  // Fake viewers count for social proof (can be replaced with real data later)
-  const viewers = Math.floor(Math.random() * 15) + 2;
+function ListingCard({listing:l,onClick,listView,isSaved,onSave,index=0}){
+const photos=Array.isArray(l.photos)?l.photos.map(p=>typeof p==="string"?p:p?.url).filter(Boolean):[];
+const photo=photos[0]||null;
+const photoCount=photos.length;
+const isNew=Date.now()-new Date(l.created_at)<12*3600000&&l.status!=="sold";
+const ripple=useRipple();
+// Fake viewers count for social proof (can be replaced with real data later)
+const viewers = Math.floor(Math.random() * 15) + 2;
+  // Staggered entrance animation
+  const [isVisible, setIsVisible] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), index * 50);
+    return () => clearTimeout(timer);
+  }, [index]);
+  // Get badge based on listing metrics
+  const getBadge = () => {
+    if (l.view_count > 50) return { text: '🔥 Trending', color: '#ef4444' };
+    if (l.interest_count > 5) return { text: '⚡ Fast Moving', color: '#f59e0b' };
+    if (isNew) return { text: '✨ New', color: '#10b981' };
+    return null;
+  };
+  const badge = getBadge();
 
   return <div className={`lcard product-card${listView?" lcard-list":""}`}
     onClick={e=>{ripple(e);onClick&&onClick();}}
