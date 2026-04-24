@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { fmtKES, ago, CATS, KENYA_COUNTIES, KENYA_TOWNS, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
 import { api, Ic } from '@/components/ui/primitives';
 
@@ -11,23 +12,31 @@ function Toast({msg,type,onClose}){
 }
 
 function Modal({title,onClose,children,footer,large,xl}){
-  const [closing,setClosing]=useState(false);
-  const close=()=>{setClosing(true);setTimeout(onClose,200);};
-  useEffect(()=>{
-    const h=e=>{if(e.key==="Escape")close();};
-    document.addEventListener("keydown",h);
-    return()=>document.removeEventListener("keydown",h);
-  },[]);
-  return <div className={`ov${closing?" closing":""}`} onClick={e=>e.target===e.currentTarget&&close()}>
-    <div className={`mod${large?" lg":""}${xl?" xl":""}${closing?" closing":""}`}>
-      <div className="mh">
-        <h3 style={{fontSize:17,fontWeight:700,lineHeight:1.3}}>{title}</h3>
-        <button className="icon-btn" onClick={close} title="Close" aria-label="Close modal">{Ic.x(18)}</button>
-      </div>
-      <div className="mb mod-stagger">{children}</div>
-      {footer&&<div className="mf">{footer}</div>}
-    </div>
-  </div>;
+const [closing,setClosing]=useState(false);
+const [mounted,setMounted]=useState(false);
+const closeRef=useRef(onClose);
+closeRef.current=onClose;
+const close=useCallback(()=>{setClosing(true);setTimeout(()=>closeRef.current(),200);},[]);
+useEffect(()=>{
+setMounted(true);
+const h=e=>{if(e.key==="Escape")close();};
+document.addEventListener("keydown",h);
+return()=>document.removeEventListener("keydown",h);
+},[close]);
+const modalContent=(
+<div className={`ov${closing?" closing":""}`} onClick={e=>e.target===e.currentTarget&&close()}>
+<div className={`mod${large?" lg":""}${xl?" xl":""}${closing?" closing":""}`}>
+<div className="mh">
+<h3 style={{fontSize:17,fontWeight:700,lineHeight:1.3}}>{title}</h3>
+<button className="icon-btn" onClick={close} title="Close" aria-label="Close modal">{Ic.x(18)}</button>
+</div>
+<div className="mb mod-stagger">{children}</div>
+{footer&&<div className="mf">{footer}</div>}
+</div>
+</div>
+);
+if(!mounted)return null;
+return createPortal(modalContent,document.body);
 }
 
 function FF({label,hint,children,required}){
