@@ -719,8 +719,8 @@ const getViewers = (listingId) => {
     if(filter.subcat)p.set('subcat',filter.subcat);
     if(filter.q)p.set('search',filter.q);
     if(filter.county)p.set('county',filter.county);
-    if(filter.minPrice)p.set('minPrice',filter.minPrice);
-    if(filter.maxPrice)p.set('maxPrice',filter.maxPrice);
+    if(filter.minPrice)p.set('min_price',filter.minPrice);
+    if(filter.maxPrice)p.set('max_price',filter.maxPrice);
     const qs=p.toString();
     return qs?'&'+qs:'';
   },[filter]);
@@ -1321,8 +1321,8 @@ function AllListingsPage({user,token,notify,onBack,onOpenListing,onToggleSave,sa
     if(category)p.set("category",category);
     if(subcat)p.set("subcat",subcat);
     if(county)p.set("county",county);
-    if(minPrice)p.set("minPrice",minPrice);
-    if(maxPrice)p.set("maxPrice",maxPrice);
+    if(minPrice)p.set("min_price",minPrice);
+    if(maxPrice)p.set("max_price",maxPrice);
     api(`/api/listings?${p}`).then(d=>{
       setListings(prev=>pg===1?(d.listings||[]):[...prev,...(d.listings||[])]);
       setTotal(d.total||0);

@@ -6,11 +6,13 @@ export const dynamic = 'auto';
 export const revalidate = 30; // Revalidate page every 30 seconds
 
 async function getInitialData(searchParams) {
-  const { category = '', search = '', county = '', sort = 'newest', page = '1' } = await searchParams || {};
+  const { cat = '', search = '', county = '', sort = 'newest', page = '1', min_price = '', max_price = '' } = await searchParams || {};
   const params = new URLSearchParams({ page, limit: PER_PAGE, sort });
-  if (category) params.set('category', category);
+  if (cat) params.set('category', cat);
   if (search) params.set('search', search);
   if (county) params.set('county', county);
+  if (min_price) params.set('min_price', min_price);
+  if (max_price) params.set('max_price', max_price);
 
   const [listingsRes, statsRes, countiesRes] = await Promise.allSettled([
     fetch(`${API}/api/listings?${params}`, { next: { revalidate: 30 } }),
@@ -30,14 +32,14 @@ async function getInitialData(searchParams) {
 
 export async function generateMetadata({ searchParams }) {
   const BASE = 'https://weka-soko-nextjs.vercel.app';
-  const { category, search } = await searchParams || {};
+  const { cat, search } = await searchParams || {};
   let title = 'Weka Soko — Buy & Sell in Kenya';
   let description = "Kenya's trusted marketplace. Post free. Pay KSh 250 only when a serious buyer locks in. Safe anonymous chat and M-Pesa escrow.";
   let canonical = BASE;
-  if (category) {
-    title = `${category} for Sale in Kenya — Weka Soko`;
-    description = `Browse ${category} listings in Kenya. Buy and sell safely on Weka Soko — anonymous chat, M-Pesa escrow, no hidden fees.`;
-    canonical = `${BASE}/?cat=${encodeURIComponent(category)}`;
+  if (cat) {
+    title = `${cat} for Sale in Kenya — Weka Soko`;
+    description = `Browse ${cat} listings in Kenya. Buy and sell safely on Weka Soko — anonymous chat, M-Pesa escrow, no hidden fees.`;
+    canonical = `${BASE}/?cat=${encodeURIComponent(cat)}`;
   } else if (search) {
     title = `"${search}" for Sale in Kenya — Weka Soko`;
     description = `Find "${search}" listings in Kenya on Weka Soko. Post free, pay KSh 250 only when a serious buyer shows up.`;
@@ -59,14 +61,14 @@ export default async function HomePage({ searchParams }) {
       initialTotal={listings.total || 0}
       initialStats={stats}
       initialCounties={counties}
-      initialFilter={{
-        cat: sp?.category || '',
-        q: sp?.search || '',
-        county: sp?.county || '',
-        minPrice: sp?.minPrice || '',
-        maxPrice: sp?.maxPrice || '',
-        sort: sp?.sort || 'newest',
-      }}
+    initialFilter={{
+      cat: sp?.cat || '',
+      q: sp?.search || '',
+      county: sp?.county || '',
+      minPrice: sp?.min_price || '',
+      maxPrice: sp?.max_price || '',
+      sort: sp?.sort || 'newest',
+    }}
       initialPage={parseInt(sp?.page || '1')}
     />
   );
