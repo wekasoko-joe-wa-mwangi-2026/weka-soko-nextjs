@@ -296,13 +296,13 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     notify(newSaved?"Saved!":"Removed from saved","success");
   },[user,token,savedIds,notify]);
 
-  // Stats — fetch on load + poll every 30s
-  useEffect(()=>{
-    const fetchStats=()=>apiCall("/api/stats").then(setStats).catch(()=>{});
-    fetchStats();
-    const iv=setInterval(fetchStats,30000);
-    return()=>clearInterval(iv);
-  },[]);
+// Stats — fetch on load + poll every 60s (reduced frequency for better performance)
+useEffect(()=>{
+  const fetchStats=()=>apiCall("/api/stats").then(setStats).catch(()=>{});
+  fetchStats();
+  const iv=setInterval(fetchStats,60000);
+  return()=>clearInterval(iv);
+},[]);
 
   // Listings — fetch on filter/page change + silent background refresh every 60s
   const listingsFilterRef=useRef(filter);
@@ -332,7 +332,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       finally{if(!silent)setLoading(false);}
     };
     load(false);
-    const iv=setInterval(()=>load(true),60000);
+    const iv=setInterval(()=>load(true),120000);
     return()=>clearInterval(iv);
   },[pg,filter]);
 
@@ -458,7 +458,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       if(Array.isArray(ns))setNotifCount(ns.filter(n=>!n.is_read).length);
     }).catch(()=>{});
     fetchUnread();
-    const iv=setInterval(fetchUnread,20000);
+    const iv=setInterval(fetchUnread,60000);
     return()=>clearInterval(iv);
   },[token]);
 

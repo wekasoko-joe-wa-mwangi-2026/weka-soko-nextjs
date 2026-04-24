@@ -1,7 +1,9 @@
 import { API, PER_PAGE } from '@/lib/utils';
 import HomeClient from './HomeClient';
 
-export const dynamic = 'force-dynamic';
+// Use auto to allow static generation when possible, dynamic when needed
+export const dynamic = 'auto';
+export const revalidate = 30; // Revalidate page every 30 seconds
 
 async function getInitialData(searchParams) {
   const { category = '', search = '', county = '', sort = 'newest', page = '1' } = await searchParams || {};

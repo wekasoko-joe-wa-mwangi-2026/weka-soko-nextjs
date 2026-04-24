@@ -13,9 +13,17 @@ const nextConfig = {
     imageSizes: [64, 128, 256, 384],
     minimumCacheTTL: 86400, // cache optimized images for 24h
   },
-  webpack: (config) => {
-    // Disable webpack filesystem cache so Vercel always recompiles fresh
-    config.cache = false;
+  webpack: (config, { isServer }) => {
+    // Enable webpack filesystem cache for faster builds
+    // Only disable in development if needed
+    if (process.env.NODE_ENV === 'production') {
+      config.cache = {
+        type: 'filesystem',
+        buildDependencies: {
+          config: [__filename],
+        },
+      };
+    }
     return config;
   },
 };
@@ -24,9 +32,12 @@ module.exports = withSentryConfig(nextConfig, {
   // Sentry webpack plugin options
   org: 'weka-soko',
   project: 'weka-soko-nextjs',
-  silent: true,           // suppress build output noise
+  silent: true, // suppress build output noise
   widenClientFileUpload: true,
-  hideSourceMaps: true,   // don't expose source maps in production bundle
+  hideSourceMaps: true, // don't expose source maps in production bundle
   disableLogger: true,
   automaticVercelMonitors: true,
+  sourcemaps: {
+    disable: true, // Disable source maps in production for faster builds
+  },
 });
