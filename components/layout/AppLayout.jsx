@@ -644,28 +644,37 @@ return(
 
 // ── SWIPE FEED — vertical scroll between ads, tap edges to browse photos ──────
 function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,onSignIn,onPostAd,initialListings,startIndex,onClose,filter}){
-  const [listings,setListings]=useState(initialListings&&initialListings.length?[...initialListings]:[]);
-  const [total,setTotal]=useState(0);
-  const [loading,setLoading]=useState(!(initialListings&&initialListings.length));
-  const [idx,setIdx]=useState(typeof startIndex==="number"?startIndex:0);
-  const [panelIdx,setPanelIdx]=useState(0); // horizontal panel index (photos + info panel)
-  const [dragY,setDragY]=useState(0);
-  const [dragX,setDragX]=useState(0);
-  const [animating,setAnimating]=useState(false);
-  const [animatingH,setAnimatingH]=useState(false);
-  const [autoScroll,setAutoScroll]=useState(false);
-  const [shareModal,setShareModal]=useState(null);
-  const [reportTarget,setReportTarget]=useState(null);
-  const animatingH_=useRef(false);
-  const containerRef=useRef(null);
-  const fetching=useRef(false);
-  const animating_=useRef(false);
-  const startYRef=useRef(null);
-  const startXRef=useRef(null);
-  const swipeDir=useRef(null);
-  const autoScrollRef=useRef(null);
-  const panelIdxRef=useRef(0);
-  const PER=20;
+const [listings,setListings]=useState(initialListings&&initialListings.length?[...initialListings]:[]);
+const [total,setTotal]=useState(0);
+const [loading,setLoading]=useState(!(initialListings&&initialListings.length));
+const [idx,setIdx]=useState(typeof startIndex==="number"?startIndex:0);
+const [panelIdx,setPanelIdx]=useState(0); // horizontal panel index (photos + info panel)
+const [dragY,setDragY]=useState(0);
+const [dragX,setDragX]=useState(0);
+const [animating,setAnimating]=useState(false);
+const [animatingH,setAnimatingH]=useState(false);
+const [autoScroll,setAutoScroll]=useState(false);
+const [shareModal,setShareModal]=useState(null);
+const [reportTarget,setReportTarget]=useState(null);
+const [bottomSheetExpanded,setBottomSheetExpanded]=useState(false);
+const [imageLoaded,setImageLoaded]=useState({}); // Track image loading per listing
+const animatingH_=useRef(false);
+const containerRef=useRef(null);
+const fetching=useRef(false);
+const animating_=useRef(false);
+const startYRef=useRef(null);
+const startXRef=useRef(null);
+const swipeDir=useRef(null);
+const autoScrollRef=useRef(null);
+const panelIdxRef=useRef(0);
+const PER=20;
+
+// Generate fake viewers count for social proof
+const getViewers = (listingId) => {
+  // Deterministic based on listing ID
+  const hash = listingId.split('').reduce((a,b)=>a+b.charCodeAt(0),0);
+  return (hash % 15) + 2; // 2-16 viewers
+};
 
   // Keep panelIdxRef in sync so autoscroll interval always reads fresh value
   useEffect(()=>{panelIdxRef.current=panelIdx;},[panelIdx]);
@@ -831,9 +840,17 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
       :[];
     const photoSrcs=photos.length>0?photos:[null]; // at least one panel (placeholder)
     const totalPanels=photoSrcs.length+1; // photo panels + 1 info panel
-    const isNew=Date.now()-new Date(l.created_at)<12*3600000;
-    const isExpiring=l.expires_at&&new Date(l.expires_at)-Date.now()<3*86400000&&new Date(l.expires_at)>Date.now();
-    const isSaved=savedIds?.has(l.id);
+  const isNew=Date.now()-new Date(l.created_at)<12*3600000;
+  const isExpiring=l.expires_at&&new Date(l.expires_at)-Date.now()<3*86400000&&new Date(l.expires_at)>Date.now();
+  const isSaved=savedIds?.has(l.id);
+  // Dynamic badges based on engagement
+  const getDynamicBadge=()=>{
+    if(l.view_count>50)return{text:'🔥 Trending',color:'#ef4444',bg:'rgba(239,68,68,.9)'};
+    if(l.interest_count>5)return{text:'⚡ Fast Moving',color:'#f59e0b',bg:'rgba(245,158,11,.9)'};
+    if(isNew)return{text:'✨ New',color:'#10b981',bg:'rgba(16,185,129,.9)'};
+    return null;
+  };
+  const dynamicBadge=getDynamicBadge();
     const baseY=offset*100;
     const ty=`calc(${baseY}vh + ${dragY}px)`;
     // Horizontal drag — only applied to the current slide
@@ -887,12 +904,12 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
                       return<div key={di} style={{width:isAct?20:5,height:5,borderRadius:3,background:isAct?(isInfo?"#1428A0":"#fff"):isInfo?"rgba(20,40,160,.45)":"rgba(255,255,255,.45)",transition:"all .2s"}}/>;
                     })}
                   </div>}
-                  {/* Badges */}
-                  <div style={{position:"absolute",top:onClose?60:14,left:14,display:"flex",flexDirection:"column",gap:5,zIndex:10}}>
-                    {isNew&&<div style={{background:"#10b981",color:"#fff",fontSize:10,fontWeight:800,padding:"4px 10px",borderRadius:6,letterSpacing:".06em"}}>NEW</div>}
-                    {isExpiring&&<div style={{background:"#f59e0b",color:"#fff",fontSize:10,fontWeight:800,padding:"4px 10px",borderRadius:6}}>EXPIRING</div>}
-                    {l.status==="sold"&&<div style={{background:"#111",color:"#fff",fontSize:10,fontWeight:800,padding:"4px 10px",borderRadius:6}}>SOLD</div>}
-                  </div>
+      {/* Dynamic engagement badges */}
+      <div style={{position:"absolute",top:onClose?60:14,left:14,display:"flex",flexDirection:"column",gap:6,zIndex:10}}>
+      {dynamicBadge&&<div style={{background:dynamicBadge.bg,color:"#fff",fontSize:10,fontWeight:800,padding:"5px 12px",borderRadius:20,letterSpacing:".04em",boxShadow:"0 4px 12px rgba(0,0,0,.2)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",gap:4}}>{dynamicBadge.text}</div>}
+      {isExpiring&&<div style={{background:"rgba(245,158,11,.9)",color:"#fff",fontSize:10,fontWeight:800,padding:"5px 12px",borderRadius:20,backdropFilter:"blur(4px)"}}>⏰ Expiring Soon</div>}
+      {l.status==="sold"&&<div style={{background:"rgba(17,17,17,.9)",color:"#fff",fontSize:10,fontWeight:800,padding:"5px 12px",borderRadius:20,backdropFilter:"blur(4px)"}}>✓ Sold</div>}
+      </div>
                   {/* Progressive bottom info overlay */}
                   {infoLayer.card
                     /* Description panel: full scrollable frosted card replaces the overlay */
@@ -1018,38 +1035,117 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
           );
         })()}
 
-        {/* Fixed action bar — stays put while swiping through photo panels */}
-        {offset===0&&activePanelIdx<photoSrcs.length&&<>
-          {/* Right-side column: Save / Views / Interest */}
-          <div style={{position:"absolute",right:12,bottom:100,display:"flex",flexDirection:"column",gap:14,alignItems:"center",zIndex:30,pointerEvents:"auto"}}>
-            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-              <HeartBtn saved={isSaved} onToggle={e=>{if(e&&e.stopPropagation)e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onToggleSave&&onToggleSave(l);}} size={20} bg="rgba(0,0,0,.55)" style={{width:44,height:44,border:"1.5px solid rgba(255,255,255,.3)",backdropFilter:"blur(6px)"}}/>
-              <span style={{color:"#fff",fontSize:10,fontWeight:700,textShadow:"0 1px 4px rgba(0,0,0,.8)"}}>{isSaved?"Saved":"Save"}</span>
-            </div>
-            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-              <div style={{width:44,height:44,borderRadius:"50%",background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid rgba(255,255,255,.2)",backdropFilter:"blur(6px)"}}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              </div>
-              <span style={{color:"rgba(255,255,255,.8)",fontSize:10,fontWeight:700}}>{l.view_count||0}</span>
-            </div>
-            {l.interest_count>0&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-              <div style={{width:44,height:44,borderRadius:"50%",background:"rgba(232,25,75,.8)",display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid rgba(255,255,255,.2)",backdropFilter:"blur(6px)",flexDirection:"column"}}>
-                <span style={{color:"#fff",fontSize:12,fontWeight:800,lineHeight:1}}>{l.interest_count}</span>
-                <span style={{color:"rgba(255,255,255,.7)",fontSize:8,fontWeight:700}}>INT</span>
-              </div>
-            </div>}
-            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-              <button onClick={e=>{e.stopPropagation();setShareModal(l);}} style={{width:44,height:44,borderRadius:"50%",background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid rgba(255,255,255,.2)",backdropFilter:"blur(6px)",cursor:"pointer"}}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-              </button>
-              <span style={{color:"rgba(255,255,255,.8)",fontSize:10,fontWeight:700}}>Share</span>
-            </div>
-          </div>
-          {/* Bottom action buttons */}
-          {user?.id!==l.seller_id&&<div style={{position:"absolute",bottom:0,left:0,right:0,padding:`12px 16px calc(env(safe-area-inset-bottom,0px) + 20px)`,display:"flex",gap:8,zIndex:30,background:"linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 100%)"}}>
-            <button onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onMessage&&onMessage(l);}} style={{flex:1,background:"rgba(255,255,255,.15)",color:"#fff",border:"1.5px solid rgba(255,255,255,.4)",padding:"14px",fontSize:14,fontWeight:700,borderRadius:12,cursor:"pointer",fontFamily:"var(--fn)",backdropFilter:"blur(8px)"}}>Message Seller</button>
-          </div>}
-        </>}
+  {/* TikTok-style floating actions — right side column */}
+      {offset===0&&activePanelIdx<photoSrcs.length&&<>
+      {/* Viewers badge at top */}
+      <div style={{position:"absolute",top:60,left:16,zIndex:30}}>
+      <div className="viewers-badge" style={{background:"rgba(0,0,0,.6)",backdropFilter:"blur(8px)",borderRadius:20,padding:"6px 12px",display:"flex",alignItems:"center",gap:6,fontSize:12,fontWeight:600,color:"#fff",animation:"pulse-soft 2s ease-in-out infinite"}}>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+      <circle cx="12" cy="12" r="3"/>
+      </svg>
+      {getViewers(l.id)} viewing
+      </div>
+      </div>
+
+      {/* Right-side floating actions — TikTok style */}
+      <div style={{position:"absolute",right:14,bottom:"35%",display:"flex",flexDirection:"column",gap:16,alignItems:"center",zIndex:30,pointerEvents:"auto"}}>
+      {/* Like button */}
+      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+      <button
+      onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onToggleSave&&onToggleSave(l);}}
+      style={{
+      width:52,height:52,borderRadius:"50%",border:"none",
+      background:isSaved?"#E8194B":"rgba(255,255,255,.95)",
+      color:isSaved?"#fff":"#1A1A1A",
+      display:"flex",alignItems:"center",justifyContent:"center",
+      boxShadow:"0 4px 20px rgba(0,0,0,.2)",cursor:"pointer",
+      transition:"transform .2s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+      transform:isSaved?"scale(1.1)":"scale(1)",
+      }}
+      onTouchStart={e=>e.currentTarget.style.transform="scale(0.9)"}
+      onTouchEnd={e=>e.currentTarget.style.transform=isSaved?"scale(1.1)":"scale(1)"}
+      >
+      <svg width="24" height="24" viewBox="0 0 24 24" fill={isSaved?"#fff":"none"} stroke={isSaved?"#fff":"currentColor"} strokeWidth="2">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+      </svg>
+      </button>
+      <span style={{color:"#fff",fontSize:11,fontWeight:700,textShadow:"0 1px 4px rgba(0,0,0,.8)"}}>{isSaved?"Liked":"Like"}</span>
+      </div>
+
+      {/* Chat button */}
+      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+      <button
+      onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onMessage&&onMessage(l);}}
+      style={{
+      width:52,height:52,borderRadius:"50%",border:"none",
+      background:"rgba(255,255,255,.95)",color:"#1A1A1A",
+      display:"flex",alignItems:"center",justifyContent:"center",
+      boxShadow:"0 4px 20px rgba(0,0,0,.2)",cursor:"pointer",
+      transition:"transform .2s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+      }}
+      onTouchStart={e=>e.currentTarget.style.transform="scale(0.9)"}
+      onTouchEnd={e=>e.currentTarget.style.transform="scale(1)"}
+      >
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7A8.38 8.38 0 0 1 4 11.5a8.5 8.5 0 0 1 8.5-8.5 8.38 8.38 0 0 1 3.8.9"/>
+      </svg>
+      </button>
+      <span style={{color:"#fff",fontSize:11,fontWeight:700,textShadow:"0 1px 4px rgba(0,0,0,.8)"}}>{l.message_count||"Chat"}</span>
+      </div>
+
+      {/* Share button */}
+      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+      <button
+      onClick={e=>{e.stopPropagation();setShareModal(l);}}
+      style={{
+      width:52,height:52,borderRadius:"50%",border:"none",
+      background:"rgba(255,255,255,.95)",color:"#1A1A1A",
+      display:"flex",alignItems:"center",justifyContent:"center",
+      boxShadow:"0 4px 20px rgba(0,0,0,.2)",cursor:"pointer",
+      transition:"transform .2s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+      }}
+      onTouchStart={e=>e.currentTarget.style.transform="scale(0.9)"}
+      onTouchEnd={e=>e.currentTarget.style.transform="scale(1)"}
+      >
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+      </svg>
+      </button>
+      <span style={{color:"#fff",fontSize:11,fontWeight:700,textShadow:"0 1px 4px rgba(0,0,0,.8)"}}>Share</span>
+      </div>
+
+      {/* Views count */}
+      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+      <div style={{width:52,height:52,borderRadius:"50%",background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid rgba(255,255,255,.2)",backdropFilter:"blur(6px)"}}>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+      </svg>
+      </div>
+      <span style={{color:"#fff",fontSize:11,fontWeight:700,textShadow:"0 1px 4px rgba(0,0,0,.8)"}}>{l.view_count||0}</span>
+      </div>
+      </div>
+
+      {/* Bottom action button */}
+      {user?.id!==l.seller_id&&<div style={{position:"absolute",bottom:0,left:0,right:0,padding:`16px 16px calc(env(safe-area-inset-bottom,0px) + 24px)`,display:"flex",gap:10,zIndex:30,background:"linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 100%)"}}>
+      <button
+      onClick={e=>{e.stopPropagation();if(!user){onSignIn&&onSignIn();return;}onMessage&&onMessage(l);}}
+      style={{
+      flex:1,background:"#1428A0",color:"#fff",border:"none",
+      padding:"16px",fontSize:15,fontWeight:700,borderRadius:12,
+      cursor:"pointer",fontFamily:"var(--fn)",
+      boxShadow:"0 4px 14px rgba(20,40,160,.35)",
+      display:"flex",alignItems:"center",justifyContent:"center",gap:8
+      }}
+      >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7A8.38 8.38 0 0 1 4 11.5a8.5 8.5 0 0 1 8.5-8.5 8.38 8.38 0 0 1 3.8.9"/>
+      </svg>
+      Message Seller
+      </button>
+      </div>}
+      </>}
       </div>
     );
   };

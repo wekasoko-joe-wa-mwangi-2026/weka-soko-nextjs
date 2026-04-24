@@ -10,7 +10,6 @@ import { ListingCard, ListingCardSkeleton, HeroSkeleton, HotRightNow } from '@/c
 import { WhatBuyersWant, MobileLayout, MobileRequestsTab } from '@/components/all';
 import { AllListingsPage, SoldPage, BuyersWantPage, SwipeFeed } from '@/components/all';
 import { SoldSection, Pager, RoleSwitcher } from '@/components/all';
-import DiscoveryFeed from '@/components/feed/DiscoveryFeed';
 
 // ── HEAVY — lazy loaded only when needed (modals, dashboard, auth) ─────────────
 const AuthModal      = dynamic(() => import('@/components/auth/AuthModal').then(m => ({ default: m.AuthModal })), { ssr: false });
@@ -77,7 +76,6 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
 
   const [mobileFiltersOpen,setMobileFiltersOpen]=useState(false);
   const [mobileTab,setMobileTab]=useState('home');
-  const [mobileViewMode,setMobileViewMode]=useState('discover'); // 'discover' | 'grid'
 
   const closeModal=useCallback(()=>{
     setModal(null);
@@ -581,143 +579,21 @@ useEffect(()=>{
     </>;
   // Mobile home/requests/search
   return <>
-  {/* View Mode Toggle - only on home tab */}
-  {mobileTab === 'home' && (
-    <div style={{
-      position: 'fixed',
-      top: 60,
-      left: '50%',
-      transform: 'translateX(-50%)',
-      zIndex: 100,
-      background: 'rgba(255,255,255,0.95)',
-      backdropFilter: 'blur(10px)',
-      borderRadius: 24,
-      padding: '4px',
-      display: 'flex',
-      gap: 4,
-      boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-    }}>
-      <button
-        onClick={() => setMobileViewMode('discover')}
-        style={{
-          padding: '8px 16px',
-          borderRadius: 20,
-          border: 'none',
-          background: mobileViewMode === 'discover' ? '#1428A0' : 'transparent',
-          color: mobileViewMode === 'discover' ? '#fff' : '#6B7280',
-          fontSize: 13,
-          fontWeight: 600,
-          cursor: 'pointer',
-          transition: 'all 0.2s ease',
-        }}
-      >
-        Discover
-      </button>
-      <button
-        onClick={() => setMobileViewMode('grid')}
-        style={{
-          padding: '8px 16px',
-          borderRadius: 20,
-          border: 'none',
-          background: mobileViewMode === 'grid' ? '#1428A0' : 'transparent',
-          color: mobileViewMode === 'grid' ? '#fff' : '#6B7280',
-          fontSize: 13,
-          fontWeight: 600,
-          cursor: 'pointer',
-          transition: 'all 0.2s ease',
-        }}
-      >
-        Grid
-      </button>
-    </div>
-  )}
-
-  {/* Discovery Feed Mode */}
-  {mobileTab === 'home' && mobileViewMode === 'discover' && !loading && listings.length > 0 ? (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1 }}>
-      <DiscoveryFeed
-        listings={listings}
-        onListingClick={(listing) => openListing(listing)}
-        onLike={(listing) => {
-          if (!user) {
-            notify('Sign in to save listings', 'warning');
-            setModal({ type: 'auth', mode: 'login' });
-            return;
-          }
-          handleToggleSave(listing);
-        }}
-        onChat={(listing) => {
-          if (!user) {
-            notify('Sign in to chat', 'warning');
-            setModal({ type: 'auth', mode: 'login' });
-            return;
-          }
-          setModal({ type: 'chat', listing });
-        }}
-        onShare={(listing) => setModal({ type: 'share', listing })}
-        savedIds={savedIds}
-      />
-      {/* Floating bottom nav for discover mode */}
-      <div style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        background: 'rgba(255,255,255,0.95)',
-        backdropFilter: 'blur(20px)',
-        borderTop: '1px solid rgba(0,0,0,0.05)',
-        display: 'flex',
-        justifyContent: 'space-around',
-        padding: '12px 0',
-        zIndex: 100,
-      }}>
-        {[
-          { icon: '🏠', label: 'Home', tab: 'home' },
-          { icon: '📂', label: 'Categories', tab: 'categories' },
-          { icon: '➕', label: 'Sell', action: () => { if(!user){setModal({type:'auth',mode:'login'});return;}setModal({type:'post'}); } },
-          { icon: '💬', label: 'Messages', tab: 'requests' },
-          { icon: '👤', label: 'Profile', tab: 'dashboard' },
-        ].map((item) => (
-          <button
-            key={item.label}
-            onClick={() => item.action ? item.action() : setMobileTab(item.tab)}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 4,
-              background: 'none',
-              border: 'none',
-              color: mobileTab === item.tab ? '#1428A0' : '#6B7280',
-              fontSize: 11,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            <span style={{ fontSize: 20 }}>{item.icon}</span>
-            <span>{item.label}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  ) : (
-    /* Grid Mode - Original MobileLayout */
-    <MobileLayout
-      user={user} token={token} notify={notify}
-      page={page} setPage={setPage}
-      listings={listings} total={total} loading={loading}
-      filter={filter} setFilter={setFilter} pg={pg} setPg={setPg}
-      stats={stats} counties={counties}
-      modal={modal} setModal={setModal}
-      notifCount={notifCount}
-      maintenanceMsg={maintenanceMsg}
-      mobileFiltersOpen={mobileFiltersOpen} setMobileFiltersOpen={setMobileFiltersOpen}
-      mobileTab={mobileTab} setMobileTab={setMobileTab}
-      openListing={openListing} handleLockIn={handleLockIn}
-      savedIds={savedIds} onToggleSave={handleToggleSave}
-      newSinceLastVisit={newSinceLastVisit}
-    />
-  )}
+  <MobileLayout
+    user={user} token={token} notify={notify}
+    page={page} setPage={setPage}
+    listings={listings} total={total} loading={loading}
+    filter={filter} setFilter={setFilter} pg={pg} setPg={setPg}
+    stats={stats} counties={counties}
+    modal={modal} setModal={setModal}
+    notifCount={notifCount}
+    maintenanceMsg={maintenanceMsg}
+    mobileFiltersOpen={mobileFiltersOpen} setMobileFiltersOpen={setMobileFiltersOpen}
+    mobileTab={mobileTab} setMobileTab={setMobileTab}
+    openListing={openListing} handleLockIn={handleLockIn}
+    savedIds={savedIds} onToggleSave={handleToggleSave}
+    newSinceLastVisit={newSinceLastVisit}
+  />
       {modal?.type==="auth"&&<AuthModal defaultMode={modal.mode} onClose={closeModal} onAuth={handleAuth} notify={notify}/>}
       {modal?.type==="post"&&token&&<PostAdModal onClose={closeModal} token={token} notify={notify} linkedRequest={modal.linkedRequest||null} onSuccess={(l,isEdit)=>{if(isEdit){setPage("dashboard");if(typeof window!=='undefined')window.history.pushState({},"","/dashboard");}else{setListings(p=>[l,...p]);setTotal(t=>t+1);}}}/>}
       {modal?.type==="detail"&&<DetailModal listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}
