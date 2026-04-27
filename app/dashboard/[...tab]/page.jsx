@@ -4,12 +4,15 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Dashboard, Toast } from '@/components/all';
 
-export default function DashboardPage() {
+export default function DashboardPage({ params }) {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [toast, setToast] = useState(null);
   const [ready, setReady] = useState(false);
+  
+  // Extract the tab from URL if present
+  const tabParam = params?.tab?.[0] || undefined;
 
   const notify = (msg, type = 'info') => setToast({ msg, type, id: Date.now() });
 
@@ -30,7 +33,9 @@ export default function DashboardPage() {
   return (
     <>
       <Dashboard
-        user={user} token={token} notify={notify}
+        user={user} 
+        token={token} 
+        notify={notify}
         onPostAd={() => router.push('/?post=1')}
         onClose={() => router.push('/')}
         onUserUpdate={updated => {
@@ -38,6 +43,7 @@ export default function DashboardPage() {
           setUser(merged);
           localStorage.setItem('ws_user', JSON.stringify(merged));
         }}
+        initialTab={tabParam}
       />
       {toast && <Toast key={toast.id} msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
     </>
