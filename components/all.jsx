@@ -965,11 +965,11 @@ function PayModal({type,listingId,pitchId,amount,purpose,token,user,onSuccess,on
             <div style={{fontWeight:700,fontSize:14,color:"#1428A0",marginBottom:3}}>Reveal Buyer Contact — KSh 260</div>
             <div style={{fontSize:12,color:"#444444",lineHeight:1.65}}>Unlock the buyer's phone number to negotiate directly. One-time payment of KSh 260.</div>
           </div>
-        </div>
       </div>
-    </div>}
+    </div>
+  </div>}
 
-    {/* Seller safety tip — shown only on unlock */}
+  {/* Seller safety tip — shown only on unlock */}
       {type==="unlock"&&<div style={{background:"#F8F9FF",border:"1px solid #C7D2FE",borderRadius:12,padding:"12px 14px",marginBottom:16,fontSize:12,color:"#1428A0",lineHeight:1.7}}>
         <strong style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>{Ic.shield(14)} Seller tip:</strong> Once you unlock, potential buyers will immediately see your contact details. <strong>Do not hand over the item until payment is confirmed.</strong>
       </div>}
