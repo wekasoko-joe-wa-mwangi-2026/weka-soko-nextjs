@@ -957,39 +957,24 @@ function PayModal({type,listingId,pitchId,amount,purpose,token,user,onSuccess,on
       {type==="unlock"&&<div style={{marginBottom:20}}>
         <div style={{fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:12}}>How do you want to proceed?</div>
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
-          {/* Option A — decoy: direct contact, no protection (least appealing) */}
-          <div className="pay-option" style={{opacity:.7}}>
-            <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
-              <div style={{width:36,height:36,borderRadius:10,background:"#F5F5F5",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{Ic.phone(16,"#888888")}</div>
-              <div>
-                <div style={{fontWeight:700,fontSize:13,color:"#1A1A1A",marginBottom:3}}>Unlock Contact — KSh 260</div>
-                <div style={{fontSize:12,color:"#888888",lineHeight:1.6}}>Get the buyer's number directly. No transaction protection. Riskier for cash deals.</div>
-              </div>
-            </div>
-          </div>
-          {/* Option B — featured: escrow (the obvious best choice, decoy pushes buyer here) */}
-          <div className="pay-option featured" style={{position:"relative"}}>
-            <div className="pay-badge gold">MOST POPULAR — BEST VALUE</div>
-            <div style={{display:"flex",alignItems:"flex-start",gap:12,marginTop:8}}>
-              <div style={{width:36,height:36,borderRadius:10,background:"rgba(20,40,160,.1)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{Ic.shield(16,"#1428A0")}</div>
-              <div>
-                <div style={{fontWeight:700,fontSize:14,color:"#1428A0",marginBottom:3}}>Buy with Escrow — Full Protection</div>
-                <div style={{fontSize:12,color:"#444444",lineHeight:1.65}}>Your money is held safely until you receive and confirm the item. <strong style={{color:"#1428A0"}}>If anything goes wrong, you get a full refund.</strong> Fee: 5.5% of item price.</div>
-                <div style={{marginTop:8,display:"flex",gap:6,flexWrap:"wrap"}}>
-                  <span className="badge" style={{background:"rgba(20,40,160,.08)",color:"#1428A0"}}>Buyer protected</span>
-                  <span className="badge" style={{background:"rgba(16,185,129,.1)",color:"#059669"}}>Full refund if dispute</span>
-                </div>
-              </div>
-            </div>
+      {/* Option A — unlock contact (only option now) */}
+      <div className="pay-option featured">
+        <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
+          <div style={{width:36,height:36,borderRadius:10,background:"rgba(20,40,160,.1)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{Ic.shield(16,"#1428A0")}</div>
+          <div>
+            <div style={{fontWeight:700,fontSize:14,color:"#1428A0",marginBottom:3}}>Reveal Buyer Contact — KSh 260</div>
+            <div style={{fontSize:12,color:"#444444",lineHeight:1.65}}>Unlock the buyer's phone number to negotiate directly. One-time payment of KSh 260.</div>
           </div>
         </div>
+      </div>
+    </div>
         <div style={{height:1,background:"#F0F0F0",margin:"20px 0"}}/>
         <div style={{fontSize:11,color:"#AAAAAA",lineHeight:1.6,marginBottom:16}}>Or pay KSh 260 to just unlock the contact and negotiate directly:</div>
       </div>}
 
       {/* Seller safety tip — shown only on unlock */}
       {type==="unlock"&&<div style={{background:"#F8F9FF",border:"1px solid #C7D2FE",borderRadius:12,padding:"12px 14px",marginBottom:16,fontSize:12,color:"#1428A0",lineHeight:1.7}}>
-        <strong style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>{Ic.shield(14)} Seller tip:</strong> Once you unlock, you'll see the buyer's contact details. <strong>Do not hand over the item until payment is confirmed.</strong>
+        <strong style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>{Ic.shield(14)} Seller tip:</strong> Once you unlock, potential buyers will immediately see your contact details. <strong>Do not hand over the item until payment is confirmed.</strong>
       </div>}
       <div style={{background:type==="escrow"?"linear-gradient(135deg,rgba(20,40,160,.04) 0%,rgba(20,40,160,.08) 100%)":"#F8F8F8",border:type==="escrow"?"1.5px solid #C7D2FE":"1px solid #E8E8E8",borderRadius:14,padding:"20px 22px",marginBottom:20}}>
         <div style={{fontSize:11,color:"#888888",marginBottom:6,display:"flex",alignItems:"center",gap:6}}>Till Number <strong style={{color:"var(--txt)"}}>5673935</strong> · Weka Soko{type==="escrow"&&<span className="badge" style={{background:"rgba(16,185,129,.1)",color:"#059669",fontSize:9}}>FUNDS HELD SECURE</span>}</div>
@@ -1446,9 +1431,9 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
       </div>}
 
       {/* M-Pesa payment after listing is created */}
-    {showPayModal&&createdListingId&&<PayModal
-      type="unlock" listingId={createdListingId} amount={250}
-      purpose={`Reveal buyer contact for: ${f.title}`}
+      {showPayModal&&createdListingId&&<PayModal
+        type="unlock" listingId={createdListingId} amount={260}
+        purpose={`Reveal buyer contact for: ${f.title}`}
       token={token} user={{}} allowVoucher={true}
       onSuccess={async()=>{
         setShowPayModal(false);
