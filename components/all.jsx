@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { io } from 'socket.io-client';
 import { fmtKES, ago, CATS, KENYA_COUNTIES, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
 
@@ -376,22 +377,55 @@ function Toast({msg,type,onClose}){
 
 function Modal({title,onClose,children,footer,large,xl}){
   const [closing,setClosing]=useState(false);
-  const close=()=>{setClosing(true);setTimeout(onClose,200);};
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+    // Lock body scroll when modal opens
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.overflow = 'hidden';
+    document.body.style.paddingRight = `${scrollbarWidth}px`;
+    document.body.classList.add('modal-open');
+    
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+      document.body.classList.remove('modal-open');
+    };
+  }, []);
+  
+  const close=()=>{
+    setClosing(true);
+    setTimeout(() => {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+      document.body.classList.remove('modal-open');
+      onClose();
+    }, 200);
+  };
+  
   useEffect(()=>{
     const h=e=>{if(e.key==="Escape")close();};
     document.addEventListener("keydown",h);
     return()=>document.removeEventListener("keydown",h);
   },[]);
-  return <div className={`ov${closing?" closing":""}`} onClick={e=>e.target===e.currentTarget&&close()}>
-    <div className={`mod${large?" lg":""}${xl?" xl":""}${closing?" closing":""}`}>
-      <div className="mh">
-        <h3 style={{fontSize:17,fontWeight:700,lineHeight:1.3}}>{title}</h3>
-        <button className="icon-btn" onClick={close} title="Close">{Ic.x(18)}</button>
+  
+  const modalContent = (
+    <div className={`ov${closing?" closing":""}`} onClick={e=>e.target===e.currentTarget&&close()}>
+      <div className={`mod${large?" lg":""}${xl?" xl":""}${closing?" closing":""}`}>
+        <div className="mh">
+          <h3 style={{fontSize:17,fontWeight:700,lineHeight:1.3}}>{title}</h3>
+          <button className="icon-btn" onClick={close} title="Close">{Ic.x(18)}</button>
+        </div>
+        <div className="mb mod-stagger">{children}</div>
+        {footer&&<div className="mf">{footer}</div>}
       </div>
-      <div className="mb mod-stagger">{children}</div>
-      {footer&&<div className="mf">{footer}</div>}
     </div>
-  </div>;
+  );
+  
+  if (!mounted) return null;
+  
+  return createPortal(modalContent, document.body);
 }
 
 function FF({label,hint,children,required}){
@@ -621,30 +655,55 @@ function WatermarkedImage({src,alt,style={},onClick}){
 // ── LIGHTBOX ──────────────────────────────────────────────────────────────────
 function Lightbox({photos,startIdx,onClose}){
   const [idx,setIdx]=useState(startIdx||0);
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+    // Lock body scroll
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.overflow = 'hidden';
+    document.body.style.paddingRight = `${scrollbarWidth}px`;
+    document.body.classList.add('modal-open');
+    
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+      document.body.classList.remove('modal-open');
+    };
+  }, []);
+  
   const prev=()=>setIdx(i=>(i-1+photos.length)%photos.length);
   const next=()=>setIdx(i=>(i+1)%photos.length);
+  
   useEffect(()=>{
-    const h=e=>{if(e.key==="ArrowLeft")prev();if(e.key==="ArrowRight")next();if(e.key==="Escape")onClose();};
+    const h=e=>{if(e.key==="ArrowLeft")prev();if(e.key==="ArrowRight")next();if(e.key==="Escape"){document.body.style.overflow = '';document.body.style.paddingRight = '';document.body.classList.remove('modal-open');onClose();}};
     window.addEventListener("keydown",h);
     return()=>window.removeEventListener("keydown",h);
   },[]);
-  return <div style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,.96)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}
-    onClick={onClose}>
-    <button onClick={onClose} style={{position:"absolute",top:16,right:20,background:"rgba(255,255,255,.15)",border:"none",color:"#fff",width:44,height:44,borderRadius:"50%",cursor:"pointer",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.x(20,"#fff")}</button>
-    <div style={{position:"absolute",top:20,left:"50%",transform:"translateX(-50%)",color:"rgba(255,255,255,.7)",fontSize:13,zIndex:10}}>{idx+1} / {photos.length}</div>
-    <div onClick={e=>e.stopPropagation()} style={{display:"flex",alignItems:"center",justifyContent:"center",maxWidth:"92vw",maxHeight:"82vh"}}>
-      <WatermarkedImage src={photos[idx]} alt=""
+  
+  const content = (
+    <div style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,.96)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}
+    onClick={()=>{document.body.style.overflow = '';document.body.style.paddingRight = '';document.body.classList.remove('modal-open');onClose();}}>
+      <button onClick={()=>{document.body.style.overflow = '';document.body.style.paddingRight = '';document.body.classList.remove('modal-open');onClose();}} style={{position:"absolute",top:16,right:20,background:"rgba(255,255,255,.15)",border:"none",color:"#fff",width:44,height:44,borderRadius:"50%",cursor:"pointer",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.x(20,"#fff")}</button>
+      <div style={{position:"absolute",top:20,left:"50%",transform:"translateX(-50%)",color:"rgba(255,255,255,.7)",fontSize:13,zIndex:10}}>{idx+1} / {photos.length}</div>
+      <div onClick={e=>e.stopPropagation()} style={{display:"flex",alignItems:"center",justifyContent:"center",maxWidth:"92vw",maxHeight:"82vh"}}>
+        <WatermarkedImage src={photos[idx]} alt=""
         style={{maxWidth:"92vw",maxHeight:"82vh",objectFit:"contain",borderRadius:8,boxShadow:"0 8px 40px rgba(0,0,0,.6)",display:"block"}}/>
-    </div>
-    {photos.length>1&&<>
-      <button onClick={e=>{e.stopPropagation();prev();}} style={{position:"absolute",left:16,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,.15)",border:"none",color:"#fff",width:50,height:50,borderRadius:"50%",cursor:"pointer",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.chevronLeft(28,"#fff")}</button>
-      <button onClick={e=>{e.stopPropagation();next();}} style={{position:"absolute",right:16,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,.15)",border:"none",color:"#fff",width:50,height:50,borderRadius:"50%",cursor:"pointer",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.chevronRight(28,"#fff")}</button>
-    </>}
-    {photos.length>1&&<div style={{position:"absolute",bottom:20,display:"flex",gap:8,overflowX:"auto",maxWidth:"90vw",padding:"0 8px",zIndex:10}}>
-      {photos.map((p,i)=><img key={i} src={p} alt="" onClick={e=>{e.stopPropagation();setIdx(i);}}
+      </div>
+      {photos.length>1&&<>
+        <button onClick={e=>{e.stopPropagation();prev();}} style={{position:"absolute",left:16,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,.15)",border:"none",color:"#fff",width:50,height:50,borderRadius:"50%",cursor:"pointer",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.chevronLeft(28,"#fff")}</button>
+        <button onClick={e=>{e.stopPropagation();next();}} style={{position:"absolute",right:16,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,.15)",border:"none",color:"#fff",width:50,height:50,borderRadius:"50%",cursor:"pointer",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.chevronRight(28,"#fff")}</button>
+      </>}
+      {photos.length>1&&<div style={{position:"absolute",bottom:20,display:"flex",gap:8,overflowX:"auto",maxWidth:"90vw",padding:"0 8px",zIndex:10,scrollbarWidth:'thin'}}>
+        {photos.map((p,i)=><img key={i} src={p} alt="" onClick={e=>{e.stopPropagation();setIdx(i);}}
         style={{width:56,height:44,objectFit:"cover",borderRadius:8,cursor:"pointer",opacity:i===idx?1:.45,border:i===idx?"2px solid #fff":"2px solid transparent",flexShrink:0,transition:"opacity .2s"}}/>)}
-    </div>}
-  </div>;
+      </div>}
+    </div>
+  );
+  
+  if (!mounted) return null;
+  
+  return createPortal(content, document.body);
 }
 
 // ── AUTH MODAL ────────────────────────────────────────────────────────────────

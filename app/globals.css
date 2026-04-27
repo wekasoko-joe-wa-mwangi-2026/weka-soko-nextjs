@@ -85,7 +85,80 @@ body {
 }
 
 .mob-root{overflow-x:hidden;}
-::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-thumb{background:#CCCCCC;}::-webkit-scrollbar-thumb:hover{background:#AAAAAA;}
+
+/* ── SCROLLBARS ───────────────────────────────────────────────────────────── */
+/* Global scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CCCCCC;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #AAAAAA;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #CCCCCC transparent;
+}
+
+/* Body scroll lock when modal is open */
+body.modal-open {
+  overflow: hidden;
+  padding-right: 8px; /* Prevent layout shift from scrollbar removal */
+}
+
+/* Modal scroll container - proper scrollbar positioning */
+.mod {
+  scrollbar-width: thin;
+  scrollbar-color: #CCCCCC transparent;
+  overflow-y: auto;
+  overscroll-behavior: contain; /* Prevent body scroll when modal scroll ends */
+}
+
+.mod::-webkit-scrollbar {
+  width: 8px;
+}
+
+.mod::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mod::-webkit-scrollbar-thumb {
+  background: #CCCCCC;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* Scrollable areas within modals */
+.scroll-container {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #CCCCCC transparent;
+}
+
+.scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scroll-container::-webkit-scrollbar-thumb {
+  background: #CCCCCC;
+  border-radius: 3px;
+}
 
 /* ── SKELETON SHIMMER ─────────────────────────────────────────────────────── */
 @keyframes skel-shimmer{
