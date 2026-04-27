@@ -1618,7 +1618,7 @@ function ReportListingBtn({listingId,token,notify}){
 
   if(!open)return <button className="btn" style={{fontSize:12,color:"#C03030",border:"1px solid #C03030",background:"transparent",padding:"6px 12px",borderRadius:6,fontWeight:600,display:"flex",alignItems:"center",gap:4}} onClick={()=>setOpen(true)}><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 5-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-5 1-5 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg> Report</button>;
 
-  return <div style={{position:"fixed",inset:0,zIndex:4000,background:"rgba(0,0,0,.6)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={e=>{if(e.target===e.currentTarget)setOpen(false);}}>
+  return <div style={{position:"fixed",inset:0,zIndex:5000,background:"rgba(0,0,0,.75)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,isolation:"isolate"}} onClick={e=>{if(e.target===e.currentTarget)setOpen(false);}}>
     <div style={{background:"#FFFFFF",borderRadius:6,padding:24,maxWidth:400,width:"100%",maxHeight:"90vh",overflowY:"auto"}}>
       <div style={{fontWeight:700,fontSize:17,marginBottom:4}}>Report this listing</div>
       <div style={{color:"#888888",fontSize:13,marginBottom:16}}>Help us keep Weka Soko safe. Reports are anonymous and reviewed by our team.</div>
