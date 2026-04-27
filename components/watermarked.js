@@ -1,7 +1,11 @@
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+
 // ── WATERMARKED IMAGE ─────────────────────────────────────────────────────────
 // Renders an image on a <canvas> with a centered semi-transparent WekaSoko logo watermark.
 // The watermark is baked into the canvas pixel data — right-click save includes it.
-function WatermarkedImage({src,alt,style={},onClick}){
+export default function WatermarkedImage({src,alt,style={},onClick}){
   const canvasRef=useRef(null);
   const [loaded,setLoaded]=useState(false);
 
@@ -53,5 +57,3 @@ function WatermarkedImage({src,alt,style={},onClick}){
     style={{...style,cursor:onClick?"zoom-in":"default"}} onClick={onClick}/>}
   </>;
 }
-
-// ── LIGHTBOX ──────────────────────────────────────────────────────────────────

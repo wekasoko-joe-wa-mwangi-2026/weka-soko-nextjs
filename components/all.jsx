@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { io } from 'socket.io-client';
 import { fmtKES, ago, CATS, KENYA_COUNTIES, API, PER_PAGE, CAT_PHOTOS } from '@/lib/utils';
+import WatermarkedImage from './watermarked';
 
 // ── WEKA SOKO LOGO COMPONENT ──────────────────────────────────────────────────
 function WekaSokoLogo({ size = 32, iconOnly = false, light = false }) {
@@ -598,9 +599,6 @@ function ResetPasswordModal({token,onClose,notify}){
 }
 
 // ── IMAGE LIGHTBOX ────────────────────────────────────────────────────────────
-// Import WatermarkedImage from separate file
-import WatermarkedImage from './watermarked';
-
 // ── LIGHTBOX ──────────────────────────────────────────────────────────────────
 function Lightbox({photos,startIdx,onClose}){
   const [idx,setIdx]=useState(startIdx||0);
