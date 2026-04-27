@@ -1983,7 +1983,7 @@ function PostRequestModal({onClose,token,notify,onSuccess}){
   return <Modal title="Post a Buyer Request" onClose={onClose} footer={
     <><button className="btn bs" onClick={onClose}>Cancel</button><button className="btn bp" onClick={submit} disabled={loading}>{loading?<Spin/>:"Post Request"}</button></>
   }>
-    <div className="alert ag" style={{marginBottom:16,fontSize:13}}>Tell sellers what you're looking for. They'll be notified when a matching item is listed. <strong>Do not include contact info</strong> — use the platform chat instead.</div>
+    <div className="alert ag" style={{marginBottom:16,fontSize:13}}>Tell sellers what you're hunting for and we'll ping you as soon as a match hits the site. Just a heads-up: keep your contact info private and stick to our chat to stay safe from spam!</div>
     <FF label="What are you looking for?" required>
       <input className={`inp${fieldErrors.title?" err":""}`} placeholder="e.g. iPhone 13 Pro, good condition" value={f.title} onChange={e=>{sf("title",e.target.value);if(fieldErrors.title)setFieldErrors(p=>({...p,title:""}));}} maxLength={120}/>
       <div style={{display:"flex",justifyContent:"space-between",marginTop:3}}>
