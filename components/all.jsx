@@ -1618,29 +1618,40 @@ function ReportListingBtn({listingId,token,notify}){
 
   if(!open)return <button className="btn" style={{fontSize:12,color:"#C03030",border:"1px solid #C03030",background:"transparent",padding:"6px 12px",borderRadius:6,fontWeight:600,display:"flex",alignItems:"center",gap:4}} onClick={()=>setOpen(true)}><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 5-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-5 1-5 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg> Report</button>;
 
-  return <div style={{position:"fixed",inset:0,zIndex:5000,background:"rgba(0,0,0,.75)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,isolation:"isolate"}} onClick={e=>{if(e.target===e.currentTarget)setOpen(false);}}>
-    <div style={{background:"#FFFFFF",borderRadius:6,padding:24,maxWidth:400,width:"100%",maxHeight:"90vh",overflowY:"auto"}}>
-      <div style={{fontWeight:700,fontSize:17,marginBottom:4}}>Report this listing</div>
-      <div style={{color:"#888888",fontSize:13,marginBottom:16}}>Help us keep Weka Soko safe. Reports are anonymous and reviewed by our team.</div>
-      {done?<div style={{textAlign:"center",padding:"20px 0"}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"center"}}><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="20 6 9 17 4 12"/></svg></div>
-        <div style={{fontWeight:600,marginTop:8}}>Report submitted</div>
-        <div style={{color:"#888888",fontSize:13}}>Our team will review it shortly.</div>
-      </div>:<>
-        <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
-          {REPORT_REASONS.map(r=><label key={r.value} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:6,border:`1.5px solid ${reason===r.value?"#111111":"#E0E0E0"}`,cursor:"pointer",background:reason===r.value?"#F5F5F5":"transparent",fontSize:13}}>
-            <input type="radio" name="report_reason" value={r.value} checked={reason===r.value} onChange={()=>setReason(r.value)} style={{accentColor:"#111111"}}/>
-            {r.label}
+  const modalContent = (
+    <div style={{position:"fixed",inset:0,zIndex:99999,background:"rgba(0,0,0,.85)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={e=>{if(e.target===e.currentTarget)setOpen(false);}}>
+      <div style={{background:"#FFFFFF",borderRadius:12,padding:28,maxWidth:420,width:"100%",maxHeight:"90vh",overflowY:"auto",boxShadow:"0 25px 50px -12px rgba(0,0,0,.5)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C03030" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 5-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-5 1-5 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+          <div style={{fontWeight:700,fontSize:18,color:"#111111"}}>Report this listing</div>
+        </div>
+        <div style={{color:"#636363",fontSize:14,marginBottom:20,lineHeight:1.5}}>Help us keep Weka Soko safe. Reports are anonymous and reviewed by our team.</div>
+        {done?<div style={{textAlign:"center",padding:"30px 0"}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center",marginBottom:12}}>
+            <div style={{width:64,height:64,borderRadius:"50%",background:"#22c55e",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          </div>
+          <div style={{fontWeight:700,fontSize:16,color:"#111111",marginBottom:6}}>Report submitted</div>
+          <div style={{color:"#636363",fontSize:14}}>Our team will review it shortly.</div>
+        </div>:<>
+        <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:18}}>
+          {REPORT_REASONS.map(r=><label key={r.value} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",borderRadius:10,border:`2px solid ${reason===r.value?"#1428A0":"#E0E0E0"}`,cursor:"pointer",background:reason===r.value?"#F0F4FF":"transparent",fontSize:14,transition:"all .15s"}}>
+            <input type="radio" name="report_reason" value={r.value} checked={reason===r.value} onChange={()=>setReason(r.value)} style={{accentColor:"#1428A0",width:18,height:18}}/>
+            <span style={{fontWeight:reason===r.value?600:400,color:reason===r.value?"#1428A0":"#333333"}}>{r.label}</span>
           </label>)}
         </div>
-        <textarea className="inp" rows={3} placeholder="Additional details (optional)..." value={details} onChange={e=>setDetails(e.target.value)} style={{marginBottom:14,resize:"vertical"}}/>
-        <div style={{display:"flex",gap:8}}>
-          <button className="btn bs" style={{flex:1}} onClick={()=>setOpen(false)}>Cancel</button>
-          <button className="btn bp" style={{flex:1}} onClick={submit} disabled={loading}>{loading?<Spin/>:"Submit Report"}</button>
+        <textarea className="inp" rows={3} placeholder="Additional details (optional)..." value={details} onChange={e=>setDetails(e.target.value)} style={{marginBottom:20,resize:"vertical",borderRadius:10,minHeight:80}}/>
+        <div style={{display:"flex",gap:12}}>
+          <button className="btn bs" style={{flex:1,padding:"12px 20px",borderRadius:10}} onClick={()=>setOpen(false)}>Cancel</button>
+          <button className="btn bp" style={{flex:1,padding:"12px 20px",borderRadius:10,background:"#C03030",borderColor:"#C03030"}} onClick={submit} disabled={loading}>{loading?<Spin/>:"Submit Report"}</button>
         </div>
-      </>}
+        </>}
+      </div>
     </div>
-  </div>;
+  );
+
+  return createPortal(modalContent, document.body);
 }
 
 
