@@ -1,14 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <!-- Background -->
   <rect width="512" height="512" rx="112" fill="#1428A0"/>
-  <!-- Bag body -->
-  <rect x="112" y="220" width="288" height="210" rx="18" fill="#FFFFFF"/>
-  <!-- Bag shadow strip -->
-  <rect x="112" y="280" width="288" height="32" fill="#E0E0E0"/>
-  <!-- Bag handle -->
-  <path d="M192 220 Q192 130 256 130 Q320 130 320 220" fill="none" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round"/>
-  <!-- Lock dot outer -->
-  <circle cx="256" cy="375" r="30" fill="#1428A0" opacity="0.9"/>
-  <!-- Lock dot inner -->
-  <circle cx="256" cy="375" r="14" fill="#FFFFFF"/>
+  <!-- 
+    Weka Soko WS Logo
+    Stylized interlocked W and S with gold accent
+  -->
+  <!-- White W character -->
+  <path d="M120 160 L180 352 L240 160 L300 352 L360 160" 
+        fill="none" 
+        stroke="#FFFFFF" 
+        stroke-width="48" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"/>
+  
+  <!-- White S character -->
+  <path d="M420 160 
+           C380 160 350 180 350 210 
+           C350 270 420 270 420 330 
+           C420 370 380 390 340 390 
+           C300 390 260 370 260 330" 
+        fill="none" 
+        stroke="#FFFFFF" 
+        stroke-width="48" 
+        stroke-linecap="round"/>
+  
+  <!-- Gold vertical accent bar -->
+  <rect x="320" y="100" width="24" height="312" rx="12" fill="#C49A00"/>
 </svg>

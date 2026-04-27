@@ -8,28 +8,29 @@ import WatermarkedImage from './watermarked';
 
 // ── WEKA SOKO LOGO COMPONENT ──────────────────────────────────────────────────
 function WekaSokoLogo({ size = 32, iconOnly = false, light = false }) {
+  const blue = light ? "#FFFFFF" : "#1428A0";
+  const gold = "#C49A00";
   const textColor = light ? "#FFFFFF" : "#1428A0";
+  const iconW = size * 1.35;
+  const iconH = size;
   const gap = size * 0.25;
 
-  const LogoImage = () => (
-    <img 
-      src="/logo-ws-new.png" 
-      alt="Weka Soko" 
-      style={{
-        width: size * 1.35,
-        height: size,
-        objectFit: 'contain',
-        display: 'block',
-        flexShrink: 0
-      }}
-    />
+  const Monogram = () => (
+    <svg width={iconW} height={iconH} viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg" style={{display: "block", flexShrink: 0}}>
+      {/* Stylized W */}
+      <path d="M5 25L20 65L35 25L50 65L65 25" stroke={blue} strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Stylized S */}
+      <path d="M95 25C85 25 75 28 75 35C75 48 95 48 95 61C95 68 85 71 75 71C65 71 55 68 55 61" stroke={blue} strokeWidth="12" strokeLinecap="round" />
+      {/* Gold accent */}
+      <path d="M75 14V76" stroke={gold} strokeWidth="10" strokeLinecap="round" />
+    </svg>
   );
 
-  if (iconOnly) return <LogoImage />;
+  if (iconOnly) return <Monogram />;
 
   return (
     <div style={{display: "flex", alignItems: "center", gap: gap, userSelect: "none"}}>
-      <LogoImage />
+      <Monogram />
       <span style={{
         fontSize: size * 0.72,
         fontWeight: 800,
