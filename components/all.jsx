@@ -7,29 +7,28 @@ import { fmtKES, ago, CATS, KENYA_COUNTIES, API, PER_PAGE, CAT_PHOTOS } from '@/
 
 // ── WEKA SOKO LOGO COMPONENT ──────────────────────────────────────────────────
 function WekaSokoLogo({ size = 32, iconOnly = false, light = false }) {
-  const blue = light ? "#FFFFFF" : "#1428A0";
-  const gold = "#C49A00";
   const textColor = light ? "#FFFFFF" : "#1428A0";
-  const iconW = size * 1.35;
-  const iconH = size;
   const gap = size * 0.25;
 
-  const Monogram = () => (
-    <svg width={iconW} height={iconH} viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg" style={{display: "block", flexShrink: 0}}>
-      {/* Stylized W */}
-      <path d="M5 25L20 65L35 25L50 65L65 25" stroke={blue} strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
-      {/* Stylized S */}
-      <path d="M95 25C85 25 75 28 75 35C75 48 95 48 95 61C95 68 85 71 75 71C65 71 55 68 55 61" stroke={blue} strokeWidth="12" strokeLinecap="round" />
-      {/* More Visible $ Sign (Vertical Stroke) */}
-      <path d="M75 14V76" stroke={gold} strokeWidth="10" strokeLinecap="round" />
-    </svg>
+  const LogoImage = () => (
+    <img 
+      src="/logo-ws-new.png" 
+      alt="Weka Soko" 
+      style={{
+        width: size * 1.35,
+        height: size,
+        objectFit: 'contain',
+        display: 'block',
+        flexShrink: 0
+      }}
+    />
   );
 
-  if (iconOnly) return <Monogram />;
+  if (iconOnly) return <LogoImage />;
 
   return (
     <div style={{display: "flex", alignItems: "center", gap: gap, userSelect: "none"}}>
-      <Monogram />
+      <LogoImage />
       <span style={{
         fontSize: size * 0.72,
         fontWeight: 800,
@@ -599,58 +598,8 @@ function ResetPasswordModal({token,onClose,notify}){
 }
 
 // ── IMAGE LIGHTBOX ────────────────────────────────────────────────────────────
-// ── WATERMARKED IMAGE ─────────────────────────────────────────────────────────
-// Renders an image on a <canvas> with a tiled diagonal WekaSoko watermark.
-// The watermark is baked into the canvas pixel data — right-click save includes it.
-function WatermarkedImage({src,alt,style={},onClick}){
-  const canvasRef=useRef(null);
-  const [loaded,setLoaded]=useState(false);
-
-  useEffect(()=>{
-    if(!src){setLoaded(false);return;}
-    setLoaded(false);
-    const img=new Image();
-    img.crossOrigin="anonymous";
-    img.onload=()=>{
-      const canvas=canvasRef.current;
-      if(!canvas)return;
-      const w=img.naturalWidth, h=img.naturalHeight;
-      canvas.width=w; canvas.height=h;
-      const ctx=canvas.getContext("2d");
-      ctx.drawImage(img,0,0);
-      // Single centred diagonal watermark — visible on both bright and dark images
-      const fontSize=Math.max(22,Math.min(w,h)*0.10);
-      ctx.save();
-      ctx.translate(w/2,h/2);
-      ctx.rotate(-Math.PI/6);
-      ctx.font=`700 ${fontSize}px var(--fn),Helvetica,Arial,sans-serif`;
-      ctx.textAlign="center";
-      ctx.textBaseline="middle";
-      // Dark halo pass — makes it pop on bright/white images
-      ctx.shadowColor="rgba(0,0,0,0.55)";
-      ctx.shadowBlur=8;
-      ctx.shadowOffsetX=0;
-      ctx.shadowOffsetY=0;
-      ctx.fillStyle="rgba(255,255,255,0.42)";
-      ctx.fillText("WekaSoko",0,0);
-      // Second pass — strengthen the white fill without shadow
-      ctx.shadowBlur=0;
-      ctx.fillStyle="rgba(255,255,255,0.38)";
-      ctx.fillText("WekaSoko",0,0);
-      ctx.restore();
-      setLoaded(true);
-    };
-    img.onerror=()=>setLoaded(false);
-    img.src=src;
-  },[src]);
-
-  return <>
-    <canvas ref={canvasRef} onClick={onClick}
-      style={{...style,display:loaded?"block":"none",cursor:onClick?"zoom-in":"default"}}/>
-    {!loaded&&<img src={src} alt={alt||""}
-      style={{...style,cursor:onClick?"zoom-in":"default"}} onClick={onClick}/>}
-  </>;
-}
+// Import WatermarkedImage from separate file
+import WatermarkedImage from './watermarked';
 
 // ── LIGHTBOX ──────────────────────────────────────────────────────────────────
 function Lightbox({photos,startIdx,onClose}){
