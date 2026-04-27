@@ -1245,9 +1245,9 @@ function ChatModal({listing,user,token,onClose,notify}){
 function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=null}){
   // linkedRequest = { id, title, category, subcat } when coming from "I Have This"
   const [step,setStep]=useState(1);
+  const [showPayChoice,setShowPayChoice]=useState(false);
   const [loading,setLoading]=useState(false);
   const [images,setImages]=useState([]);
-  const [payChoice,setPayChoice]=useState(null); // 'now' | 'later' — shown on step 2
   const [createdListingId,setCreatedListingId]=useState(null);
   const [showPayModal,setShowPayModal]=useState(false);
 
@@ -1302,12 +1302,7 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
 
       const lid=result.id||result.listing?.id;
       setCreatedListingId(lid);
-      if(payNow){
-        setShowPayModal(true);
-      } else {
-        onSuccess(result);onClose();
-        notify("Ad submitted! It's under review — you'll be notified once it goes live.","info");
-      }
+      setShowPayChoice(true);
     }catch(err){
       if(err.violations){
         notify(`Contact info detected — ${err.violations.map(v=>`${v.field}: ${v.reason}`).join(" | ")}`, "error");
@@ -1425,7 +1420,32 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
 
     </>}
 
-    {/* M-Pesa payment after listing is created */}
+      {/* Pay Now or Pay Later choice */}
+      {showPayChoice&&!listing&&<div style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,.85)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={e=>{if(e.target===e.currentTarget)setShowPayChoice(false);}}>
+        <div style={{background:"#FFFFFF",borderRadius:16,padding:32,maxWidth:420,width:"100%",textAlign:"center",boxShadow:"0 25px 50px -12px rgba(0,0,0,.5)"}}>
+          <div style={{width:64,height:64,borderRadius:"50%",background:"#EEF2FF",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 20px"}}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1428A0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div style={{fontWeight:700,fontSize:22,marginBottom:8,color:"#111111"}}>Ad Submitted!</div>
+          <div style={{color:"#636363",fontSize:15,marginBottom:28,lineHeight:1.6}}>Your ad is under review. Would you like to pay now to reveal buyer contact instantly, or pay later from your dashboard?</div>
+          
+          <div style={{display:"flex",flexDirection:"column",gap:12}}>
+            <button className="btn bp" style={{padding:"16px 24px",borderRadius:12,fontSize:15,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",gap:10}} onClick={()=>{setShowPayChoice(false);setShowPayModal(true);}}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Pay Now — KSh 260
+            </button>
+            <button className="btn bs" style={{padding:"16px 24px",borderRadius:12,fontSize:15,fontWeight:600}} onClick={()=>{setShowPayChoice(false);onSuccess({id:createdListingId,...f});onClose();notify("Ad submitted! Pay KSh 260 from your dashboard to reveal buyer contact.","success");}}>
+              Pay Later from Dashboard
+            </button>
+          </div>
+          
+          <div style={{marginTop:20,fontSize:13,color:"#888888",lineHeight:1.5}}>
+            You'll be notified when your ad goes live. Unlocking now reveals buyer contact instantly.
+          </div>
+        </div>
+      </div>}
+
+      {/* M-Pesa payment after listing is created */}
     {showPayModal&&createdListingId&&<PayModal
       type="unlock" listingId={createdListingId} amount={250}
       purpose={`Reveal buyer contact for: ${f.title}`}
