@@ -59,7 +59,7 @@ Weka Soko is a classified advertising platform only. We are NOT party to any tra
 Escrow is a convenience feature. Weka Soko is not a licensed financial institution. The 5.5% platform fee is non-refundable once payment is accepted. Dispute decisions by Weka Soko are final.
 
 4. FEES
-Contact unlock fee: KSh 250 (non-refundable). Escrow fee: 5.5% of item price. All payments to Till Number 5673935.
+Contact unlock fee: KSh 260 (non-refundable). Escrow fee: 5.5% of item price. All payments to Till Number 5673935.
 
 5. PROHIBITED CONTENT
 No stolen goods, counterfeit items, illegal drugs, weapons, or adult content. Violators will be permanently banned.
@@ -1003,7 +1003,7 @@ function PayModal({type,listingId,pitchId,amount,purpose,token,user,onSuccess,on
     <p style={{fontSize:11,color:"#CCCCCC",marginTop:5}}>We confirm the code was paid to Till 5673935 before unlocking.</p>
   </div>;
 
-  return <Modal title={pitchId?"Reveal Seller Contact — KSh 250":type==="unlock"?"Reveal Buyer Contact — KSh 250":"Escrow Payment"} onClose={onClose}>
+  return <Modal title={pitchId?"Reveal Seller Contact — KSh 260":type==="unlock"?"Reveal Buyer Contact — KSh 260":"Escrow Payment"} onClose={onClose}>
     {step==="form"&&<>
       {/* Decoy: Show the 3 options with escrow as the clearly "best" choice */}
       {type==="unlock"&&<div style={{marginBottom:20}}>
@@ -1014,7 +1014,7 @@ function PayModal({type,listingId,pitchId,amount,purpose,token,user,onSuccess,on
             <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
               <div style={{width:36,height:36,borderRadius:10,background:"#F5F5F5",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{Ic.phone(16,"#888888")}</div>
               <div>
-                <div style={{fontWeight:700,fontSize:13,color:"#1A1A1A",marginBottom:3}}>Unlock Contact — KSh 250</div>
+                <div style={{fontWeight:700,fontSize:13,color:"#1A1A1A",marginBottom:3}}>Unlock Contact — KSh 260</div>
                 <div style={{fontSize:12,color:"#888888",lineHeight:1.6}}>Get the buyer's number directly. No transaction protection. Riskier for cash deals.</div>
               </div>
             </div>
@@ -1036,7 +1036,7 @@ function PayModal({type,listingId,pitchId,amount,purpose,token,user,onSuccess,on
           </div>
         </div>
         <div style={{height:1,background:"#F0F0F0",margin:"20px 0"}}/>
-        <div style={{fontSize:11,color:"#AAAAAA",lineHeight:1.6,marginBottom:16}}>Or pay KSh 250 to just unlock the contact and negotiate directly:</div>
+        <div style={{fontSize:11,color:"#AAAAAA",lineHeight:1.6,marginBottom:16}}>Or pay KSh 260 to just unlock the contact and negotiate directly:</div>
       </div>}
 
       {/* Seller safety tip — shown only on unlock */}
@@ -1081,7 +1081,7 @@ function PayModal({type,listingId,pitchId,amount,purpose,token,user,onSuccess,on
           </div>;})}
           {/* Safety tip before payment */}
           <div style={{background:"#F8F8F8",border:"1px solid #E8E8E8",borderRadius:12,padding:"10px 13px",marginBottom:12,fontSize:12,color:"#333333",lineHeight:1.65}}>
-            <strong style={{display:"flex",alignItems:"center",gap:6}}>{Ic.warning(14)} Security reminder:</strong> {type==="escrow"?<>This payment of <strong>{fmtKES(finalAmt)}</strong> goes to <strong>Weka Soko Till 5673935</strong> only. Funds are held in escrow — not paid directly to the seller.</>:<>This KSh 250 is paid to <strong>Weka Soko Till 5673935</strong> only. We will <strong>never</strong> ask you to send money to a seller's personal number before meeting.</>}
+            <strong style={{display:"flex",alignItems:"center",gap:6}}>{Ic.warning(14)} Security reminder:</strong> {type==="escrow"?<>This payment of <strong>{fmtKES(finalAmt)}</strong> goes to <strong>Weka Soko Till 5673935</strong> only. Funds are held in escrow — not paid directly to the seller.</>:<>This KSh 260 is paid to <strong>Weka Soko Till 5673935</strong> only. We will <strong>never</strong> ask you to send money to a seller's personal number before meeting.</>}
           </div>
           <button className="btn bp lg" style={{width:"100%"}} onClick={startPayment} disabled={phone.length<10}>
             Send M-Pesa Request — {fmtKES(finalAmt)}
@@ -1208,7 +1208,7 @@ function ChatModal({listing,user,token,onClose,notify}){
       const sysMsg = {
         id:"sys-"+Date.now(),
         sender_id:"system",
-        body: systemMessage || `Message blocked: ${reason}. Contact info must stay hidden until KSh 250 unlock is paid.`,
+        body: systemMessage || `Message blocked: ${reason}. Contact info must stay hidden until KSh 260 unlock is paid.`,
         created_at: new Date().toISOString(),
         direction: "system",
         is_system: true,
@@ -1403,7 +1403,7 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
       </div>
     </div>}
 
-    <div className="alert ag" style={{marginBottom:16,fontSize:12}}>Posting is free. Your ad goes to admin review first — you'll be notified when it's live. KSh 250 to reveal buyer contact.</div>
+    <div className="alert ag" style={{marginBottom:16,fontSize:12}}>Posting is free. Your ad goes to admin review first — you'll be notified when it's live. KSh 260 to reveal buyer contact.</div>
 
     {step===1&&<>
       <FF label="Item Title" required>
@@ -1466,7 +1466,7 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
           {[
             ["1","Your ad goes live after a quick review (usually under 1 hour)."],
             ["2","When a serious buyer locks in, you get a notification + email."],
-            ["3","Pay KSh 250 via M-Pesa to reveal their contact. That's it."],
+            ["3","Pay KSh 260 via M-Pesa to reveal their contact. That's it."],
           ].map(([n,txt])=><div key={n} style={{display:"flex",gap:10,alignItems:"flex-start"}}>
             <div style={{width:22,height:22,borderRadius:"50%",background:"#1428A0",color:"#fff",fontSize:11,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{n}</div>
             <div style={{fontSize:13,color:"#3730A3",lineHeight:1.5,paddingTop:2}}>{txt}</div>
@@ -1493,7 +1493,7 @@ function PostAdModal({onClose,onSuccess,token,notify,listing=null,linkedRequest=
         setShowPayModal(false);
         onSuccess({id:createdListingId,...f});
         onClose();
-        notify("Ad submitted for review. Pay KSh 250 from your dashboard to reveal buyer contact once live.","info");
+        notify("Ad submitted for review. Pay KSh 260 from your dashboard to reveal buyer contact once live.","info");
       }}
       notify={notify}
     />}
@@ -1722,7 +1722,7 @@ function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnl
       {isSeller&&<button className="btn bs sm" onClick={onChat}>View Messages</button>}
       {!isSeller&&l.status==="active"&&!l.locked_buyer_id&&user&&<button className="btn bg2 sm" onClick={onLockIn}>I'm Interested — Lock In</button>}
       {!isSeller&&l.status==="active"&&user&&<button className="btn bs sm" onClick={onEscrow}>Buy with Escrow</button>}
-      {isSeller&&l.locked_buyer_id&&!l.is_unlocked&&<button className="btn bp" style={{flex:1}} onClick={onUnlock}>Pay KSh 250 to See Buyer Contact</button>}
+      {isSeller&&l.locked_buyer_id&&!l.is_unlocked&&<button className="btn bp" style={{flex:1}} onClick={onUnlock}>Pay KSh 260 to See Buyer Contact</button>}
       {!user&&<button className="btn bp" onClick={()=>onSignIn&&onSignIn()}>Sign In to Contact Seller</button>}
     </div>
   }>
@@ -1814,7 +1814,7 @@ function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnl
           <span><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
           <div style={{flex:1}}>
             <div style={{fontWeight:600}}>{l.seller_anon||"Anonymous Seller"}</div>
-            <div style={{fontSize:12,color:"#888888"}}>Pay KSh 250 to reveal contact details</div>
+            <div style={{fontSize:12,color:"#888888"}}>Pay KSh 260 to reveal contact details</div>
             <div style={{display:"flex",gap:6,marginTop:5,flexWrap:"wrap",alignItems:"center"}}>
               {l.seller_avg_rating>0&&<span style={{fontSize:11,background:"rgba(0,0,0,.05)",color:"#1428A0",padding:"2px 8px",borderRadius:80,fontWeight:700}}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle",marginRight:2}}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> {Number(l.seller_avg_rating).toFixed(1)} ({l.seller_review_count||0} review{l.seller_review_count!==1?"s":""})
@@ -1828,7 +1828,7 @@ function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnl
               </span>}
             </div>
           </div>
-          {isSeller&&l.locked_buyer_id&&<button className="btn bp sm" style={{marginLeft:"auto"}} onClick={onUnlock}>Unlock → KSh 250</button>}
+          {isSeller&&l.locked_buyer_id&&<button className="btn bp sm" style={{marginLeft:"auto"}} onClick={onUnlock}>Unlock → KSh 260</button>}
         </div>}
     </div>
 
@@ -2709,7 +2709,7 @@ function PitchesTab({token, notify, user}) {
                 {p.status === "pending" && <div style={{display:"flex",gap:8,marginTop:10}}>
                   <button className="btn bp" style={{borderRadius:8,fontSize:13,padding:"8px 18px"}}
                     onClick={() => setPaying(p)}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg> Accept — Pay KSh 250
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg> Accept — Pay KSh 260
                   </button>
                   <button className="btn bs" style={{borderRadius:8,fontSize:13,padding:"8px 18px"}}
                     onClick={() => decline(p.id, r.id)}>
@@ -2826,7 +2826,7 @@ function ProfileSection({user, token, notify, onUpdate}){
         {editing
           ?<input className="inp" value={f.phone} onChange={e=>setF(p=>({...p,phone:e.target.value}))} placeholder="e.g. 0712345678" type="tel"/>
           :<div style={{fontSize:15,color:"#1A1A1A",fontWeight:500}}>{user.phone||<span style={{color:"#CCC"}}>Not set</span>}</div>}
-        {editing&&<div style={{fontSize:12,color:"#AAAAAA",marginTop:4}}>Used for M-Pesa payments — shared with buyers after KSh 250 unlock</div>}
+        {editing&&<div style={{fontSize:12,color:"#AAAAAA",marginTop:4}}>Used for M-Pesa payments — shared with buyers after KSh 260 unlock</div>}
       </div>
 
       {/* WhatsApp */}
@@ -3051,7 +3051,7 @@ function MobileDashboard({
               <div key={l.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderTop:"1px solid #FED7AA",gap:10}}>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontWeight:600,fontSize:13,color:"#1A1A1A",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.title}</div>
-                  <div style={{fontSize:12,color:"#888",marginTop:2}}>Pay KSh 250 to reveal contact</div>
+                  <div style={{fontSize:12,color:"#888",marginTop:2}}>Pay KSh 260 to reveal contact</div>
                 </div>
                 <button className="btn bp sm" style={{borderRadius:8,whiteSpace:"nowrap",fontSize:12}} onClick={()=>setShowPayModal(l)}>Reveal</button>
               </div>
@@ -3138,7 +3138,7 @@ function MobileDashboard({
                 </div>
               </div>
               {user.role==="seller"&&<div style={{borderTop:"1px solid #F5F5F5",padding:"8px 12px",display:"flex",gap:8}}>
-                {!l.is_unlocked&&l.locked_buyer_id&&<button className="btn bp sm" style={{borderRadius:8,flex:1,fontSize:12}} onClick={()=>setShowPayModal(l)}>Reveal Buyer — KSh 250</button>}
+                {!l.is_unlocked&&l.locked_buyer_id&&<button className="btn bp sm" style={{borderRadius:8,flex:1,fontSize:12}} onClick={()=>setShowPayModal(l)}>Reveal Buyer — KSh 260</button>}
                 <button className="btn bs sm" style={{borderRadius:8,fontSize:12}} onClick={()=>setEditingListing(l)}>Edit</button>
                 {l.status==="active"&&<button className="btn bs sm" style={{borderRadius:8,fontSize:12}} onClick={()=>setMarkSoldListing(l)}>Mark Sold</button>}
               </div>}
@@ -3274,7 +3274,7 @@ function MobileDashboard({
     {selectedListing&&<ChatModal listing={selectedListing} user={user} token={token} onClose={()=>setSelectedListing(null)} notify={notify}/>}
     {editingListing&&<PostAdModal listing={editingListing} token={token} notify={notify} onClose={()=>setEditingListing(null)} onSuccess={(updated)=>{setListings(p=>p.map(l=>l.id===updated.id?updated:l));setEditingListing(null);}}/>}
     {markSoldListing&&<MarkSoldModal listing={markSoldListing} token={token} notify={notify} onClose={()=>setMarkSoldListing(null)} onSuccess={(id,channel)=>setListings(p=>p.map(l=>l.id===id?{...l,status:"sold",sold_channel:channel}:l))}/>}
-    {showPayModal&&<PayModal type="unlock" listingId={showPayModal.id} amount={Math.max(0,250-(showPayModal.unlock_discount||0))} purpose={`Reveal buyer: ${showPayModal.title}`} token={token} user={user} allowVoucher={true}
+    {showPayModal&&<PayModal type="unlock" listingId={showPayModal.id} amount={Math.max(0,260-(showPayModal.unlock_discount||0))} purpose={`Reveal buyer: ${showPayModal.title}`} token={token} user={user} allowVoucher={true}
       onSuccess={async()=>{
         const lid=showPayModal.id;setShowPayModal(null);
         try{const fresh=await api(`/api/listings/${lid}`,{},token);setListings(p=>p.map(l=>l.id===lid?fresh:l));}
@@ -3336,7 +3336,7 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
           soldListings:lArr.filter(l=>l.status==="sold").length,
           totalViews:lArr.reduce((a,l)=>a+(l.view_count||0),0),
           buyersWaiting:lArr.filter(l=>l.locked_buyer_id&&!l.is_unlocked).length,
-          totalRevenue:lArr.filter(l=>l.status==="sold").length*250,
+          totalRevenue:lArr.filter(l=>l.status==="sold").length*260,
           unreadNotifs:(Array.isArray(ns)?ns:[]).filter(n=>!n.is_read).length,
           unreadMessages:(Array.isArray(th)?th:[]).reduce((a,t)=>a+parseInt(t.unread_count||0),0),
         });
@@ -3468,10 +3468,10 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
             <span><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M12 2c0 0-5 4-5 9a5 5 0 0 0 10 0c0-5-5-9-5-9z"/><path d="M12 12c0 0-2 1.5-2 3a2 2 0 0 0 4 0c0-1.5-2-3-2-3z"/></svg></span>
             <div style={{flex:1}}>
               <div style={{fontWeight:700,fontSize:15,marginBottom:2}}>{l.title}</div>
-              <div style={{fontSize:12,color:"#888888"}}>{l.linked_request_id?"A buyer requested this item!":"A buyer has locked in!"} Pay KSh 250 to reveal their contact details.</div>
+              <div style={{fontSize:12,color:"#888888"}}>{l.linked_request_id?"A buyer requested this item!":"A buyer has locked in!"} Pay KSh 260 to reveal their contact details.</div>
             </div>
             <button className="btn bp sm" onClick={()=>setShowPayModal(l)}>
-              {(l.unlock_discount||0)>=250?"Reveal Buyer — FREE":l.unlock_discount>0?`Reveal Buyer — KSh ${250-(l.unlock_discount||0)}`:"Reveal Buyer — KSh 250"}
+              {(l.unlock_discount||0)>=260?"Reveal Buyer — FREE":l.unlock_discount>0?`Reveal Buyer — KSh ${260-(l.unlock_discount||0)}`:"Reveal Buyer — KSh 260"}
             </button>
           </div>
         ))}
@@ -3668,7 +3668,7 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
                 <span className={`badge ${l.status==="active"||l.status==="locked"?"bg-g":l.status==="sold"?"bg-y":l.status==="pending_review"?"bg-b":l.status==="rejected"?"br2":"bg-m"}`} style={{fontSize:10}}>{l.status==="pending_review"?"Review":l.status==="rejected"?"Rejected":l.status}</span>
                 {!l.is_unlocked&&l.status!=="sold"&&(l.free_unlock_approved
                   ?<button className="btn bg2 sm" onClick={async()=>{try{await api(`/api/payments/unlock`,{method:"POST",body:JSON.stringify({listing_id:l.id,phone:user.phone||"0700000000",voucher_code:"ADMIN-FREE"})},token);setListings(p=>p.map(x=>x.id===l.id?{...x,is_unlocked:true}:x));notify("Unlocked!","success");}catch{setShowPayModal(l);}}}>Free</button>
-                  :<button className="btn bp sm" onClick={()=>setShowPayModal(l)}>{l.linked_request_id?"Reveal Buyer":"Unlock"} — KSh 250</button>)}
+                  :<button className="btn bp sm" onClick={()=>setShowPayModal(l)}>{l.linked_request_id?"Reveal Buyer":"Unlock"} — KSh 260</button>)}
                 {(l.status==="active"||l.status==="locked")&&<button className="btn bp sm" onClick={()=>setMarkSoldListing(l)}>Sold</button>}
                 {l.status!=="sold"&&<button className="btn bs sm" onClick={()=>setEditingListing(l)}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>}
                 {(l.status==="rejected"||l.status==="needs_changes")&&<button className="btn bg2 sm" onClick={async()=>{try{await api(`/api/listings/${l.id}/resubmit`,{method:"POST"},token);setListings(p=>p.map(x=>x.id===l.id?{...x,status:"pending_review",moderation_note:null}:x));notify("Resubmitted","success");}catch(e){notify(e.message,"error");}}}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>}
@@ -3724,7 +3724,7 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
     {selectedListing&&<ChatModal listing={selectedListing} user={user} token={token} onClose={()=>setSelectedListing(null)} notify={notify}/>}
     {editingListing&&<PostAdModal listing={editingListing} token={token} notify={notify} onClose={()=>setEditingListing(null)} onSuccess={(updated)=>{setListings(p=>p.map(l=>l.id===updated.id?updated:l));setEditingListing(null);}}/>}
     {markSoldListing&&<MarkSoldModal listing={markSoldListing} token={token} notify={notify} onClose={()=>setMarkSoldListing(null)} onSuccess={(id,channel)=>setListings(p=>p.map(l=>l.id===id?{...l,status:"sold",sold_channel:channel}:l))}/>}
-    {showPayModal&&<PayModal type="unlock" listingId={showPayModal.id} amount={Math.max(0,250-(showPayModal.unlock_discount||0))} purpose={`Unlock buyer contact for: ${showPayModal.title}`} token={token} user={user} allowVoucher={true}
+    {showPayModal&&<PayModal type="unlock" listingId={showPayModal.id} amount={Math.max(0,260-(showPayModal.unlock_discount||0))} purpose={`Unlock buyer contact for: ${showPayModal.title}`} token={token} user={user} allowVoucher={true}
       onSuccess={async(result)=>{
         const lid=showPayModal.id;setShowPayModal(null);
         try{const fresh=await api(`/api/listings/${lid}`,{},token);const ul=fresh.listing||fresh;setListings(p=>p.map(l=>l.id===lid?ul:l));}
@@ -4669,7 +4669,7 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
                   </div>
                 </div>
                 <div style={{marginTop:10,padding:"10px 12px",background:"#FFF8E1",borderRadius:10,border:"1px solid #FFE082"}}>
-                  <div style={{fontSize:12,color:"#92400E",lineHeight:1.6}}>Pay <strong>KSh 250</strong> to unlock seller contact. Funds are only charged when a serious buyer locks in.</div>
+                  <div style={{fontSize:12,color:"#92400E",lineHeight:1.6}}>Pay <strong>KSh 260</strong> to unlock seller contact. Funds are only charged when a serious buyer locks in.</div>
                 </div>
               </div>
 

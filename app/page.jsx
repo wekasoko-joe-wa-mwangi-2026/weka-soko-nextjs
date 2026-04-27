@@ -30,7 +30,7 @@ export async function generateMetadata({ searchParams }) {
   const BASE = 'https://weka-soko-nextjs.vercel.app';
   const { category, search } = await searchParams || {};
   let title = 'Weka Soko — Buy & Sell in Kenya';
-  let description = "Kenya's trusted marketplace. Post free. Pay KSh 250 only when a serious buyer locks in. Safe anonymous chat and M-Pesa escrow.";
+  let description = "Kenya's trusted marketplace. Post free. Pay KSh 260 only when a serious buyer locks in. Safe anonymous chat and M-Pesa escrow.";
   let canonical = BASE;
   if (category) {
     title = `${category} for Sale in Kenya — Weka Soko`;
@@ -38,7 +38,7 @@ export async function generateMetadata({ searchParams }) {
     canonical = `${BASE}/?cat=${encodeURIComponent(category)}`;
   } else if (search) {
     title = `"${search}" for Sale in Kenya — Weka Soko`;
-    description = `Find "${search}" listings in Kenya on Weka Soko. Post free, pay KSh 250 only when a serious buyer shows up.`;
+    description = `Find "${search}" listings in Kenya on Weka Soko. Post free, pay KSh 260 only when a serious buyer shows up.`;
   }
   return {
     title,

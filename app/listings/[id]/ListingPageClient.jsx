@@ -67,7 +67,7 @@ export default function ListingPageClient({ initialListing, listingId }) {
         <PayModal
           type={payType}
           listingId={listing.id}
-          amount={payType === 'unlock' ? Math.max(0, 250 - (listing.unlock_discount || 0)) : listing.price + Math.round(listing.price * 0.075)}
+          amount={payType === 'unlock' ? Math.max(0, 260 - (listing.unlock_discount || 0)) : listing.price + Math.round(listing.price * 0.075)}
           purpose={payType === 'unlock' ? `Reveal buyer: ${listing.title}` : `Escrow: ${listing.title}`}
           token={token} user={user} allowVoucher={true}
           onSuccess={async () => {

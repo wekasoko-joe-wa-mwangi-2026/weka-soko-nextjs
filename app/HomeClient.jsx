@@ -548,7 +548,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
       {modal?.type==="chat"&&user&&<ChatModal listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}/>}
       {modal?.type==="share"&&<ShareModal listing={modal.listing} onClose={closeModal}/>}
       {modal?.type==="pay"&&user&&<PayModal type={modal.payType} listingId={modal.listing.id}
-        amount={modal.payType==="unlock"?250:Number(modal.listing.price)+Math.round(Number(modal.listing.price)*0.055)}
+        amount={modal.payType==="unlock"?260:Number(modal.listing.price)+Math.round(Number(modal.listing.price)*0.055)}
         purpose={modal.payType==="unlock"?`Unlock buyer contact: ${modal.listing.title}`:`Escrow for: ${modal.listing.title}`}
         token={token} user={user} allowVoucher={true}
         onSuccess={async(result)=>{
@@ -620,7 +620,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     {modal?.type==="chat"&&user&&<ChatModal listing={modal.listing} user={user} token={token} onClose={closeModal} notify={notify}/>}
     {modal?.type==="share"&&<ShareModal listing={modal.listing} onClose={closeModal}/>}
     {modal?.type==="pay"&&user&&<PayModal type={modal.payType} listingId={modal.listing.id}
-      amount={modal.payType==="unlock"?250:Number(modal.listing.price)+Math.round(Number(modal.listing.price)*0.055)}
+      amount={modal.payType==="unlock"?260:Number(modal.listing.price)+Math.round(Number(modal.listing.price)*0.055)}
       purpose={modal.payType==="unlock"?`Unlock buyer contact: ${modal.listing.title}`:`Escrow for: ${modal.listing.title}`}
       token={token} user={user} allowVoucher={true}
       onSuccess={async(result)=>{
@@ -950,7 +950,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
             ["doc","Post for Free","#1428A0","No upfront cost. Photos, description, location — done in 2 minutes."],
             ["chat","Chat Safely","#0d9488","Anonymous, moderated chat. Contact info hidden until unlock."],
             ["fire","Buyer Locks In","#E8194B","Serious buyers click 'I'm Interested'. You get notified instantly."],
-            ["card","Pay KSh 250","#f59e0b","Seller pays once to see buyer contact. Till 5673935. Non-refundable."],
+            ["card","Pay KSh 260","#f59e0b","Seller pays once to see buyer contact. Till 5673935. Non-refundable."],
             ["lock","Safe Escrow","#7c3aed","Optional 5.5% escrow. Funds held until you confirm delivery."],
             ["trophy","Deal Done","#10b981","Leave a review. Build your seller reputation on the platform."]
           ].map(([icon,title,color,desc],i)=>(
@@ -980,7 +980,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
         <div style={{display:"flex",gap:32,alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",marginBottom:28}}>
           <div>
             <span style={{fontWeight:800,fontSize:22,color:"#fff",letterSpacing:"-.02em"}}>WekaSoko</span>
-            <p style={{fontSize:13,color:"rgba(255,255,255,.65)",margin:"6px 0 0",lineHeight:1.6}}>Kenya's marketplace. Free to list.<br/>Pay KSh 250 only when a buyer locks in.</p>
+            <p style={{fontSize:13,color:"rgba(255,255,255,.65)",margin:"6px 0 0",lineHeight:1.6}}>Kenya's marketplace. Free to list.<br/>Pay KSh 260 only when a buyer locks in.</p>
           </div>
           <button className="btn" onClick={()=>setModal({type:"auth",mode:"signup"})} style={{background:"#fff",color:"#1428A0",border:"none",padding:"13px 28px",fontSize:14,fontWeight:800,borderRadius:10,cursor:"pointer",fontFamily:"var(--fn)",boxShadow:"0 4px 16px rgba(0,0,0,.15)",whiteSpace:"nowrap"}}>Post an Ad for Free</button>
         </div>
@@ -1026,7 +1026,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
     {modal?.type==="pay"&&user&&<PayModal
       type={modal.payType}
       listingId={modal.listing.id}
-      amount={modal.payType==="unlock"?250:Number(modal.listing.price)+Math.round(Number(modal.listing.price)*0.055)}
+      amount={modal.payType==="unlock"?260:Number(modal.listing.price)+Math.round(Number(modal.listing.price)*0.055)}
       purpose={modal.payType==="unlock"?`Unlock buyer contact: ${modal.listing.title}`:`Escrow for: ${modal.listing.title}`}
       token={token} user={user} allowVoucher={true}
       onSuccess={async(result)=>{
