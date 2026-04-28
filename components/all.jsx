@@ -951,20 +951,17 @@ function PayModal({type,listingId,pitchId,amount,purpose,token,user,onSuccess,on
     <p style={{fontSize:11,color:"#CCCCCC",marginTop:5}}>We confirm the code was paid to Till 5673935 before unlocking.</p>
   </div>;
 
-  return <Modal title={pitchId?"Reveal Seller Contact — KSh 260":type==="unlock"?"Reveal Buyer Contact — KSh 260":"Escrow Payment"} onClose={onClose}>
+  return <Modal title={pitchId?"Reveal Seller Contact — KSh 260":type==="unlock"?"Reveal Your Contact Info To Potential Buyers— KSh 260":"Escrow Payment"} onClose={onClose}>
     {step==="form"&&<>
-      {/* Decoy: Show the 3 options with escrow as the clearly "best" choice */}
-      {type==="unlock"&&<div style={{marginBottom:20}}>
-        <div style={{fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:12}}>How do you want to proceed?</div>
-        <div style={{display:"flex",flexDirection:"column",gap:12}}>
-      {/* Option A — unlock contact (only option now) */}
-      <div className="pay-option featured">
-        <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
-          <div style={{width:36,height:36,borderRadius:10,background:"rgba(20,40,160,.1)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{Ic.shield(16,"#1428A0")}</div>
-          <div>
-            <div style={{fontWeight:700,fontSize:14,color:"#1428A0",marginBottom:3}}>Reveal Buyer Contact — KSh 260</div>
-            <div style={{fontSize:12,color:"#444444",lineHeight:1.65}}>Unlock the buyer's phone number to negotiate directly. One-time payment of KSh 260.</div>
-          </div>
+  {/* Option A — unlock contact (only option now) */}
+  {type==="unlock"&&<div style={{marginBottom:20}}>
+    <div className="pay-option featured">
+      <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
+        <div style={{width:36,height:36,borderRadius:10,background:"rgba(20,40,160,.1)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{Ic.shield(16,"#1428A0")}</div>
+        <div>
+          <div style={{fontWeight:700,fontSize:14,color:"#1428A0",marginBottom:3}}>Reveal Your Contact</div>
+          <div style={{fontSize:12,color:"#444444",lineHeight:1.65}}>Unlock your phone number to buyers, to let them contact you directly. One-time payment of <strong>KSh 260</strong> for this listing.</div>
+        </div>
       </div>
     </div>
   </div>}
