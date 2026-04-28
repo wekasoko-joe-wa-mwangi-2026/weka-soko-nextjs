@@ -3097,7 +3097,7 @@ function MobileDashboard({
             {id:"pending_review",label:"Pending",count:listings.filter(l=>l.status==="pending_review").length},
             {id:"active",label:"Active",count:listings.filter(l=>l.status==="active"||l.status==="locked").length},
             {id:"sold",label:"Sold",count:listings.filter(l=>l.status==="sold").length},
-            {id:"rejected",label:"Rejected",count:listings.filter(l=>l.status==="rejected"||l.status==="needs_changes").count},
+            {id:"rejected",label:"Rejected",count:listings.filter(l=>l.status==="rejected"||l.status==="needs_changes").length},
           ].map(tab=>{
             const isActive=mobAdsFilter===tab.id;
             return <button key={tab.id} onClick={()=>setMobAdsFilter(tab.id)} style={{flexShrink:0,padding:"8px 14px",borderRadius:20,fontSize:12,fontWeight:700,fontFamily:"var(--fn)",cursor:"pointer",border:"none",background:isActive?"#1428A0":"#F0F0F0",color:isActive?"#fff":"#666"}}>
