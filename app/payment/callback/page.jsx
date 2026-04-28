@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-export default function PaymentCallback() {
+function PaymentCallbackContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState('verifying');
@@ -30,7 +30,7 @@ export default function PaymentCallback() {
         if (data.status === 'confirmed') {
           setStatus('success');
           setMessage('Payment successful! Redirecting...');
-          
+
           // If it's an unlock payment, redirect to the listing
           if (data.payment?.listing_id) {
             setTimeout(() => {
@@ -73,11 +73,11 @@ export default function PaymentCallback() {
         );
       default:
         return (
-          <div style={{ 
-            width: 64, 
-            height: 64, 
-            border: '4px solid #E8E8E8', 
-            borderTop: '4px solid #1428A0', 
+          <div style={{
+            width: 64,
+            height: 64,
+            border: '4px solid #E8E8E8',
+            borderTop: '4px solid #1428A0',
             borderRadius: '50%',
             animation: 'spin 1s linear infinite'
           }}/>
@@ -102,22 +102,22 @@ export default function PaymentCallback() {
           100% { transform: rotate(360deg); }
         }
       `}</style>
-      
+
       <div style={{ marginBottom: 24 }}>
         {getIcon()}
       </div>
-      
+
       <h1 style={{
         fontSize: 24,
         fontWeight: 700,
         color: status === 'error' ? '#C03030' : '#111111',
         marginBottom: 12
       }}>
-        {status === 'success' ? 'Payment Successful!' : 
-         status === 'error' ? 'Payment Issue' : 
+        {status === 'success' ? 'Payment Successful!' :
+         status === 'error' ? 'Payment Issue' :
          'Processing Payment...'}
       </h1>
-      
+
       <p style={{
         fontSize: 16,
         color: '#666666',
@@ -165,5 +165,45 @@ export default function PaymentCallback() {
         </button>
       )}
     </div>
+  );
+}
+
+// Loading fallback while suspense resolves
+function LoadingFallback() {
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: '#FAFAFA',
+      padding: '24px'
+    }}>
+      <div style={{
+        width: 64,
+        height: 64,
+        border: '4px solid #E8E8E8',
+        borderTop: '4px solid #1428A0',
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite'
+      }}/>
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
+      <p style={{ marginTop: 24, fontSize: 16, color: '#666666' }}>Loading...</p>
+    </div>
+  );
+}
+
+// Main export with Suspense boundary
+export default function PaymentCallback() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <PaymentCallbackContent />
+    </Suspense>
   );
 }
