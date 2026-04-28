@@ -2942,13 +2942,15 @@ function MobileDashboard({
 }){
   // Bottom nav sections
   const navItems=[
-    {id:"home",  label:"Overview",   icon:<svg viewBox="0 0 24 24" fill="none" width="22" height="22"><rect x="3" y="3" width="7" height="5" rx="1" stroke="currentColor" strokeWidth="2"/><rect x="14" y="3" width="7" height="5" rx="1" stroke="currentColor" strokeWidth="2"/><rect x="3" y="12" width="7" height="9" rx="1" stroke="currentColor" strokeWidth="2"/><rect x="14" y="12" width="7" height="9" rx="1" stroke="currentColor" strokeWidth="2"/></svg>},
-    {id:"ads",   label:user.role==="seller"?"My Ads":"Interests", icon:<svg viewBox="0 0 24 24" fill="none" width="22" height="22"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/><rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/></svg>},
-    {id:"notif", label:"Inbox",   icon:<svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>, badge:unreadCount>0?unreadCount:null},
+    {id:"home", label:"Overview", icon:<svg viewBox="0 0 24 24" fill="none" width="22" height="22"><rect x="3" y="3" width="7" height="5" rx="1" stroke="currentColor" strokeWidth="2"/><rect x="14" y="3" width="7" height="5" rx="1" stroke="currentColor" strokeWidth="2"/><rect x="3" y="12" width="7" height="9" rx="1" stroke="currentColor" strokeWidth="2"/><rect x="14" y="12" width="7" height="9" rx="1" stroke="currentColor" strokeWidth="2"/></svg>},
+    {id:"ads", label:user.role==="seller"?"My Ads":"Saved", icon:<svg viewBox="0 0 24 24" fill="none" width="22" height="22"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/><rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/></svg>},
+    {id:"myrequests", label:"My Requests", icon:<svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M9 11l3 3L22 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>, badge:myRequests?.filter(r=>r.status==="active").length||0},
+    {id:"notif", label:"Inbox", icon:<svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>, badge:unreadCount>0?unreadCount:null},
     {id:"settings",label:"Account",icon:<svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>},
   ];
 
   const [inboxTab,setInboxTab]=useState("chat");
+  const [mobAdsFilter,setMobAdsFilter]=useState("all");
   const unreadMsgsMob=threads.reduce((a,t)=>a+parseInt(t.unread_count||0),0);
   const unreadNotifsMob=notifs.filter(n=>!n.is_read).length;
 
@@ -3086,17 +3088,47 @@ function MobileDashboard({
 
       {/* ── ADS / INTERESTS SECTION ──────────────────────────────────────── */}
       {!loading&&mobSection==="ads"&&<div style={{padding:"16px"}}>
-        <div style={{fontSize:16,fontWeight:700,color:"#1A1A1A",marginBottom:16}}>{user.role==="seller"?"My Ads":"Saved Items"}</div>
-        {(user.role==="seller"?listings:(savedListings||[])).length===0
-          ?<div style={{textAlign:"center",padding:"60px 20px",color:"#AAAAAA"}}>
-              <div style={{marginBottom:12,opacity:.2}}>{user.role==="seller"?<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>:<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>}</div>
-              <div style={{fontWeight:700,marginBottom:6}}>{user.role==="seller"?"No ads yet":"Nothing saved yet"}</div>
-              <div style={{fontSize:13,marginBottom:20}}>{user.role==="seller"?"Post your first ad to get started":"Tap the bookmark icon on any listing to save it"}</div>
-              {user.role==="seller"&&<button className="btn bp" style={{borderRadius:10}} onClick={onPostAd}>+ Post an Ad</button>}
-            </div>
-          :(user.role==="seller"?listings:(savedListings||[])).map(l=>{
+        <div style={{fontSize:16,fontWeight:700,color:"#1A1A1A",marginBottom:12}}>{user.role==="seller"?"My Ads":"Saved Items"}</div>
+        
+        {/* Status filter tabs - only for sellers */}
+        {user.role==="seller"&&<div style={{display:"flex",gap:8,marginBottom:16,overflowX:"auto",WebkitOverflowScrolling:"touch",paddingBottom:4}}>
+          {[
+            {id:"all",label:"All",count:listings.length},
+            {id:"pending_review",label:"Pending",count:listings.filter(l=>l.status==="pending_review").length},
+            {id:"active",label:"Active",count:listings.filter(l=>l.status==="active"||l.status==="locked").length},
+            {id:"sold",label:"Sold",count:listings.filter(l=>l.status==="sold").length},
+            {id:"rejected",label:"Rejected",count:listings.filter(l=>l.status==="rejected"||l.status==="needs_changes").count},
+          ].map(tab=>{
+            const isActive=mobAdsFilter===tab.id;
+            return <button key={tab.id} onClick={()=>setMobAdsFilter(tab.id)} style={{flexShrink:0,padding:"8px 14px",borderRadius:20,fontSize:12,fontWeight:700,fontFamily:"var(--fn)",cursor:"pointer",border:"none",background:isActive?"#1428A0":"#F0F0F0",color:isActive?"#fff":"#666"}}>
+              {tab.label}{tab.count>0&&<span style={{marginLeft:4,opacity:.8}}>({tab.count})</span>}
+            </button>;
+          })}
+        </div>}
+        
+        {(()=>{
+          const displayList=user.role==="seller"
+            ?listings.filter(l=>mobAdsFilter==="all"||mobAdsFilter==="active"?(l.status==="active"||l.status==="locked"):mobAdsFilter==="pending_review"?l.status==="pending_review":mobAdsFilter==="sold"?l.status==="sold":mobAdsFilter==="rejected"?(l.status==="rejected"||l.status==="needs_changes"):true)
+            :(savedListings||[]);
+          
+          if(displayList.length===0)return<div style={{textAlign:"center",padding:"60px 20px",color:"#AAAAAA"}}>
+            <div style={{marginBottom:12,opacity:.2}}>{user.role==="seller"?<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>:<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>}</div>
+            <div style={{fontWeight:700,marginBottom:6}}>{user.role==="seller"?"No ads yet":"Nothing saved yet"}</div>
+            <div style={{fontSize:13,marginBottom:20}}>{user.role==="seller"?"Post your first ad to get started":"Tap the bookmark icon on any listing to save it"}</div>
+            {user.role==="seller"&&<button className="btn bp" style={{borderRadius:10}} onClick={onPostAd}>+ Post an Ad</button>}
+          </div>;
+          
+          return displayList.map(l=>{
             const photo=Array.isArray(l.photos)?l.photos.find(p=>typeof p==="string")||l.photos[0]?.url||null:null;
-            return <div key={l.id} style={{background:"#fff",borderRadius:14,marginBottom:10,border:"1px solid #EBEBEB",overflow:"hidden"}}>
+            const needsUnlock=user.role==="seller"&&!l.is_unlocked&&(l.status==="active"||l.status==="locked");
+            const hasBuyerWaiting=l.locked_buyer_id&&!l.is_unlocked;
+            const isRejected=l.status==="rejected"||l.status==="needs_changes";
+            const canEdit=user.role==="seller"&&l.status!=="sold";
+            const canDelete=user.role==="seller"&&l.status!=="sold";
+            const canMarkSold=user.role==="seller"&&l.status==="active";
+            const canResubmit=isRejected;
+            
+            return <div key={l.id} style={{background:"#fff",borderRadius:14,marginBottom:12,border:"1px solid #EBEBEB",overflow:"hidden"}}>
               <div style={{display:"flex",gap:12,padding:"12px"}}>
                 <div style={{width:64,height:64,borderRadius:10,background:"#F0F0F0",overflow:"hidden",flexShrink:0}}>
                   {photo?<img src={photo} alt={l.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",opacity:.3}}><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>}
@@ -3104,16 +3136,51 @@ function MobileDashboard({
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontWeight:700,fontSize:14,color:"#1A1A1A",marginBottom:3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.title}</div>
                   <div style={{fontSize:14,color:"#1428A0",fontWeight:700,marginBottom:4}}>{fmtKES(l.price)}</div>
-                  <span style={{padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700,background:l.status==="active"?"#DCFCE7":l.status==="sold"?"#F3F4F6":"#FEF3C7",color:l.status==="active"?"#16a34a":l.status==="sold"?"#888":"#D97706"}}>{l.status}</span>
+                  <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+                    <span style={{padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700,background:l.status==="active"?"#DCFCE7":l.status==="sold"?"#F3F4F6":l.status==="rejected"?"#FEE2E2":"#FEF3C7",color:l.status==="active"?"#16a34a":l.status==="sold"?"#888":l.status==="rejected"?"#DC2626":"#D97706"}}>{l.status==="pending_review"?"Pending Review":l.status==="needs_changes"?"Needs Changes":l.status}</span>
+                    {hasBuyerWaiting&&<span style={{padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:700,background:"#FFF7ED",color:"#C2410C"}}>🔥 Buyer Waiting</span>}
+                    {l.is_unlocked&&<span style={{padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:700,background:"#E0E7FF",color:"#1428A0"}}>✓ Unlocked</span>}
+                  </div>
+                  {isRejected&&l.moderation_note&&<div style={{fontSize:11,color:"#DC2626",marginTop:6,background:"#FEE2E2",padding:"6px 10px",borderRadius:6}}>⚠ {l.moderation_note}</div>}
                 </div>
               </div>
-              {user.role==="seller"&&<div style={{borderTop:"1px solid #F5F5F5",padding:"8px 12px",display:"flex",gap:8}}>
-                {!l.is_unlocked&&l.locked_buyer_id&&<button className="btn bp sm" style={{borderRadius:8,flex:1,fontSize:12}} onClick={()=>setShowPayModal(l)}>Reveal Buyer — KSh 260</button>}
-                <button className="btn bs sm" style={{borderRadius:8,fontSize:12}} onClick={()=>setEditingListing(l)}>Edit</button>
-                {l.status==="active"&&<button className="btn bs sm" style={{borderRadius:8,fontSize:12}} onClick={()=>setMarkSoldListing(l)}>Mark Sold</button>}
+              
+              {/* Action buttons row */}
+              {user.role==="seller"&&<div style={{borderTop:"1px solid #F5F5F5",padding:"10px 12px",display:"flex",gap:8,flexWrap:"wrap"}}>
+                {/* Primary: Unlock if needed and has buyer waiting */}
+                {hasBuyerWaiting&&!l.is_unlocked&&<button className="btn bp sm" style={{borderRadius:8,flex:1,fontSize:12,fontWeight:700}} onClick={()=>setShowPayModal(l)}>
+                  {l.free_unlock_approved?"Free Unlock":"Unlock — KSh 260"}
+                </button>}
+                
+                {/* Unlock even without buyer (to make contact public) */}
+                {needsUnlock&&!hasBuyerWaiting&&<button className="btn bg2 sm" style={{borderRadius:8,flex:1,fontSize:12}} onClick={()=>setShowPayModal(l)}>
+                  Unlock Contact
+                </button>}
+                
+                {/* Edit button */}
+                {canEdit&&<button className="btn bs sm" style={{borderRadius:8,fontSize:12,minWidth:50}} onClick={()=>setEditingListing(l)}>✏️ Edit</button>}
+                
+                {/* Mark Sold button */}
+                {canMarkSold&&<button className="btn bg2 sm" style={{borderRadius:8,fontSize:12,minWidth:70}} onClick={()=>setMarkSoldListing(l)}>✓ Sold</button>}
+                
+                {/* Resubmit button for rejected */}
+                {canResubmit&&<button className="btn bg2 sm" style={{borderRadius:8,fontSize:12,flex:1}} onClick={async()=>{try{await api(`/api/listings/${l.id}/resubmit`,{method:"POST"},token);setListings(p=>p.map(x=>x.id===l.id?{...x,status:"pending_review",moderation_note:null}:x));notify("Resubmitted for review","success");}catch(e){notify(e.message,"error");}}}>
+                  🔄 Resubmit
+                </button>}
+                
+                {/* Delete button */}
+                {canDelete&&<button className="btn br2 sm" style={{borderRadius:8,fontSize:12,minWidth:60}} onClick={async()=>{if(!window.confirm("Delete this listing permanently?"))return;try{await api(`/api/listings/${l.id}`,{method:"DELETE"},token);setListings(p=>p.filter(x=>x.id!==l.id));notify("Listing deleted","success");}catch(err){notify(err.message,"error");}}}>
+                  🗑️
+                </button>}
+              </div>}
+              
+              {/* Buyer view - just view button */}
+              {user.role==="buyer"&&<div style={{borderTop:"1px solid #F5F5F5",padding:"10px 12px"}}>
+                <button className="btn bs sm" style={{borderRadius:8,width:"100%",fontSize:12}} onClick={()=>setSelectedListing(l)}>View Listing →</button>
               </div>}
             </div>;
-          })}
+          });
+        })()}
       </div>}
 
       {/* ── REQUESTS SECTION ─────────────────────────────────────────────── */}
@@ -3191,6 +3258,42 @@ function MobileDashboard({
             </>}
           </div>
         </div>}
+
+      {/* ── MY REQUESTS SECTION ────────────────────────────────────────── */}
+      {!loading&&mobSection==="myrequests"&&<div style={{padding:"16px"}}>
+        <div style={{fontSize:16,fontWeight:700,color:"#1A1A1A",marginBottom:16}}>My Requests</div>
+        {(myRequests||[]).length===0
+        ?<div style={{textAlign:"center",padding:"60px 20px",color:"#AAAAAA"}}>
+          <div style={{marginBottom:12,opacity:.2}}><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
+          <div style={{fontWeight:700,marginBottom:6}}>No requests yet</div>
+          <div style={{fontSize:13,marginBottom:20}}>Post a "What Buyers Want" ad to find sellers</div>
+          <button className="btn bp" style={{borderRadius:10}} onClick={()=>setMobSection("requests")}>Find Sellers →</button>
+        </div>
+        :(myRequests||[]).map(r=>(
+          <div key={r.id} style={{background:"#fff",borderRadius:14,marginBottom:10,border:"1px solid #EBEBEB",overflow:"hidden"}}>
+            <div style={{padding:"14px"}}>
+              <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
+                <div style={{width:44,height:44,borderRadius:"50%",background:"#F0F4FF",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1428A0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:700,fontSize:14,color:"#1A1A1A",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.title}</div>
+                  <div style={{fontSize:13,color:"#1428A0",fontWeight:700}}>{fmtKES(r.budget||0)}</div>
+                  <div style={{display:"flex",gap:8,marginTop:6,alignItems:"center"}}>
+                    <span style={{padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:700,background:r.status==="active"?"#DCFCE7":r.status==="fulfilled"?"#E0E7FF":"#F3F4F6",color:r.status==="active"?"#16a34a":r.status==="fulfilled"?"#1428A0":"#888"}}>{r.status}</span>
+                    {r.pitch_count>0&&<span style={{padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:700,background:"#FFF7ED",color:"#C2410C"}}>{r.pitch_count} pitch{r.pitch_count!==1?"es":""}</span>}
+                  </div>
+                </div>
+              </div>
+              {r.description&&<div style={{fontSize:12,color:"#666",marginTop:10,paddingTop:10,borderTop:"1px solid #F5F5F5",lineHeight:1.5}}>{r.description}</div>}
+            </div>
+            <div style={{borderTop:"1px solid #F5F5F5",padding:"10px 14px",display:"flex",gap:8}}>
+              {r.status==="active"&&<button className="btn bp sm" style={{borderRadius:8,flex:1,fontSize:12}} onClick={()=>setMobSection("requests")}>View Pitches</button>}
+              {r.status==="active"&&<button className="btn br2 sm" style={{borderRadius:8,fontSize:12}} onClick={async()=>{if(!window.confirm("Close this request?"))return;try{await api(`/api/requests/${r.id}`,{method:"DELETE"},token);notify("Request closed","success");}catch(err){notify(err.message,"error");}}}>Close</button>}
+            </div>
+          </div>
+        ))}
+      </div>}
 
       {/* ── SETTINGS / ACCOUNT SECTION ───────────────────────────────────── */}
       {!loading&&mobSection==="settings"&&<div style={{padding:"16px",display:"flex",flexDirection:"column",gap:12}}>
