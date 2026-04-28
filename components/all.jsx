@@ -1776,12 +1776,16 @@ function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnl
             </a>;
           })()}
         </div>
-        :<div style={{background:"#F5F5F5",borderRadius:6,padding:"14px",display:"flex",alignItems:"center",gap:12}}>
-          <span><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
-          <div style={{flex:1}}>
-            <div style={{fontWeight:600}}>{l.seller_anon||"Anonymous Seller"}</div>
-            <div style={{fontSize:12,color:"#888888"}}>Pay KSh 260 to reveal contact details</div>
-            <div style={{display:"flex",gap:6,marginTop:5,flexWrap:"wrap",alignItems:"center"}}>
+:<div style={{background:"#F5F5F5",borderRadius:6,padding:"14px",display:"flex",alignItems:"center",gap:12}}>
+      <span><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+      <div style={{flex:1}}>
+        <div style={{fontWeight:600}}>{l.seller_anon||"Anonymous Seller"}</div>
+        {isSeller?(
+          <div style={{fontSize:12,color:"#888888"}}>Pay KSh 260 to reveal your contact to buyers</div>
+        ):l.locked_buyer_id?(
+          <div style={{fontSize:12,color:"#888888"}}>Seller contact will be revealed after they confirm interest</div>
+        ):null}
+        <div style={{display:"flex",gap:6,marginTop:5,flexWrap:"wrap",alignItems:"center"}}>
               {l.seller_avg_rating>0&&<span style={{fontSize:11,background:"rgba(0,0,0,.05)",color:"#1428A0",padding:"2px 8px",borderRadius:80,fontWeight:700}}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle",marginRight:2}}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> {Number(l.seller_avg_rating).toFixed(1)} ({l.seller_review_count||0} review{l.seller_review_count!==1?"s":""})
               </span>}
@@ -3023,7 +3027,7 @@ function MobileDashboard({
               <div key={l.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderTop:"1px solid #FED7AA",gap:10}}>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontWeight:600,fontSize:13,color:"#1A1A1A",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.title}</div>
-                  <div style={{fontSize:12,color:"#888",marginTop:2}}>Pay KSh 260 to reveal contact</div>
+                  <div style={{fontSize:12,color:"#888",marginTop:2}}>Pay KSh 260 to reveal buyer contact</div>
                 </div>
                 <button className="btn bp sm" style={{borderRadius:8,whiteSpace:"nowrap",fontSize:12}} onClick={()=>setShowPayModal(l)}>Reveal</button>
               </div>
@@ -3537,7 +3541,7 @@ function Dashboard({user,token,notify,onPostAd,onClose,onUserUpdate,initialTab})
             <span><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M12 2c0 0-5 4-5 9a5 5 0 0 0 10 0c0-5-5-9-5-9z"/><path d="M12 12c0 0-2 1.5-2 3a2 2 0 0 0 4 0c0-1.5-2-3-2-3z"/></svg></span>
             <div style={{flex:1}}>
               <div style={{fontWeight:700,fontSize:15,marginBottom:2}}>{l.title}</div>
-              <div style={{fontSize:12,color:"#888888"}}>{l.linked_request_id?"A buyer requested this item!":"A buyer has locked in!"} Pay KSh 260 to reveal their contact details.</div>
+              <div style={{fontSize:12,color:"#888888"}}>{l.linked_request_id?"A buyer requested this item!":"A buyer has locked in!"} Pay KSh 260 to reveal the buyer's contact details.</div>
             </div>
             <button className="btn bp sm" onClick={()=>setShowPayModal(l)}>
               {(l.unlock_discount||0)>=260?"Reveal Buyer — FREE":l.unlock_discount>0?`Reveal Buyer — KSh ${260-(l.unlock_discount||0)}`:"Reveal Buyer — KSh 260"}
