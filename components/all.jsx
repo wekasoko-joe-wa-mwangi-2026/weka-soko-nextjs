@@ -365,7 +365,7 @@ function HeartBtn({saved,onToggle,size=20,bg="rgba(255,255,255,0.95)",style={}})
     <svg width={size} height={size} viewBox="0 0 24 24" fill={optimistic?"#E8194B":"none"} stroke={optimistic?"#E8194B":"#1A1A1A"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transition:"transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275)"}}>
       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
     </svg>
-    {floats.map(id=><span key={id} className="heart-float">❤️</span>)}
+    {floats.map(id=><span key={id} className="heart-float"><svg viewBox="0 0 24 24" width={16} height={16} fill="#E8194B"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>)}
   </button>;
 }
 
@@ -3138,10 +3138,10 @@ function MobileDashboard({
                   <div style={{fontSize:14,color:"#1428A0",fontWeight:700,marginBottom:4}}>{fmtKES(l.price)}</div>
                   <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
                     <span style={{padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700,background:l.status==="active"?"#DCFCE7":l.status==="sold"?"#F3F4F6":l.status==="rejected"?"#FEE2E2":"#FEF3C7",color:l.status==="active"?"#16a34a":l.status==="sold"?"#888":l.status==="rejected"?"#DC2626":"#D97706"}}>{l.status==="pending_review"?"Pending Review":l.status==="needs_changes"?"Needs Changes":l.status}</span>
-                    {hasBuyerWaiting&&<span style={{padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:700,background:"#FFF7ED",color:"#C2410C"}}>🔥 Buyer Waiting</span>}
-                    {l.is_unlocked&&<span style={{padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:700,background:"#E0E7FF",color:"#1428A0"}}>✓ Unlocked</span>}
+{hasBuyerWaiting&&<span style={{padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:700,background:"#FFF7ED",color:"#C2410C"}}>High Demand</span>}
+      {l.is_unlocked&&<span style={{padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:700,background:"#E0E7FF",color:"#1428A0"}}>Unlocked</span>}
                   </div>
-                  {isRejected&&l.moderation_note&&<div style={{fontSize:11,color:"#DC2626",marginTop:6,background:"#FEE2E2",padding:"6px 10px",borderRadius:6}}>⚠ {l.moderation_note}</div>}
+                  {isRejected&&l.moderation_note&&<div style={{fontSize:11,color:"#DC2626",marginTop:6,background:"#FEE2E2",padding:"6px 10px",borderRadius:6}}>{l.moderation_note}</div>}
                 </div>
               </div>
               
@@ -3158,20 +3158,16 @@ function MobileDashboard({
                 </button>}
                 
                 {/* Edit button */}
-                {canEdit&&<button className="btn bs sm" style={{borderRadius:8,fontSize:12,minWidth:50}} onClick={()=>setEditingListing(l)}>✏️ Edit</button>}
+                {canEdit&&<button className="btn bs sm" style={{borderRadius:8,fontSize:12,minWidth:50}} onClick={()=>setEditingListing(l)}>Edit</button>}
                 
                 {/* Mark Sold button */}
-                {canMarkSold&&<button className="btn bg2 sm" style={{borderRadius:8,fontSize:12,minWidth:70}} onClick={()=>setMarkSoldListing(l)}>✓ Sold</button>}
+                {canMarkSold&&<button className="btn bg2 sm" style={{borderRadius:8,fontSize:12,minWidth:70}} onClick={()=>setMarkSoldListing(l)}>Sold</button>}
                 
                 {/* Resubmit button for rejected */}
-                {canResubmit&&<button className="btn bg2 sm" style={{borderRadius:8,fontSize:12,flex:1}} onClick={async()=>{try{await api(`/api/listings/${l.id}/resubmit`,{method:"POST"},token);setListings(p=>p.map(x=>x.id===l.id?{...x,status:"pending_review",moderation_note:null}:x));notify("Resubmitted for review","success");}catch(e){notify(e.message,"error");}}}>
-                  🔄 Resubmit
-                </button>}
-                
-                {/* Delete button */}
-                {canDelete&&<button className="btn br2 sm" style={{borderRadius:8,fontSize:12,minWidth:60}} onClick={async()=>{if(!window.confirm("Delete this listing permanently?"))return;try{await api(`/api/listings/${l.id}`,{method:"DELETE"},token);setListings(p=>p.filter(x=>x.id!==l.id));notify("Listing deleted","success");}catch(err){notify(err.message,"error");}}}>
-                  🗑️
-                </button>}
+{canResubmit&&<button className="btn bg2 sm" style={{borderRadius:8,fontSize:12,flex:1}} onClick={async()=>{try{await api(`/api/listings/${l.id}/resubmit`,{method:"POST"},token);setListings(p=>p.map(x=>x.id===l.id?{...x,status:"pending_review",moderation_note:null}:x));notify("Resubmitted for review","success");}catch(e){notify(e.message,"error");}}}>Resubmit</button>}
+
+      {/* Delete button */}
+      {canDelete&&<button className="btn br2 sm" style={{borderRadius:8,fontSize:12,minWidth:60}} onClick={async()=>{if(!window.confirm("Delete this listing permanently?"))return;try{await api(`/api/listings/${l.id}`,{method:"DELETE"},token);setListings(p=>p.filter(x=>x.id!==l.id));notify("Listing deleted","success");}catch(err){notify(err.message,"error");}}}>Delete</button>}
               </div>}
               
               {/* Buyer view - just view button */}
@@ -3916,7 +3912,7 @@ function MobileRequestsTab({user, token, notify, setModal}){
           </button>
         </div>
         <button onClick={()=>setShowFilters(f=>!f)} style={{background:hasFilters?"#1428A0":"#fff",color:hasFilters?"#fff":"#555",border:"1.5px solid",borderColor:hasFilters?"#1428A0":"#E0E0E0",borderRadius:8,padding:"9px 12px",cursor:"pointer",fontFamily:"var(--fn)",fontSize:13,fontWeight:600,whiteSpace:"nowrap"}}>
-          Filters{hasFilters?" ✓":""}
+          Filters{hasFilters&&<span style={{marginLeft:4,color:"#1428A0",fontWeight:700}}>- Active</span>}
         </button>
       </div>
       {/* Expanded filters */}
