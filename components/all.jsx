@@ -879,15 +879,15 @@ function ShareModal({listing,onClose}){
   </Modal>;
 }
 
-// ── REAL M-PESA PAYMENT MODAL ─────────────────────────────────────────────────
+// ── REAL M-PESA PAYMENT MODAL (Now uses Paystack behind the scenes) ─────────────────────────────
 function PayModal({type,listingId,pitchId,amount,purpose,token,user,onSuccess,onClose,notify,allowVoucher}){
-  const [phone,setPhone]=useState(user?.phone||"07");
+  const [email,setEmail]=useState(user?.email||"");
   const [vcode,setVcode]=useState("");
   const [voucherInfo,setVoucherInfo]=useState(null);
   const [step,setStep]=useState("form");
   const [errMsg,setErrMsg]=useState("");
-  const [cd,setCd]=useState(90);
-  const [manualCode,setManualCode]=useState("");
+  const [paystackUrl,setPaystackUrl]=useState("");
+  const [reference,setReference]=useState("");
   const [verifying,setVerifying]=useState(false);
   const pollRef=useRef(null);
   const discount=voucherInfo?.discount||voucherInfo?.discount_percent||0;
@@ -901,72 +901,81 @@ function PayModal({type,listingId,pitchId,amount,purpose,token,user,onSuccess,on
       setVoucherInfo(v);
       const pct=v.discount||v.discount_percent||0;
       const saved=Math.round(amount*pct/100);
-      notify(`Voucher applied — ${pct}% off! You save ${fmtKES(saved)}`,"success");
+      notify(`Voucher applied — ${pct}% off! You save ${fmtKES(saved)}`,`success`);
     }catch{notify("Invalid or expired voucher code.","error");setVoucherInfo(null);}
   };
 
   const startPayment=async()=>{
-    if(finalAmt>0&&(!phone||phone.length<10)){notify("Enter a valid M-Pesa phone number.","warning");return;}
-    setStep("pushing");
+    if(finalAmt>0&&(!email||!email.includes("@"))){notify("Enter a valid email address.","warning");return;}
+    setStep("initializing");
     try{
       const endpoint=pitchId?`/api/pitches/${pitchId}/accept`:type==="unlock"?"/api/payments/unlock":"/api/payments/escrow";
-      const body=pitchId?{phone:phone.trim()}:{listing_id:listingId,phone:phone.trim()};
+      const body=pitchId?{email:email.trim()}:{listing_id:listingId,email:email.trim()};
       if(voucherInfo)body.voucher_code=vcode.trim().toUpperCase();
       const result=await api(endpoint,{method:"POST",body:JSON.stringify(body)},token);
       if(result.unlocked){setStep("done");setTimeout(()=>onSuccess(result),600);return;}
-      setStep("polling");
-      let c=90;setCd(90);
+      
+      // Open Paystack checkout in new window/tab
+      setPaystackUrl(result.authorization_url);
+      setReference(result.reference);
+      setStep("checkout");
+      
+      // Open Paystack immediately
+      window.open(result.authorization_url, '_blank');
+      
+      // Start polling for payment status
+      let c=180; // 3 minutes polling
       pollRef.current=setInterval(async()=>{
-        c--;setCd(c);
+        c--;
         if(c<=0){clearInterval(pollRef.current);setStep("timeout");return;}
         try{
-          const s=await api(`/api/payments/status/${result.checkoutRequestId}`,{},token);
+          const s=await api(`/api/payments/status/${result.reference}`,{},token);
           if(s.status==="confirmed"){clearInterval(pollRef.current);setStep("done");setTimeout(()=>onSuccess(s),800);}
-          else if(s.status==="failed"){clearInterval(pollRef.current);setStep("error");setErrMsg(s.resultDesc||"Payment failed. Try again.");}
         }catch{}
-      },2000);
+      },3000);
     }catch(err){setStep("error");setErrMsg(err.message);}
   };
 
   const verifyManual=async()=>{
     if(pitchId){notify("Manual verification is not available for pitch payments. Please try again or contact support.","warning");return;}
-    const code=manualCode.trim().toUpperCase();
-    if(!code||code.length<8){notify("Enter a valid M-Pesa transaction code.","warning");return;}
+    if(!reference){notify("No payment reference found. Please complete payment first.","warning");return;}
     setVerifying(true);
     try{
-      const result=await api("/api/payments/verify-manual",{method:"POST",body:JSON.stringify({mpesa_code:code,listing_id:listingId,type})},token);
-      setStep("done");setTimeout(()=>onSuccess(result),600);
+      const s=await api(`/api/payments/status/${reference}`,{},token);
+      if(s.status==="confirmed"){
+        setStep("done");
+        setTimeout(()=>onSuccess(s),600);
+      }else{
+        notify("Payment not yet confirmed. Please complete payment on the checkout page.","warning");
+      }
     }catch(err){notify(err.message,"error");}
     finally{setVerifying(false);}
   };
 
   useEffect(()=>()=>{if(pollRef.current)clearInterval(pollRef.current);},[]);
 
-  const ManualInput=()=><div style={{marginTop:14,borderTop:"1px solid #E8E8E8",paddingTop:14}}>
-    <div className="lbl" style={{marginBottom:8}}>Paid directly? Enter M-Pesa Transaction Code</div>
-    <div style={{display:"flex",gap:8}}>
-      <input className="inp" placeholder="e.g. RJK2X4ABCD" value={manualCode} onChange={e=>setManualCode(e.target.value.toUpperCase())} style={{flex:1,fontFamily:"monospace",letterSpacing:".05em"}} maxLength={12}/>
-      <button className="btn bg2 sm" onClick={verifyManual} disabled={verifying||manualCode.length<8}>{verifying?<Spin/>:"Verify"}</button>
-    </div>
-    <p style={{fontSize:11,color:"#CCCCCC",marginTop:5}}>We confirm the code was paid to Till 5673935 before unlocking.</p>
+  const ManualVerify=()=><div style={{marginTop:14,borderTop:"1px solid #E8E8E8",paddingTop:14}}>
+    <div className="lbl" style={{marginBottom:8}}>Already paid? Click to verify</div>
+    <button className="btn bg2 sm" onClick={verifyManual} disabled={verifying} style={{width:"100%"}}>{verifying?<Spin/>:"I've Completed Payment — Verify"}</button>
+    <p style={{fontSize:11,color:"#CCCCCC",marginTop:5}}>We check Paystack for your payment status.</p>
   </div>;
 
   return <Modal title={pitchId?"Reveal Seller Contact — KSh 260":type==="unlock"?"Reveal Your Contact Info To Potential Buyers— KSh 260":"Escrow Payment"} onClose={onClose}>
     {step==="form"&&<>
-  {/* Option A — unlock contact (only option now) */}
-  {type==="unlock"&&<div style={{marginBottom:20}}>
-    <div className="pay-option featured">
-      <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
-        <div style={{width:36,height:36,borderRadius:10,background:"rgba(20,40,160,.1)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{Ic.shield(16,"#1428A0")}</div>
-        <div>
-          <div style={{fontWeight:700,fontSize:14,color:"#1428A0",marginBottom:3}}>Reveal Your Contact</div>
-          <div style={{fontSize:12,color:"#444444",lineHeight:1.65}}>Unlock your phone number to buyers, to let them contact you directly. One-time payment of <strong>KSh 260</strong> for this listing.</div>
+      {/* Option A — unlock contact (only option now) */}
+      {type==="unlock"&&<div style={{marginBottom:20}}>
+        <div className="pay-option featured">
+          <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
+            <div style={{width:36,height:36,borderRadius:10,background:"rgba(20,40,160,.1)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{Ic.shield(16,"#1428A0")}</div>
+            <div>
+              <div style={{fontWeight:700,fontSize:14,color:"#1428A0",marginBottom:3}}>Reveal Your Contact</div>
+              <div style={{fontSize:12,color:"#444444",lineHeight:1.65}}>Unlock your phone number to buyers, to let them contact you directly. One-time payment of <strong>KSh 260</strong> for this listing.</div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </div>}
+      </div>}
 
-  {/* Seller safety tip — shown only on unlock */}
+      {/* Seller safety tip — shown only on unlock */}
       {type==="unlock"&&<div style={{background:"#F8F9FF",border:"1px solid #C7D2FE",borderRadius:12,padding:"12px 14px",marginBottom:16,fontSize:12,color:"#1428A0",lineHeight:1.7}}>
         <strong style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>{Ic.shield(14)} Seller tip:</strong> Once you unlock, potential buyers will immediately see your contact details. <strong>Do not hand over the item until payment is confirmed.</strong>
       </div>}
@@ -990,50 +999,49 @@ function PayModal({type,listingId,pitchId,amount,purpose,token,user,onSuccess,on
         {voucherInfo&&<div className="alert ag" style={{marginTop:8,fontSize:12,display:"flex",alignItems:"center",gap:6}}>{Ic.check(14,"#1428A0")} {voucherInfo.description||`${discount}% discount`} — Pay only {fmtKES(finalAmt)}{finalAmt===0?" (FREE!)":""}</div>}
       </FF>}
       {finalAmt===0
-        ?<button className="btn bp lg" style={{width:"100%"}} onClick={startPayment}>Unlock for Free</button>
-        :<>
-          <FF label="Your M-Pesa Number" required>
-            <div style={{display:"flex"}}>
-              <div style={{background:"#F5F5F5",border:"1.5px solid #E0E0E0",borderRight:"none",borderRadius:6,padding:"10px 12px",fontSize:13,color:"#888888",whiteSpace:"nowrap"}}>KE +254</div>
-              <input className="inp" style={{borderRadius:6}} value={phone} onChange={e=>setPhone(e.target.value.replace(/[^0-9]/g,""))} placeholder="0712345678" maxLength={10}/>
-            </div>
-          </FF>
-          {/* Escrow breakdown */}
-          {type==="escrow"&&(()=>{const itemPrice=Math.round(amount/1.055);const fee=amount-itemPrice;return<div style={{background:"#F0F4FF",border:"1px solid #C7D2FE",borderRadius:12,padding:"12px 14px",marginBottom:12,fontSize:13}}>
-            <div style={{fontWeight:700,color:"#1428A0",marginBottom:8,fontSize:12,letterSpacing:".06em",textTransform:"uppercase"}}>Escrow Breakdown</div>
-            <div style={{display:"flex",justifyContent:"space-between",color:"#444",marginBottom:4}}><span>Item price</span><span style={{fontWeight:600}}>{fmtKES(itemPrice)}</span></div>
-            <div style={{display:"flex",justifyContent:"space-between",color:"#444",marginBottom:8}}><span>Escrow fee (5.5%)</span><span style={{fontWeight:600}}>{fmtKES(fee)}</span></div>
-            <div style={{display:"flex",justifyContent:"space-between",borderTop:"1px solid #C7D2FE",paddingTop:8,fontWeight:700,color:"#1428A0"}}><span>Total you pay</span><span>{fmtKES(amount)}</span></div>
-            <div style={{fontSize:11,color:"#6366F1",marginTop:8}}>Funds held securely until you confirm receipt. The seller is paid once you confirm.</div>
-          </div>;})}
-          {/* Safety tip before payment */}
-          <div style={{background:"#F8F8F8",border:"1px solid #E8E8E8",borderRadius:12,padding:"10px 13px",marginBottom:12,fontSize:12,color:"#333333",lineHeight:1.65}}>
-            <strong style={{display:"flex",alignItems:"center",gap:6}}>{Ic.warning(14)} Security reminder:</strong> {type==="escrow"?<>This payment of <strong>{fmtKES(finalAmt)}</strong> goes to <strong>Weka Soko Till 5673935</strong> only. Funds are held in escrow — not paid directly to the seller.</>:<>This KSh 260 is paid to <strong>Weka Soko Till 5673935</strong> only. We will <strong>never</strong> ask you to send money to a seller's personal number before meeting.</>}
-          </div>
-          <button className="btn bp lg" style={{width:"100%"}} onClick={startPayment} disabled={phone.length<10}>
-            Send M-Pesa Request — {fmtKES(finalAmt)}
-          </button>
-          <ManualInput/>
-        </>}
+      ?<button className="btn bp lg" style={{width:"100%"}} onClick={startPayment}>Unlock for Free</button>
+      :<>
+      <FF label="Your Email" required>
+        <input className="inp" type="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} style={{borderRadius:6}}/>
+      </FF>
+      {/* Escrow breakdown */}
+      {type==="escrow"&&(()=>{const itemPrice=Math.round(amount/1.055);const fee=amount-itemPrice;return<div style={{background:"#F0F4FF",border:"1px solid #C7D2FE",borderRadius:12,padding:"12px 14px",marginBottom:12,fontSize:13}}>
+        <div style={{fontWeight:700,color:"#1428A0",marginBottom:8,fontSize:12,letterSpacing:".06em",textTransform:"uppercase"}}>Escrow Breakdown</div>
+        <div style={{display:"flex",justifyContent:"space-between",color:"#444",marginBottom:4}}><span>Item price</span><span style={{fontWeight:600}}>{fmtKES(itemPrice)}</span></div>
+        <div style={{display:"flex",justifyContent:"space-between",color:"#444",marginBottom:8}}><span>Escrow fee (5.5%)</span><span style={{fontWeight:600}}>{fmtKES(fee)}</span></div>
+        <div style={{display:"flex",justifyContent:"space-between",borderTop:"1px solid #C7D2FE",paddingTop:8,fontWeight:700,color:"#1428A0"}}><span>Total you pay</span><span>{fmtKES(amount)}</span></div>
+        <div style={{fontSize:11,color:"#6366F1",marginTop:8}}>Funds held securely until you confirm receipt. The seller is paid once you confirm.</div>
+      </div>;})}
+      {/* Safety tip before payment */}
+      <div style={{background:"#F8F8F8",border:"1px solid #E8E8E8",borderRadius:12,padding:"10px 13px",marginBottom:12,fontSize:12,color:"#333333",lineHeight:1.65}}>
+        <strong style={{display:"flex",alignItems:"center",gap:6}}>{Ic.warning(14)} Security reminder:</strong> {type==="escrow"?<>This payment of <strong>{fmtKES(finalAmt)}</strong> goes to <strong>Weka Soko Till 5673935</strong> only. Funds are held in escrow — not paid directly to the seller.</>:<>This KSh 260 is paid to <strong>Weka Soko Till 5673935</strong> only. We will <strong>never</strong> ask you to send money to a seller's personal number before meeting.</>}
+      </div>
+      <button className="btn bp lg" style={{width:"100%"}} onClick={startPayment} disabled={!email.includes("@")}>
+        Send M-Pesa Request — {fmtKES(finalAmt)}
+      </button>
+      </>}
     </>}
-    {step==="pushing"&&<div style={{textAlign:"center",padding:"32px 0"}}>
+    {step==="initializing"&&<div style={{textAlign:"center",padding:"32px 0"}}>
       <div style={{marginBottom:18}}><Spin s="48px"/></div>
-      <h3 style={{fontWeight:700,marginBottom:8}}>Sending M-Pesa Request...</h3>
-      <p style={{color:"#888888",fontSize:14}}>Watch for a push notification on <strong>{phone}</strong></p>
+      <h3 style={{fontWeight:700,marginBottom:8}}>Initializing Payment...</h3>
+      <p style={{color:"#888888",fontSize:14}}>Please wait...</p>
     </div>}
-    {step==="polling"&&<div style={{textAlign:"center",padding:"24px 0"}}>
-      <div style={{marginBottom:12,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.phone(56,"#1428A0")}</div>
-      <h3 style={{fontWeight:700,marginBottom:8}}>Enter Your M-Pesa PIN</h3>
-      <p style={{color:"#888888",fontSize:14,marginBottom:16}}>Check your phone · Pay Till <strong>5673935</strong> · {fmtKES(finalAmt)}</p>
-      <div style={{fontSize:48,fontWeight:700,color:"#111111",marginBottom:8}}>{cd}s</div>
-      <div className="progress"><div className="progress-bar" style={{width:`${(cd/90)*100}%`}}/></div>
-      <ManualInput/>
+    {step==="checkout"&&<div style={{textAlign:"center",padding:"24px 0"}}>
+      <div style={{marginBottom:12,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.shield(56,"#1428A0")}</div>
+      <h3 style={{fontWeight:700,marginBottom:8}}>Complete Payment</h3>
+      <p style={{color:"#888888",fontSize:14,marginBottom:16}}>A secure payment page has opened in a new tab. Please complete your payment there.</p>
+      <div style={{background:"#F0F4FF",border:"1px solid #C7D2FE",borderRadius:12,padding:"16px",marginBottom:16}}>
+        <div style={{fontSize:12,color:"#888888",marginBottom:4}}>Reference</div>
+        <div style={{fontSize:16,fontWeight:700,color:"#1428A0",fontFamily:"monospace"}}>{reference}</div>
+      </div>
+      <button className="btn bp" style={{width:"100%",marginBottom:8}} onClick={()=>window.open(paystackUrl, '_blank')}>Re-open Payment Page</button>
+      <ManualVerify/>
     </div>}
     {step==="timeout"&&<div style={{textAlign:"center",padding:"24px 0"}}>
       <div style={{marginBottom:12,display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.clock(56,"#C03030")}</div>
-      <h3 style={{fontWeight:700,marginBottom:8}}>Request Timed Out</h3>
-      <p style={{color:"#888888",fontSize:14,marginBottom:14}}>Did you pay? Paste your M-Pesa code to verify:</p>
-      <ManualInput/>
+      <h3 style={{fontWeight:700,marginBottom:8}}>Still Waiting?</h3>
+      <p style={{color:"#888888",fontSize:14,marginBottom:14}}>If you've completed payment, click verify below:</p>
+      <ManualVerify/>
       <button className="btn bs" style={{width:"100%",marginTop:12}} onClick={()=>{setStep("form");if(pollRef.current)clearInterval(pollRef.current);}}>Try Again</button>
     </div>}
     {step==="done"&&<div style={{textAlign:"center",padding:"32px 0"}}>
