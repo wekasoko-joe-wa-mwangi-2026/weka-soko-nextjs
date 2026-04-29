@@ -358,7 +358,7 @@ function HeartBtn({saved,onToggle,size=20,bg="rgba(255,255,255,0.95)",style={}})
     style={{
       width:size*2.1,height:size*2.1,background:bg,
       boxShadow: "0 2px 10px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.02)",
-      borderRadius: 8, padding: 0, border: "none",
+      borderRadius: "50%", padding: 0, border: "none",
       display: "flex", alignItems: "center", justifyContent: "center",
       ...style
     }}>
@@ -4853,7 +4853,7 @@ function SwipeFeed({user,token,onOpen,onLockIn,onMessage,savedIds,onToggleSave,o
 }
 
 // ── HOT RIGHT NOW — horizontal scroll of popular listings ─────────────────────
-function HotRightNow({onOpen,savedIds,onToggleSave,user,onOpenInFeed}){
+function HotRightNow({onOpen,savedIds,onToggleSave,user,onOpenInFeed,onLockIn,onMessage,onSignIn}){
   const [items,setItems]=useState([]);
   const [loading,setLoading]=useState(true);
   const [feedIdx,setFeedIdx]=useState(null);
@@ -4907,11 +4907,13 @@ function HotRightNow({onOpen,savedIds,onToggleSave,user,onOpenInFeed}){
       </div>
     </div>
     {/* SwipeFeed overlay for hot listings */}
-    {feedIdx!==null&&<div style={{position:"fixed",inset:0,zIndex:600}}>
+{feedIdx!==null&&<div style={{position:"fixed",inset:0,zIndex:600}}>
       <SwipeFeed user={user} token={null} initialListings={items} startIndex={feedIdx}
-        onOpen={l=>{setFeedIdx(null);onOpen&&onOpen(l);}}
-        onLockIn={l=>{setFeedIdx(null);}} onMessage={l=>{setFeedIdx(null);}} savedIds={savedIds} onToggleSave={onToggleSave}
-        onSignIn={()=>{}} onPostAd={()=>{}} onClose={()=>setFeedIdx(null)}/>
+      onOpen={l=>{setFeedIdx(null);onOpen&&onOpen(l);}}
+      onLockIn={l=>{setFeedIdx(null);onLockIn&&onLockIn(l);}}
+      onMessage={l=>{setFeedIdx(null);onMessage&&onMessage(l);}}
+      savedIds={savedIds} onToggleSave={onToggleSave}
+      onSignIn={onSignIn||(()=>{})} onPostAd={()=>{setFeedIdx(null);}} onClose={()=>setFeedIdx(null)}/>
     </div>}
   </>;
 }

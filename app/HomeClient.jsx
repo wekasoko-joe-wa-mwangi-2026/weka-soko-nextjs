@@ -835,7 +835,7 @@ export default function HomeClient({ initialListings, initialTotal, initialStats
 
       {/* ── LISTINGS SECTION — full width below ── */}
       <div id="listings-section">
-        <HotRightNow onOpen={openListing} savedIds={savedIds} onToggleSave={handleToggleSave} user={user}/>
+        <HotRightNow onOpen={openListing} onLockIn={handleLockIn} onMessage={(l)=>{if(!user){setModal({type:"auth",mode:"login"});return;}setModal({type:"chat",listing:l});}} savedIds={savedIds} onToggleSave={handleToggleSave} user={user} onSignIn={()=>setModal({type:"auth",mode:"login"})}/>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,marginBottom:20,flexWrap:"wrap"}}>
           <h2 style={{fontSize:22,fontWeight:700,letterSpacing:"-.02em",color:"#1A1A1A"}}>
             {filter.cat||"All Listings"} <span style={{fontWeight:400,fontSize:15,color:"#AAAAAA"}}>{total} items</span>
