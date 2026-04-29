@@ -358,7 +358,7 @@ function HeartBtn({saved,onToggle,size=20,bg="rgba(255,255,255,0.95)",style={}})
     style={{
       width:size*2.1,height:size*2.1,background:bg,
       boxShadow: "0 2px 10px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.02)",
-      borderRadius: "50%", padding: 0, border: "none",
+      borderRadius: 8, padding: 0, border: "none",
       display: "flex", alignItems: "center", justifyContent: "center",
       ...style
     }}>
@@ -4240,12 +4240,7 @@ function MobileLayout({
                 return <div key={l.id} className="mob-lcard" onClick={()=>openListing(l)} style={{position:"relative"}}>
                   <div className="mob-lcard-img" style={{position:"relative"}}>
                     {photo?<img src={photo} alt={l.title}/>:<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",background:"#F2F2F7",opacity:.6}}>{Ic.image(24,"#CCCCCC")}</div>}
-                    {isNew&&<div style={{position:"absolute",bottom:4,left:4,background:"#10b981",color:"#fff",fontSize:8,fontWeight:800,padding:"2px 6px",borderRadius:4,letterSpacing:".04em"}}>NEW</div>}
-                    {/* Swipe browse button — bottom right of image */}
-                    <button onClick={e=>{e.stopPropagation();setSwipeFeedIdx(listings.findIndex(x=>x.id===l.id));}} style={{position:"absolute",bottom:6,right:6,background:"rgba(0,0,0,.55)",color:"#fff",border:"none",borderRadius:6,padding:"4px 8px",fontSize:10,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontFamily:"var(--fn)"}}>
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                      Browse
-                    </button>
+{isNew&&<div style={{position:"absolute",bottom:4,left:4,background:"#10b981",color:"#fff",fontSize:8,fontWeight:800,padding:"2px 6px",borderRadius:4,letterSpacing:".04em"}}>NEW</div>}
                   </div>
                   <div className="mob-lcard-body">
                     <div className="mob-lcard-cat">{l.category}</div>
@@ -4885,13 +4880,13 @@ function HotRightNow({onOpen,savedIds,onToggleSave,user,onOpenInFeed}){
         <div style={{fontWeight:700,fontSize:15,color:"#1A1A1A"}}>Hot Right Now</div>
         <div style={{fontSize:11,color:"#AAAAAA",fontWeight:500}}>Most viewed today</div>
       </div>
-      <div style={{display:"flex",gap:10,overflowX:"auto",padding:"4px 16px 12px",WebkitOverflowScrolling:"touch",msOverflowStyle:"none",scrollbarWidth:"none"}}>
-        {items.map((l,i)=>{
-          const photo=Array.isArray(l.photos)?l.photos.find(p=>typeof p==="string")||l.photos[0]?.url||null:null;
-          const isNew=Date.now()-new Date(l.created_at)<12*3600000;
-          const catPhoto=CAT_PHOTOS[l.category];
-          return<div key={l.id} onClick={()=>openItem(l,i)} style={{flexShrink:0,width:152,cursor:"pointer"}}>
-            <div style={{width:152,height:152,borderRadius:14,overflow:"hidden",background:"#F0F0F0",position:"relative",marginBottom:9,boxShadow:"0 2px 8px rgba(0,0,0,.10),0 6px 20px rgba(20,40,160,.07)",transition:"transform .2s,box-shadow .2s"}}
+<div style={{display:"flex",gap:10,padding:"4px 16px 12px",flexWrap:"wrap"}}>
+      {items.slice(0,2).map((l,i)=>{
+        const photo=Array.isArray(l.photos)?l.photos.find(p=>typeof p==="string")||l.photos[0]?.url||null:null;
+        const isNew=Date.now()-new Date(l.created_at)<12*3600000;
+        const catPhoto=CAT_PHOTOS[l.category];
+        return<div key={l.id} onClick={()=>openItem(l,i)} style={{flexShrink:0,width:"calc(50% - 5px)",cursor:"pointer"}}>
+          <div style={{width:"100%",aspectRatio:"1/1",borderRadius:14,overflow:"hidden",background:"#F0F0F0",position:"relative",marginBottom:9,boxShadow:"0 2px 8px rgba(0,0,0,.10),0 6px 20px rgba(20,40,160,.07)",transition:"transform .2s,box-shadow .2s"}}
               onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow="0 4px 16px rgba(0,0,0,.12),0 12px 32px rgba(20,40,160,.12)";}}
               onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.boxShadow="0 2px 8px rgba(0,0,0,.10),0 6px 20px rgba(20,40,160,.07)";}}>
               {photo
@@ -4915,7 +4910,7 @@ function HotRightNow({onOpen,savedIds,onToggleSave,user,onOpenInFeed}){
     {feedIdx!==null&&<div style={{position:"fixed",inset:0,zIndex:600}}>
       <SwipeFeed user={user} token={null} initialListings={items} startIndex={feedIdx}
         onOpen={l=>{setFeedIdx(null);onOpen&&onOpen(l);}}
-        onLockIn={()=>{}} onMessage={()=>{}} savedIds={savedIds} onToggleSave={onToggleSave}
+        onLockIn={l=>{setFeedIdx(null);}} onMessage={l=>{setFeedIdx(null);}} savedIds={savedIds} onToggleSave={onToggleSave}
         onSignIn={()=>{}} onPostAd={()=>{}} onClose={()=>setFeedIdx(null)}/>
     </div>}
   </>;
