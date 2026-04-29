@@ -4880,12 +4880,12 @@ function HotRightNow({onOpen,savedIds,onToggleSave,user,onOpenInFeed,onLockIn,on
         <div style={{fontWeight:700,fontSize:15,color:"#1A1A1A"}}>Hot Right Now</div>
         <div style={{fontSize:11,color:"#AAAAAA",fontWeight:500}}>Most viewed today</div>
       </div>
-<div style={{display:"flex",gap:10,padding:"4px 16px 12px",flexWrap:"wrap"}}>
+<div style={{display:"flex",gap:12,padding:"4px 16px 12px",flexWrap:"wrap"}}>
       {items.slice(0,2).map((l,i)=>{
         const photo=Array.isArray(l.photos)?l.photos.find(p=>typeof p==="string")||l.photos[0]?.url||null:null;
         const isNew=Date.now()-new Date(l.created_at)<12*3600000;
         const catPhoto=CAT_PHOTOS[l.category];
-        return<div key={l.id} onClick={()=>openItem(l,i)} style={{flexShrink:0,width:"calc(50% - 5px)",cursor:"pointer"}}>
+        return<div key={l.id} onClick={()=>openItem(l,i)} style={{flexShrink:0,width:"calc(50% - 6px)",cursor:"pointer"}}>
           <div style={{width:"100%",aspectRatio:"1/1",borderRadius:14,overflow:"hidden",background:"#F0F0F0",position:"relative",marginBottom:9,boxShadow:"0 2px 8px rgba(0,0,0,.10),0 6px 20px rgba(20,40,160,.07)",transition:"transform .2s,box-shadow .2s"}}
               onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow="0 4px 16px rgba(0,0,0,.12),0 12px 32px rgba(20,40,160,.12)";}}
               onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.boxShadow="0 2px 8px rgba(0,0,0,.10),0 6px 20px rgba(20,40,160,.07)";}}>
