@@ -1021,8 +1021,12 @@ function PayModal({type,listingId,pitchId,amount,purpose,token,user,onSuccess,on
       </div>
   <button 
     className="btn bp lg" 
-    style={{width:"100%"}}
-    onClick={startPayment}
+    style={{width:"100%", pointerEvents: 'auto', cursor: 'pointer'}}
+    onClick={(e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      startPayment();
+    }}
   >
     Send M-Pesa Request — {fmtKES(finalAmt)}
   </button>
