@@ -998,10 +998,10 @@ function PayModal({type,listingId,pitchId,amount,purpose,token,user,onSuccess,on
         </div>
         {voucherInfo&&<div className="alert ag" style={{marginTop:8,fontSize:12,display:"flex",alignItems:"center",gap:6}}>{Ic.check(14,"#1428A0")} {voucherInfo.description||`${discount}% discount`} — Pay only {fmtKES(finalAmt)}{finalAmt===0?" (FREE!)":""}</div>}
       </FF>}
-      {finalAmt===0
-      ?<button className="btn bp lg" style={{width:"100%"}} onClick={startPayment}>Unlock for Free</button>
-      :<>
-      <FF label="Your Email" required>
+  {finalAmt===0
+    ?<button className="btn bp lg" style={{width:"100%"}} onClick={startPayment}>Unlock for Free</button>
+    :<>
+      <FF label="Your Email" required error={!email?"Email is required":!email.includes("@")?"Enter a valid email":""}>
         <input className="inp" type="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} style={{borderRadius:6}}/>
       </FF>
       {/* Escrow breakdown */}
@@ -1016,9 +1016,14 @@ function PayModal({type,listingId,pitchId,amount,purpose,token,user,onSuccess,on
       <div style={{background:"#F8F8F8",border:"1px solid #E8E8E8",borderRadius:12,padding:"10px 13px",marginBottom:12,fontSize:12,color:"#333333",lineHeight:1.65}}>
         <strong style={{display:"flex",alignItems:"center",gap:6}}>{Ic.warning(14)} Security reminder:</strong> {type==="escrow"?<>This payment of <strong>{fmtKES(finalAmt)}</strong> goes to <strong>Weka Soko Till 5673935</strong> only. Funds are held in escrow — not paid directly to the seller.</>:<>This KSh 260 is paid to <strong>Weka Soko Till 5673935</strong> only. We will <strong>never</strong> ask you to send money to a seller's personal number before meeting.</>}
       </div>
-      <button className="btn bp lg" style={{width:"100%"}} onClick={startPayment} disabled={!email.includes("@")}>
-        Send M-Pesa Request — {fmtKES(finalAmt)}
-      </button>
+  <button 
+    className="btn bp lg" 
+    style={{width:"100%", opacity: email && email.includes("@") ? 1 : 0.6, cursor: email && email.includes("@") ? 'pointer' : 'not-allowed'}} 
+    onClick={startPayment} 
+    disabled={!email || !email.includes("@")}
+  >
+    Send M-Pesa Request — {fmtKES(finalAmt)}
+  </button>
       </>}
     </>}
     {step==="initializing"&&<div style={{textAlign:"center",padding:"32px 0"}}>
