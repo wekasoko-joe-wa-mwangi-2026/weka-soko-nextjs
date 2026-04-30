@@ -1747,19 +1747,16 @@ function DetailModal({listing:l,user,token,onClose,onShare,onChat,onLockIn,onUnl
             </div>
           </div>
           <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
-            {l.seller_name&&<div style={{display:"flex",alignItems:"center",gap:8,fontSize:13}}>
-              <span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
-              <span style={{fontWeight:600}}>{l.seller_name}</span>
-            </div>}
-            {l.seller_phone&&<div style={{display:"flex",alignItems:"center",gap:8,fontSize:13}}>
-              <span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span>
-              <span>{l.seller_phone}</span>
-            </div>}
-            {l.seller_email&&<div style={{display:"flex",alignItems:"center",gap:8,fontSize:13}}>
-              <span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
-              <span>{l.seller_email}</span>
-            </div>}
-          </div>
+  {l.seller_name&&<div style={{display:"flex",alignItems:"center",gap:8,fontSize:13}}>
+    <span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+    <span style={{fontWeight:600}}>{l.seller_name}</span>
+  </div>}
+  {l.seller_phone&&<div style={{display:"flex",alignItems:"center",gap:8,fontSize:13}}>
+    <span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span>
+    <span>{l.seller_phone}</span>
+  </div>}
+  {/* Email is NOT shown - only phone/WhatsApp for contact */}
+</div>
           {l.seller_phone&&(()=>{
             // Convert Kenyan number to WhatsApp international format
             const raw=l.seller_phone.replace(/\D/g,"");
@@ -2332,13 +2329,13 @@ function SoldCard({l,showContact=false}){
       <div style={{fontSize:11,color:"#767676",marginBottom:showContact?8:0}}>
         <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {l.county||l.location||"Kenya"}
       </div>
-      {showContact&&<div style={{borderTop:"1px solid #F0F0F0",paddingTop:8,display:"flex",flexDirection:"column",gap:5}}>
-        <div style={{fontSize:11,fontWeight:700,letterSpacing:".06em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:2}}>Contacts</div>
-        <div style={{fontSize:12,display:"flex",flexDirection:"column",gap:4}}>
-          <div><span style={{fontWeight:600,color:"#1428A0"}}>Seller: </span><span style={{color:"#222"}}>{l.seller_name||"—"}</span>{l.seller_phone&&<span style={{color:"#636363"}}> · {l.seller_phone}</span>}{l.seller_email&&<span style={{color:"#636363",fontSize:11}}> · {l.seller_email}</span>}</div>
-          {l.buyer_name&&<div><span style={{fontWeight:600,color:"#059669"}}>Buyer: </span><span style={{color:"#222"}}>{l.buyer_name}</span>{l.buyer_phone&&<span style={{color:"#636363"}}> · {l.buyer_phone}</span>}{l.buyer_email&&<span style={{color:"#636363",fontSize:11}}> · {l.buyer_email}</span>}</div>}
-        </div>
-      </div>}
+  {showContact&&<div style={{borderTop:"1px solid #F0F0F0",paddingTop:8,display:"flex",flexDirection:"column",gap:5}}>
+    <div style={{fontSize:11,fontWeight:700,letterSpacing:".06em",textTransform:"uppercase",color:"#AAAAAA",marginBottom:2}}>Contacts</div>
+    <div style={{fontSize:12,display:"flex",flexDirection:"column",gap:4}}>
+      <div><span style={{fontWeight:600,color:"#1428A0"}}>Seller: </span><span style={{color:"#222"}}>{l.seller_name||"—"}</span>{l.seller_phone&&<span style={{color:"#636363"}}> · {l.seller_phone}</span>}</div>
+      {l.buyer_name&&<div><span style={{fontWeight:600,color:"#059669"}}>Buyer: </span><span style={{color:"#222"}}>{l.buyer_name}</span>{l.buyer_phone&&<span style={{color:"#636363"}}> · {l.buyer_phone}</span>}</div>}
+    </div>
+  </div>}
     </div>
   </div>;
 }
@@ -2670,11 +2667,10 @@ function PitchesTab({token, notify, user}) {
                     <p style={{fontSize:14,color:"#333",lineHeight:1.65,marginBottom:10,padding:"10px 12px",background:"#F8F8F8",borderRadius:8}}>{p.message}</p>
                     {p.status === "accepted" && <div style={{marginTop:6}}>
                       <div style={{fontSize:13,color:"#16a34a",fontWeight:600,marginBottom:8}}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline",verticalAlign:"middle"}}><polyline points="20 6 9 17 4 12"/></svg> Accepted — contact revealed</div>
-                      {(p.seller_phone||p.seller_email)&&<div style={{background:"#F0FFF4",border:"1px solid #BBF7D0",borderRadius:10,padding:"10px 14px",fontSize:13,lineHeight:1.7}}>
-                        <div style={{fontWeight:700,color:"#1A1A1A",marginBottom:4}}>{p.seller_name||p.seller_anon}</div>
-                        {p.seller_phone&&<div style={{color:"#15803d"}}>Phone: <a href={`tel:${p.seller_phone}`} style={{color:"#15803d",fontWeight:700}}>{p.seller_phone}</a></div>}
-                        {p.seller_email&&<div style={{color:"#15803d"}}>Email: <a href={`mailto:${p.seller_email}`} style={{color:"#15803d",fontWeight:700}}>{p.seller_email}</a></div>}
-                      </div>}
+  {(p.seller_phone)&&<div style={{background:"#F0FFF4",border:"1px solid #BBF7D0",borderRadius:10,padding:"10px 14px",fontSize:13,lineHeight:1.7}}>
+    <div style={{fontWeight:700,color:"#15803d",marginBottom:6}}>Seller Contact</div>
+    {p.seller_phone&&<div style={{color:"#15803d"}}>Phone: <a href={`tel:${p.seller_phone}`} style={{color:"#15803d",fontWeight:700}}>{p.seller_phone}</a></div>}
+  </div>}
                     </div>}
                     {p.status === "declined" && <div style={{fontSize:13,color:"#888"}}>Declined</div>}
                   </div>
