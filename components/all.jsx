@@ -906,7 +906,10 @@ function PayModal({type,listingId,pitchId,amount,purpose,token,user,onSuccess,on
   };
 
   const startPayment=async()=>{
-    if(finalAmt>0&&(!email||!email.includes("@"))){notify("Enter a valid email address.","warning");return;}
+    if(finalAmt>0&&(!email||!email.includes("@"))){
+      notify("Please enter a valid email address.","warning");
+      return;
+    }
     setStep("initializing");
     try{
       const endpoint=pitchId?`/api/pitches/${pitchId}/accept`:type==="unlock"?"/api/payments/unlock":"/api/payments/escrow";
@@ -1018,9 +1021,8 @@ function PayModal({type,listingId,pitchId,amount,purpose,token,user,onSuccess,on
       </div>
   <button 
     className="btn bp lg" 
-    style={{width:"100%", opacity: email && email.includes("@") ? 1 : 0.6, cursor: email && email.includes("@") ? 'pointer' : 'not-allowed'}} 
-    onClick={startPayment} 
-    disabled={!email || !email.includes("@")}
+    style={{width:"100%"}}
+    onClick={startPayment}
   >
     Send M-Pesa Request — {fmtKES(finalAmt)}
   </button>
