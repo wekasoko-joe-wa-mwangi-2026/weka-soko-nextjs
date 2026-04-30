@@ -881,7 +881,6 @@ function ShareModal({listing,onClose}){
 
 // ── REAL M-PESA PAYMENT MODAL (Now uses Paystack behind the scenes) ─────────────────────────────
 function PayModal({type,listingId,pitchId,amount,purpose,token,user,onSuccess,onClose,notify,allowVoucher}){
-  const [email,setEmail]=useState(user?.email||"");
   const [vcode,setVcode]=useState("");
   const [voucherInfo,setVoucherInfo]=useState(null);
   const [step,setStep]=useState("form");
@@ -906,26 +905,22 @@ function PayModal({type,listingId,pitchId,amount,purpose,token,user,onSuccess,on
   };
 
   const startPayment=async()=>{
-    if(finalAmt>0&&(!email||!email.includes("@"))){
-      notify("Please enter a valid email address.","warning");
-      return;
-    }
     setStep("initializing");
     try{
       const endpoint=pitchId?`/api/pitches/${pitchId}/accept`:type==="unlock"?"/api/payments/unlock":"/api/payments/escrow";
-      const body=pitchId?{email:email.trim()}:{listing_id:listingId,email:email.trim()};
+      const body=pitchId?{email:user?.email}:{listing_id:listingId,email:user?.email};
       if(voucherInfo)body.voucher_code=vcode.trim().toUpperCase();
       const result=await api(endpoint,{method:"POST",body:JSON.stringify(body)},token);
       if(result.unlocked){setStep("done");setTimeout(()=>onSuccess(result),600);return;}
-      
+
       // Open Paystack checkout in new window/tab
       setPaystackUrl(result.authorization_url);
       setReference(result.reference);
       setStep("checkout");
-      
+
       // Open Paystack immediately
       window.open(result.authorization_url, '_blank');
-      
+
       // Start polling for payment status
       let c=180; // 3 minutes polling
       pollRef.current=setInterval(async()=>{
@@ -966,47 +961,44 @@ function PayModal({type,listingId,pitchId,amount,purpose,token,user,onSuccess,on
   return <Modal title={pitchId?"Reveal Seller Contact — KSh 260":type==="unlock"?"Reveal Your Contact Info To Potential Buyers— KSh 260":"Escrow Payment"} onClose={onClose}>
     {step==="form"&&<>
       {/* Option A — unlock contact (only option now) */}
-      {type==="unlock"&&<div style={{marginBottom:20}}>
-        <div className="pay-option featured">
-          <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
-            <div style={{width:36,height:36,borderRadius:10,background:"rgba(20,40,160,.1)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{Ic.shield(16,"#1428A0")}</div>
-            <div>
-              <div style={{fontWeight:700,fontSize:14,color:"#1428A0",marginBottom:3}}>Reveal Your Contact</div>
-              <div style={{fontSize:12,color:"#444444",lineHeight:1.65}}>Unlock your phone number to buyers, to let them contact you directly. One-time payment of <strong>KSh 260</strong> for this listing.</div>
-            </div>
-          </div>
+  {type==="unlock"&&<div style={{marginBottom:20}}>
+    <div className="pay-option featured">
+      <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
+        <div style={{width:36,height:36,borderRadius:10,background:"rgba(20,40,160,.1)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{Ic.shield(16,"#1428A0")}</div>
+        <div>
+          <div style={{fontWeight:700,fontSize:14,color:"#1428A0",marginBottom:3}}>Reveal Your Contact</div>
+          <div style={{fontSize:12,color:"#444444",lineHeight:1.65}}>Unlock your phone number to buyers, to let them contact you directly. One-time payment of <strong>KSh 260</strong> for this listing.</div>
         </div>
-      </div>}
-
-      {/* Seller safety tip — shown only on unlock */}
-      {type==="unlock"&&<div style={{background:"#F8F9FF",border:"1px solid #C7D2FE",borderRadius:12,padding:"12px 14px",marginBottom:16,fontSize:12,color:"#1428A0",lineHeight:1.7}}>
-        <strong style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>{Ic.shield(14)} Seller tip:</strong> Once you unlock, potential buyers will immediately see your contact details. <strong>Do not hand over the item until payment is confirmed.</strong>
-      </div>}
-      <div style={{background:type==="escrow"?"linear-gradient(135deg,rgba(20,40,160,.04) 0%,rgba(20,40,160,.08) 100%)":"#F8F8F8",border:type==="escrow"?"1.5px solid #C7D2FE":"1px solid #E8E8E8",borderRadius:14,padding:"20px 22px",marginBottom:20}}>
-        <div style={{fontSize:11,color:"#888888",marginBottom:6,display:"flex",alignItems:"center",gap:6}}>Till Number <strong style={{color:"var(--txt)"}}>5673935</strong> · Weka Soko{type==="escrow"&&<span className="badge" style={{background:"rgba(16,185,129,.1)",color:"#059669",fontSize:9}}>FUNDS HELD SECURE</span>}</div>
-        <div style={{display:"flex",alignItems:"baseline",gap:12,flexWrap:"wrap"}}>
-          <div style={{fontSize:38,fontWeight:800,color:"#111111",letterSpacing:"-.02em"}}>{fmtKES(finalAmt)}</div>
-          {discount>0&&<div style={{fontSize:16,color:"#CCCCCC",textDecoration:"line-through"}}>{fmtKES(amount)}</div>}
-        </div>
-        {discount>0&&<div style={{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"}}>
-          <span className="badge bg-g">{discount}% off</span>
-          <span className="badge bg-g">You save {fmtKES(saving)}</span>
-        </div>}
-        <div style={{fontSize:13,color:"#888888",marginTop:7,lineHeight:1.6}}>{purpose}</div>
       </div>
-      {allowVoucher&&<FF label="Voucher Code (optional)">
-        <div style={{display:"flex",gap:8}}>
-          <input className="inp" placeholder="e.g. WS-FREE50" value={vcode} onChange={e=>{setVcode(e.target.value);if(!e.target.value)setVoucherInfo(null);}} style={{flex:1}} onKeyDown={e=>e.key==="Enter"&&applyVoucher()}/>
-          <button className="btn bs sm" onClick={applyVoucher}>Apply</button>
-        </div>
-        {voucherInfo&&<div className="alert ag" style={{marginTop:8,fontSize:12,display:"flex",alignItems:"center",gap:6}}>{Ic.check(14,"#1428A0")} {voucherInfo.description||`${discount}% discount`} — Pay only {fmtKES(finalAmt)}{finalAmt===0?" (FREE!)":""}</div>}
-      </FF>}
+    </div>
+  </div>}
+
+  {/* Seller safety tip — shown only on unlock */}
+  {type==="unlock"&&<div style={{background:"#F8F9FF",border:"1px solid #C7D2FE",borderRadius:12,padding:"12px 14px",marginBottom:16,fontSize:12,color:"#1428A0",lineHeight:1.7}}>
+    <strong style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>{Ic.shield(14)} Seller tip:</strong> Once you unlock, potential buyers will immediately see your contact details. <strong>Do not hand over the item until payment is confirmed.</strong>
+  </div>}
+  <div style={{background:type==="escrow"?"linear-gradient(135deg,rgba(20,40,160,.04) 0%,rgba(20,40,160,.08) 100%)":"#F8F8F8",border:type==="escrow"?"1.5px solid #C7D2FE":"1px solid #E8E8E8",borderRadius:14,padding:"20px 22px",marginBottom:20}}>
+    <div style={{fontSize:11,color:"#888888",marginBottom:6,display:"flex",alignItems:"center",gap:6}}>Till Number <strong style={{color:"var(--txt)"}}>5673935</strong> · Weka Soko{type==="escrow"&&<span className="badge" style={{background:"rgba(16,185,129,.1)",color:"#059669",fontSize:9}}>FUNDS HELD SECURE</span>}</div>
+    <div style={{display:"flex",alignItems:"baseline",gap:12,flexWrap:"wrap"}}>
+      <div style={{fontSize:38,fontWeight:800,color:"#111111",letterSpacing:"-.02em"}}>{fmtKES(finalAmt)}</div>
+      {discount>0&&<div style={{fontSize:16,color:"#CCCCCC",textDecoration:"line-through"}}>{fmtKES(amount)}</div>}
+    </div>
+    {discount>0&&<div style={{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"}}>
+      <span className="badge bg-g">{discount}% off</span>
+      <span className="badge bg-g">You save {fmtKES(saving)}</span>
+    </div>}
+    <div style={{fontSize:13,color:"#888888",marginTop:7,lineHeight:1.6}}>{purpose}</div>
+  </div>
+  {allowVoucher&&<FF label="Voucher Code (optional)">
+    <div style={{display:"flex",gap:8}}>
+      <input className="inp" placeholder="e.g. WS-FREE50" value={vcode} onChange={e=>{setVcode(e.target.value);if(!e.target.value)setVoucherInfo(null);}} style={{flex:1}} onKeyDown={e=>e.key==="Enter"&&applyVoucher()}/>
+      <button className="btn bs sm" onClick={applyVoucher}>Apply</button>
+    </div>
+    {voucherInfo&&<div className="alert ag" style={{marginTop:8,fontSize:12,display:"flex",alignItems:"center",gap:6}}>{Ic.check(14,"#1428A0")} {voucherInfo.description||`${discount}% discount`} — Pay only {fmtKES(finalAmt)}{finalAmt===0?" (FREE!)":""}</div>}
+  </FF>}
   {finalAmt===0
     ?<button className="btn bp lg" style={{width:"100%"}} onClick={startPayment}>Unlock for Free</button>
     :<>
-      <FF label="Your Email" required error={!email?"Email is required":!email.includes("@")?"Enter a valid email":""}>
-        <input className="inp" type="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} style={{borderRadius:6}}/>
-      </FF>
       {/* Escrow breakdown */}
       {type==="escrow"&&(()=>{const itemPrice=Math.round(amount/1.055);const fee=amount-itemPrice;return<div style={{background:"#F0F4FF",border:"1px solid #C7D2FE",borderRadius:12,padding:"12px 14px",marginBottom:12,fontSize:13}}>
         <div style={{fontWeight:700,color:"#1428A0",marginBottom:8,fontSize:12,letterSpacing:".06em",textTransform:"uppercase"}}>Escrow Breakdown</div>
@@ -1019,18 +1011,18 @@ function PayModal({type,listingId,pitchId,amount,purpose,token,user,onSuccess,on
       <div style={{background:"#F8F8F8",border:"1px solid #E8E8E8",borderRadius:12,padding:"10px 13px",marginBottom:12,fontSize:12,color:"#333333",lineHeight:1.65}}>
         <strong style={{display:"flex",alignItems:"center",gap:6}}>{Ic.warning(14)} Security reminder:</strong> {type==="escrow"?<>This payment of <strong>{fmtKES(finalAmt)}</strong> goes to <strong>Weka Soko Till 5673935</strong> only. Funds are held in escrow — not paid directly to the seller.</>:<>This KSh 260 is paid to <strong>Weka Soko Till 5673935</strong> only. We will <strong>never</strong> ask you to send money to a seller's personal number before meeting.</>}
       </div>
-  <button 
-    className="btn bp lg" 
-    style={{width:"100%", pointerEvents: 'auto', cursor: 'pointer'}}
-    onClick={(e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      startPayment();
-    }}
-  >
-    Send M-Pesa Request — {fmtKES(finalAmt)}
-  </button>
-      </>}
+      <button 
+        className="btn bp lg" 
+        style={{width:"100%", pointerEvents: 'auto', cursor: 'pointer'}}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          startPayment();
+        }}
+      >
+        Send M-Pesa Request — {fmtKES(finalAmt)}
+      </button>
+    </>}
     </>}
     {step==="initializing"&&<div style={{textAlign:"center",padding:"32px 0"}}>
       <div style={{marginBottom:18}}><Spin s="48px"/></div>
